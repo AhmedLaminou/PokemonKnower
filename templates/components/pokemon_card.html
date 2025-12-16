@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pokemon_card.css') }}">
+
+<div class="pkm-card-container">
+
+    <div class="pkm-card">
+
+        <!-- NAME + TYPES -->
+        <div class="pkm-header">
+            <h1 class="pkm-name">{{ pokemon.name|title }}</h1>
+
+            <div class="pkm-types">
+                {% if pokemon.type_1 %}
+                    <span class="type type-{{ pokemon.type_1|lower }}">{{ pokemon.type_1 }}</span>
+                {% endif %}
+                {% if pokemon.type_2 %}
+                    <span class="type type-{{ pokemon.type_2|lower }}">{{ pokemon.type_2 }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- IMAGE -->
+        <div class="pkm-img-wrapper">
+            <img class="pkm-img"
+                 src="{{ url_for('static', filename='images/pokemon/' ~ pokemon.pokedex_number ~ '.png') }}"
+                 alt="{{ pokemon.name }}"
+                 onerror="this.onerror=null; this.src='{{ url_for(\'static\', filename=\'images/pokeball.png\') }}'">
+        </div>
+
+        <!-- STATS -->
+        <div class="pkm-stats">
+            {% for label, key in {
+                'HP':'hp',
+                'ATK':'attack',
+                'DEF':'defense',
+                'SP. ATK':'sp_attack',
+                'SP. DEF':'sp_defense',
+                'SPEED':'speed'
+            }.items() %}
+            <div class="stat-row">
+                <span class="stat-label">{{ label }}</span>
+                <div class="stat-bar">
+                    <div class="stat-fill" style="width: {{ (pokemon[key] / 255) * 100 }}%"></div>
+                </div>
+                <span class="stat-value">{{ pokemon[key] }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- DETAILS -->
+        <div class="pkm-details">
+            <div class="detail">
+                <span>Height</span>
+                <span>{{ pokemon.height_m }} m</span>
+            </div>
+            <div class="detail">
+                <span>Weight</span>
+                <span>{{ pokemon.weight_kg }} kg</span>
+            </div>
+            <div class="detail">
+                <span>Generation</span>
+                <span>{{ pokemon.generation }}</span>
+            </div>
+            <div class="detail">
+                <span>Abilities</span>
+                <span>{{ pokemon.abilities|replace('[','')|replace(']','')|replace("'","") }}</span>
+            </div>
+        </div>
+
+        <!-- BACK BUTTON -->
+        <div class="pkm-actions">
+            <a href="{{ url_for('index') }}" class="btn-back">← Back</a>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

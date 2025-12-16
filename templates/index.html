@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Pokémon Knower | AI-Powered Pokédex{% endblock %}
+
+{% block content %}
+<!-- Background Elements -->
+<div class="bg-overlay"></div>
+<div class="particles" id="particles"></div>
+
+<!-- Hero Section -->
+<section id="hero" class="hero-section">
+    <div class="hero-content">
+        <h1>Gotta Know <u>'Em All</u>!</h1>
+        <p class="hero-subtitle">The Ultimate AI-Powered Pokémon Identifier</p>
+        
+        <!-- Search Bar -->
+        <div class="search-wrapper">
+            <div class="search-container glass-effect">
+                <input type="text" id="search-input" placeholder="Search for a Pokémon..." autocomplete="off">
+                <button id="search-btn" title="Search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+                <button id="advanced-search-toggle" class="btn-icon" title="Advanced Filters">
+                    <i class="fas fa-sliders-h"></i>
+                </button>
+            </div>
+            
+            <!-- Advanced Search Panel -->
+            <div id="advanced-search-panel" class="advanced-search-panel glass-effect">
+                <div class="filter-group">
+                    <label for="type-filter">Pokémon Type</label>
+                    <select id="type-filter" class="filter-select">
+                        <option value="">All Types</option>
+                        <option value="normal">Normal</option>
+                        <option value="fire">Fire</option>
+                        <option value="water">Water</option>
+                        <option value="electric">Electric</option>
+                        <option value="grass">Grass</option>
+                        <option value="ice">Ice</option>
+                        <option value="fighting">Fighting</option>
+                        <option value="poison">Poison</option>
+                        <option value="ground">Ground</option>
+                        <option value="flying">Flying</option>
+                        <option value="psychic">Psychic</option>
+                        <option value="bug">Bug</option>
+                        <option value="rock">Rock</option>
+                        <option value="ghost">Ghost</option>
+                        <option value="dragon">Dragon</option>
+                        <option value="dark">Dark</option>
+                        <option value="steel">Steel</option>
+                        <option value="fairy">Fairy</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Weight (kg)</label>
+                    <div class="range-inputs">
+                        <input type="number" id="min-weight" placeholder="Min" min="0" step="0.1">
+                        <span>to</span>
+                        <input type="number" id="max-weight" placeholder="Max" min="0" step="0.1">
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Height (m)</label>
+                    <div class="range-inputs">
+                        <input type="number" id="min-height" placeholder="Min" min="0" step="0.1">
+                        <span>to</span>
+                        <input type="number" id="max-height" placeholder="Max" min="0" step="0.1">
+                    </div>
+                </div>
+                
+                <div class="stats-filters">
+                    <div class="stat-filter">
+                        <label for="min-attack">ATK</label>
+                        <input type="number" id="min-attack" min="0" value="0">
+                    </div>
+                    <div class="stat-filter">
+                        <label for="min-defense">DEF</label>
+                        <input type="number" id="min-defense" min="0" value="0">
+                    </div>
+                    <div class="stat-filter">
+                        <label for="min-stamina">HP</label>
+                        <input type="number" id="min-stamina" min="0" value="0">
+                    </div>
+                </div>
+                
+                <div class="filter-actions">
+                    <button id="reset-filters" class="btn-secondary">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                    <button id="apply-filters" class="btn-primary">
+                        <i class="fas fa-search"></i> Apply Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search Results Container -->
+        <div id="search-results" class="search-results"></div>
+        <div id="pagination" class="pagination"></div>
+        
+        <!-- CTA Button -->
+        <div class="initial-state">
+            <button class="cta-btn" onclick="document.getElementById('pokedex').scrollIntoView({behavior: 'smooth'})">
+                <i class="fas fa-camera"></i> START SCANNING
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- Pokédex Scanner Section -->
+<section id="pokedex" class="pokedex-section">
+    <div class="pokedex-container">
+        <!-- Left Panel - Camera/Upload -->
+        <div class="pokedex-left">
+            <div class="screen-container">
+                <div class="screen" id="drop-zone">
+                    <div class="upload-placeholder">
+                        <i class="fa-solid fa-camera"></i>
+                        <h3>Drop Image Here</h3>
+                        <p>or click to browse files</p>
+                    </div>
+                    <img id="image-preview" src="" alt="Pokémon Preview" style="display: none;">
+                    <input type="file" id="file-input" accept="image/*" hidden>
+                </div>
+                
+                <!-- Scan Button inside Pokédex -->
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <button id="predict-btn" disabled>
+                        <i class="fas fa-search"></i> IDENTIFY POKÉMON
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Panel - Results -->
+        <div class="pokedex-right">
+            <div class="info-screen">
+                <div class="scan-line"></div>
+                
+                <!-- Initial State -->
+                <div class="initial-state">
+                    <i class="fas fa-pokemon" style="font-size: 3rem; color: var(--pokemon-yellow); margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>Ready to Scan</h3>
+                    <p>Upload a Pokémon image to identify it</p>
+                </div>
+                
+                <!-- Loader -->
+                <div id="loader"></div>
+                
+                <!-- Results -->
+                <div class="result-state">
+                    <h2 id="pokemon-name">???</h2>
+                    <div id="confidence-badge">Confidence: 0%</div>
+                    <div class="stats-display">
+                        <h4><i class="fas fa-chart-bar"></i> Top Matches</h4>
+                        <ul id="stats-list">
+                            <!-- Populated by JavaScript -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pokemon Modal (for search results) -->
+<div id="pokemon-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <div id="modal-body"></div>
+    </div>
+</div>
+
+{% endblock %}

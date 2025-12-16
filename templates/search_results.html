@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="search-results-container">
+    <h1>Search Results</h1>
+    
+    {% if query or type_filter or min_weight > 0 or max_weight < float('inf') or 
+          min_height > 0 or max_height < float('inf') or 
+          min_attack > 0 or min_defense > 0 or min_stamina > 0 %}
+        <div class="search-filters">
+            <h3>Active Filters:</h3>
+            <div class="active-filters">
+                {% if query %}
+                    <span class="filter-pill">Name: {{ query }}</span>
+                {% endif %}
+                {% if type_filter %}
+                    <span class="filter-pill">Type: {{ type_filter|title }}</span>
+                {% endif %}
+                {% if min_weight > 0 or max_weight < infinity %}
+                    <span class="filter-pill">
+                        Weight: {{ min_weight }} - {{ '∞' if max_weight == infinity else max_weight }} kg
+                    </span>
+                {% endif %}
+                {% if min_height > 0 or max_height < infinity %}
+                    <span class="filter-pill">
+                        Height: {{ min_height }} - {{ '∞' if max_height == infinity else max_height }} m
+                    </span>
+                {% endif %}
+                {% if min_attack > 0 %}
+                    <span class="filter-pill">Min ATK: {{ min_attack }}</span>
+                {% endif %}
+                {% if min_defense > 0 %}
+                    <span class="filter-pill">Min DEF: {{ min_defense }}</span>
+                {% endif %}
+                {% if min_stamina > 0 %}
+                    <span class="filter-pill">Min STA: {{ min_stamina }}</span>
+                {% endif %}
+            </div>
+            <a href="{{ url_for('index') }}" class="clear-filters">Clear all filters</a>
+        </div>
+    {% endif %}
+    
+    {% if results %}
+        <div class="pokemon-grid">
+            {% for pokemon in results %}
+                <div class="pokemon-card-preview" onclick="window.location.href='{{ url_for('get_pokemon', name=pokemon.name) }}'">
+                    <div class="pokemon-preview-image">
+                        <img src="{{ url_for('static', filename='images/pokemon/' ~ pokemon.pokedex_number ~ '.png') }}" 
+                             alt="{{ pokemon.name }}"
+                             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/pokeball.png') }}'">
+                    </div>
+                    <div class="pokemon-preview-info">
+                        <h3>{{ pokemon.name|title }}</h3>
+                        <div class="pokemon-types">
+                            {% if pokemon.main_type %}
+                                <span class="type-badge type-{{ pokemon.main_type|lower }}">
+                                    {{ pokemon.main_type }}
+                                </span>
+                            {% endif %}
+                            {% if pokemon.secondary_type %}
+                                <span class="type-badge type-{{ pokemon.secondary_type|lower }}">
+                                    {{ pokemon.secondary_type }}
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="pokemon-stats-preview">
+                            <div class="stat">
+                                <span class="stat-label">ATK</span>
+                                <span class="stat-value">{{ pokemon.attack }}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">DEF</span>
+                                <span class="stat-value">{{ pokemon.defense }}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">STA</span>
+                                <span class="stat-value">{{ pokemon.stamina }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-results">
+            <p>No Pokémon found matching your search criteria.</p>
+            <a href="{{ url_for('index') }}" class="btn-back">← Back to Home</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
