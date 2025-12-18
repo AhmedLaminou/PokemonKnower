@@ -124,7 +124,7 @@ PokemonKnower/
 │   ├── pokemon_classifier_model_V2.h5    # Version 2 model
 │   ├── pokemon_classifier_model_V3.h5    # Version 3 model (active)
 │   ├── class_indices.json                 # Model class mapping (151 Pokemon)
-│   └── pokemon.csv                        # Source dataset (migration imports first 151 by default)
+│   └── pokemon.csv                        # Source dataset (migration imports all rows by default)
 │
 ├── 📖 Training Notebook
 │   └── updatedPokémonClassifier.ipynb    # Jupyter notebook with model training
@@ -207,7 +207,8 @@ PORT=5000
 
 # Optional overrides
 POKEMON_DATA_DIR=PokemonData
-MAX_POKEDEX_NUMBER=151
+# Limit how many Pokédex numbers to import (example: 151)
+# MAX_POKEDEX_NUMBER=151
 ```
 
 ### **PokemonData image folders (optional)**
@@ -283,7 +284,7 @@ Search and filter Pokémon
     }
   ],
   "pagination": {
-    "total": 151,
+    "total": 770,
     "returned": 50
   }
 }
@@ -393,7 +394,7 @@ User gets prediction with beautiful display
 | `app.py` | Flask backend with all routes | - |
 | `models.py` | SQLAlchemy models | - |
 | `migrate_db.py` | CSV -> SQLite migration + image scan | - |
-| `pokemon.csv` | Source data (migration imports first 151 by default) | - |
+| `pokemon.csv` | Source data (migration imports all rows by default) | - |
 | `class_indices.json` | Model class mapping | 151 classes |
 
 ### **Configuration Files**
@@ -478,7 +479,7 @@ python app.py
 | Frontend Load Time | <2s |
 | Search Response | <100ms |
 | Prediction Response | <500ms |
-| Database Size | 151 Pokémon (by default) |
+| Database Size | All Pokémon from `pokemon.csv` (by default) |
 | Model Size | ~50MB |
 | Image Processing | Real-time |
 

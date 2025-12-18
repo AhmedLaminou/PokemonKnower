@@ -19,7 +19,8 @@ CSV_PATH = 'pokemon.csv'
 IMAGES_DIR = 'static/images'
 POKEMON_DATA_DIR = os.environ.get('POKEMON_DATA_DIR', 'PokemonData')
 DATABASE_PATH = 'pokemon.db'
-MAX_POKEDEX_NUMBER = int(os.environ.get('MAX_POKEDEX_NUMBER', '151'))
+MAX_POKEDEX_NUMBER_RAW = (os.environ.get('MAX_POKEDEX_NUMBER', '') or '').strip()
+MAX_POKEDEX_NUMBER = int(MAX_POKEDEX_NUMBER_RAW) if MAX_POKEDEX_NUMBER_RAW else None
 
 def create_app():
     """Create Flask app for database context"""
@@ -60,7 +61,10 @@ def migrate_csv_data(app):
             
             for row in reader:
                 number = parse_int(row.get('number', 0))
-                if number <= 0 or number > MAX_POKEDEX_NUMBER:
+                if number <= 0:
+                    continue
+
+                if MAX_POKEDEX_NUMBER and number > MAX_POKEDEX_NUMBER:
                     continue
 
                 name = (row.get('pokemon_name', '') or '').strip()
