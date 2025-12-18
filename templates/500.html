@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}500 - Server Error | Pokémon Knower{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <div class="error-code">500</div>
+    <p class="error-message">Team Rocket blasted off again!</p>
+    <p style="color: var(--text-muted); margin-bottom: 2rem;">Something went wrong on our end. Please try again later.</p>
+    <div style="display: flex; gap: 1rem; justify-content: center;">
+        <a href="{{ url_for('index') }}" class="btn btn-primary">
+            <i class="fas fa-home"></i> Go Home
+        </a>
+        <a href="javascript:location.reload()" class="btn btn-secondary">
+            <i class="fas fa-redo"></i> Try Again
+        </a>
+    </div>
+</div>
+{% endblock %}

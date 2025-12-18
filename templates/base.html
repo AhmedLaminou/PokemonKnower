@@ -3,65 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Pokémon Knower | Ultimate AI Pokédex{% endblock %}</title>
-    <meta name="description" content="The ultimate AI-powered Pokémon identifier. Upload any Pokémon image and let our deep learning model identify it instantly!">
+    <title>{% block title %}Pokémon Knower | AI-Powered Pokédex{% endblock %}</title>
+    <meta name="description" content="The ultimate AI-powered Pokémon identifier and Pokédex. Identify Pokémon from images and explore detailed information on all 151 original Pokémon!">
     <meta name="theme-color" content="#DC0A2D">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
     
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='about.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='search.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pokemon_card.css') }}">
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="pokeball-bg pokeball-1"></div>
+        <div class="pokeball-bg pokeball-2"></div>
+        <div class="pokeball-bg pokeball-3"></div>
+    </div>
+
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
             <a href="{{ url_for('index') }}" class="logo">
-                <img src="{{ url_for('static', filename='images/pokeball.png') }}" alt="Pokéball">
-                <span>Pokémon Knower</span>
+                <div class="logo-pokeball">
+                    <div class="pokeball-top"></div>
+                    <div class="pokeball-center"></div>
+                    <div class="pokeball-bottom"></div>
+                </div>
+                <span class="logo-text">Pokémon <span class="highlight">Knower</span></span>
             </a>
-            <div class="nav-links">
-                <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">
-                    <i class="fas fa-home"></i> Home
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            
+            <div class="nav-links" id="navLinks">
+                <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
                 </a>
-                <a href="{{ url_for('about') }}" class="{% if request.endpoint == 'about' %}active{% endif %}">
-                    <i class="fas fa-info-circle"></i> About
+                <a href="{{ url_for('pokedex') }}" class="nav-link {% if request.endpoint == 'pokedex' %}active{% endif %}">
+                    <i class="fas fa-book-open"></i>
+                    <span>Pokédex</span>
+                </a>
+                <a href="{{ url_for('about') }}" class="nav-link {% if request.endpoint == 'about' %}active{% endif %}">
+                    <i class="fas fa-info-circle"></i>
+                    <span>About</span>
                 </a>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main>
+    <main class="main-content">
         {% block content %}{% endblock %}
     </main>
 
     <!-- Footer -->
-    <footer>
-        <div class="footer-content">
-            <p>
-                <i class="fas fa-pokeball"></i>
-                © 2025 Pokémon Knower | Powered by TensorFlow & Deep Learning
-            </p>
-            <p style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.7;">
-                Not affiliated with Nintendo, The Pokémon Company, or Game Freak
-            </p>
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <div class="logo-pokeball small">
+                            <div class="pokeball-top"></div>
+                            <div class="pokeball-center"></div>
+                            <div class="pokeball-bottom"></div>
+                        </div>
+                        <span>Pokémon Knower</span>
+                    </div>
+                    <p class="footer-desc">AI-powered Pokémon identification and comprehensive Pokédex for all 151 original Pokémon.</p>
+                </div>
+                
+                <div class="footer-links">
+                    <div class="footer-section">
+                        <h4>Navigation</h4>
+                        <a href="{{ url_for('index') }}">Home</a>
+                        <a href="{{ url_for('pokedex') }}">Pokédex</a>
+                        <a href="{{ url_for('about') }}">About</a>
+                    </div>
+                    
+                    <div class="footer-section">
+                        <h4>Features</h4>
+                        <a href="{{ url_for('index') }}#scanner">AI Scanner</a>
+                        <a href="{{ url_for('index') }}#search">Search</a>
+                        <a href="{{ url_for('pokedex') }}">Browse All</a>
+                    </div>
+                    
+                    <div class="footer-section">
+                        <h4>Connect</h4>
+                        <div class="social-links">
+                            <a href="https://github.com/AhmedLaminou" target="_blank" title="GitHub">
+                                <i class="fab fa-github"></i>
+                            </a>
+                            <a href="https://linkedin.com/in/ahmedlaminou" target="_blank" title="LinkedIn">
+                                <i class="fab fa-linkedin"></i>
+                            </a>
+                            <a href="https://twitter.com/ahmedlaminou" target="_blank" title="Twitter">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 Pokémon Knower | Powered by TensorFlow & Deep Learning</p>
+                <p class="disclaimer">Not affiliated with Nintendo, The Pokémon Company, or Game Freak. Pokémon and Pokémon character names are trademarks of Nintendo.</p>
+            </div>
         </div>
     </footer>
 
     <!-- Scripts -->
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

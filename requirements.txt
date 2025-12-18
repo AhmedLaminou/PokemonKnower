@@ -1,5 +1,6 @@
 Flask==2.3.3
 flask-cors==4.0.0
+Flask-SQLAlchemy==3.1.1
 numpy==1.23.5
 opencv-python==4.8.0.74
 tensorflow==2.12.0

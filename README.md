@@ -1,10 +1,12 @@
-# 🎮 Pokemon Knower - AI-Powered Pokemon Identifier
+# 🎮 Pokemon Knower - AI-Powered Pokédex & Pokémon Identifier
 
-A full-stack web application that identifies Pokemon from images using deep learning, built with **React**, **Flask**, and **TensorFlow**. Features advanced search, real-time predictions, and a beautiful modern UI.
+A Flask web application that identifies Pokémon from images using deep learning and also works as a modern Pokédex.
 
-[![React](https://img.shields.io/badge/React-18.2-blue?logo=react)](https://react.dev)
+This version uses a **SQLite database** (via **Flask-SQLAlchemy**) instead of reading from CSV at runtime.
+
 [![Flask](https://img.shields.io/badge/Flask-2.3-green?logo=flask)](https://flask.palletsprojects.com)
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-2.12-orange?logo=tensorflow)](https://tensorflow.org)
+[![SQLite](https://img.shields.io/badge/SQLite-3-blue?logo=sqlite)](https://www.sqlite.org)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](https://www.docker.com)
 [![License](https://img.shields.io/badge/License-MIT-green)]()
 
@@ -26,8 +28,8 @@ A full-stack web application that identifies Pokemon from images using deep lear
 
 ## ✨ Features
 
-### 🔍 **Pokemon Search**
-- Advanced search by Pokemon name with real-time filtering
+### 🔍 **Pokédex Search**
+- Advanced search by Pokémon name with real-time filtering
 - Multi-filter support:
   - Filter by type (Electric, Water, Grass, etc.)
   - Filter by stats (HP, Attack, Defense, Speed)
@@ -37,10 +39,10 @@ A full-stack web application that identifies Pokemon from images using deep lear
 
 ### 📸 **Image Scanning & Prediction**
 - Drag-and-drop image upload interface
-- Intelligent Pokemon identification using trained ML model
+- Intelligent Pokémon identification using trained ML model
 - Fallback prediction system when model unavailable
 - Confidence scores and top 3 alternative predictions
-- Display of complete Pokemon stats
+- Display of complete Pokémon stats
 - Support for: PNG, JPG, JPEG, GIF formats
 
 ### 💅 **Beautiful Modern UI**
@@ -65,14 +67,15 @@ A full-stack web application that identifies Pokemon from images using deep lear
 ## 🛠️ Tech Stack
 
 ### **Frontend**
-- **React 18** - UI framework
-- **CSS3** - Advanced styling (Glass-morphism, gradients, animations)
-- **Fetch API** - HTTP requests
-- Custom, lightweight CSS (no external UI library)
+- **Jinja2 Templates** - Server-rendered pages
+- **HTML5 / CSS3** - Modern responsive styling
+- **Vanilla JavaScript** - Search, scanner UI, camera modal
 
 ### **Backend**
 - **Flask 2.3** - Web framework
 - **Flask-CORS** - Cross-Origin Resource Sharing
+- **Flask-SQLAlchemy** - ORM
+- **SQLite** - Local database (`pokemon.db`)
 - **TensorFlow 2.12** - Deep learning framework
 - **Keras** - Neural network API
 - **OpenCV** - Image processing
@@ -91,11 +94,13 @@ A full-stack web application that identifies Pokemon from images using deep lear
 
 ```
 PokemonKnower/
-├── 📄 app.py                              # Flask backend (main server)
-├── 📦 package.json                        # React dependencies
+├── 📄 app.py                              # Flask app (main server)
 ├── 📋 requirements.txt                    # Python dependencies
+├── 🗄️ pokemon.db                          # SQLite database (generated)
+├── 🧱 models.py                           # SQLAlchemy models
+├── 🔁 migrate_db.py                       # CSV -> SQLite migration + image scan
 │
-├── 🐳 Docker Setup
+├── 🐳 Docker Setup (optional)
 │   ├── Dockerfile                         # Multi-stage Docker build
 │   ├── docker-compose.yml                 # Container orchestration
 │   ├── docker-entrypoint.sh               # Production startup script
@@ -103,29 +108,23 @@ PokemonKnower/
 │   ├── .dockerignore                      # Build optimization
 │   └── .env.example                       # Environment template
 │
-├── 🎨 Frontend (React)
-│   ├── public/
-│   │   └── index.html                     # HTML entry point
-│   └── src/
-│       ├── App.js                         # Main React component (442 lines)
-│       ├── App.css                        # Comprehensive styling (700+ lines)
-│       ├── index.js                       # React bootstrap
-│       └── index.css                      # Global styles
-│
-├── 🔧 Backend (Flask)
-│   ├── templates/                         # HTML templates
+├── 🔧 Web UI
+│   ├── templates/                         # Jinja templates
 │   └── static/                            # Static assets
-│       ├── css/
-│       ├── js/
-│       ├── images/
-│       └── uploads/                       # User uploaded images
+│       ├── css/                           # main.css
+│       ├── js/                            # main.js
+│       ├── images/                        # optional images + site assets
+│       └── uploads/                       # temporary user uploads
+│
+├── 🖼️ Optional dataset images
+│   └── PokemonData/<PokemonName>/*        # ex: PokemonData/Abra/...
 │
 ├── 🧠 ML Models
 │   ├── pokemon_classifier_model_V1.h5    # Version 1 model
 │   ├── pokemon_classifier_model_V2.h5    # Version 2 model
 │   ├── pokemon_classifier_model_V3.h5    # Version 3 model (active)
 │   ├── class_indices.json                 # Model class mapping (151 Pokemon)
-│   └── pokemon.csv                        # Pokemon stats database (770 Pokemon)
+│   └── pokemon.csv                        # Source dataset (migration imports first 151 by default)
 │
 ├── 📖 Training Notebook
 │   └── updatedPokémonClassifier.ipynb    # Jupyter notebook with model training
@@ -147,20 +146,17 @@ docker-compose up --build
 # Access: http://localhost:5000
 ```
 
-### **Option 2: Development (Two Terminals)**
+### **Option 2: Development (Recommended)**
 
-**Terminal 1 - React Frontend:**
-```bash
-npm install
-npm start
-# Runs on http://localhost:3000
-```
-
-**Terminal 2 - Flask Backend:**
 ```bash
 pip install -r requirements.txt
+
+# Build/refresh the SQLite DB from pokemon.csv
+python migrate_db.py
+
+# Run the server
 python app.py
-# Runs on http://localhost:5000
+# http://127.0.0.1:5000
 ```
 
 ---
@@ -169,7 +165,6 @@ python app.py
 
 ### **Prerequisites**
 - Python 3.11+
-- Node.js 18+
 - Git
 
 ### **Backend Setup**
@@ -186,37 +181,50 @@ source .venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Create/refresh the SQLite DB
+python migrate_db.py
+
 # Run Flask server
 python app.py
 # Server runs on http://localhost:5000
 ```
 
-### **Frontend Setup**
+### **Database**
 
-```bash
-# Install Node dependencies
-npm install
-
-# Start development server
-npm start
-# Opens http://localhost:3000 automatically
-
-# Build for production
-npm run build
-```
+- **Database engine**: SQLite
+- **Database file name**: `pokemon.db`
+- **Location**: project root (same folder as `app.py`)
+- **How it’s created**: run `python migrate_db.py`
 
 ### **Environment Variables**
 
 Create `.env` file:
-```
+```bash
 FLASK_ENV=development
 FLASK_APP=app.py
 FLASK_DEBUG=1
 PORT=5000
-MODEL_PATH=pokemon_classifier_model_V3.h5
-CLASS_INDICES_PATH=class_indices.json
-POKEMON_CSV_PATH=pokemon.csv
+
+# Optional overrides
+POKEMON_DATA_DIR=PokemonData
+MAX_POKEDEX_NUMBER=151
 ```
+
+### **PokemonData image folders (optional)**
+
+You can progressively add your dataset images without putting them inside `static/`.
+Use this pattern:
+
+- `PokemonData/Abra/*.jpg`
+- `PokemonData/Bulbasaur/*.png`
+
+Then re-run:
+
+```bash
+python migrate_db.py
+```
+
+The app serves these images at `/pokedata/...` automatically.
 
 ---
 
@@ -249,18 +257,15 @@ See [DOCKER_README.md](DOCKER_README.md) for comprehensive Docker guide.
 - Production: `http://your-domain.com`
 
 ### **GET /search**
-Search and filter Pokemon
+Search and filter Pokémon
 
 **Parameters:**
-- `q` (string) - Pokemon name search
+- `q` (string) - Pokémon name search
 - `type` (string) - Filter by type
-- `minWeight` (number) - Minimum weight
-- `maxWeight` (number) - Maximum weight
-- `minHeight` (number) - Minimum height
-- `maxHeight` (number) - Maximum height
 - `minAttack` (integer) - Minimum attack stat
 - `minDefense` (integer) - Minimum defense stat
 - `minStamina` (integer) - Minimum HP
+- `page` (integer) - Page number
 
 **Response:**
 ```json
@@ -278,14 +283,14 @@ Search and filter Pokemon
     }
   ],
   "pagination": {
-    "total": 150,
+    "total": 151,
     "returned": 50
   }
 }
 ```
 
 ### **POST /predict**
-Predict Pokemon from image
+Predict Pokémon from image
 
 **Form Data:**
 - `file` (multipart/form-data) - Image file (PNG/JPG/JPEG/GIF)
@@ -313,7 +318,7 @@ Predict Pokemon from image
 ```
 
 ### **GET /pokemon/<name>**
-Get specific Pokemon details
+Get specific Pokémon details
 
 **Response:**
 ```json
@@ -337,13 +342,13 @@ Get specific Pokemon details
 ```
 User inputs search query
     ↓
-Backend searches pokemon.csv
+Backend searches pokemon.db
     ↓
 Applies filters (type, stats, weight, height)
     ↓
-Returns matching Pokemon with stats
+Returns matching Pokémon with stats
     ↓
-React displays beautiful card grid
+Jinja templates display beautiful card grid
 ```
 
 ### **2. Image Scanning & Prediction**
@@ -354,13 +359,13 @@ Flask validates file (PNG/JPG/GIF)
     ↓
 TensorFlow model processes image
     ↓
-Model predicts Pokemon class + confidence
+Model predicts Pokémon class + confidence
     ↓
-Backend fetches stats from pokemon.csv
+Backend fetches stats from pokemon.db
     ↓
 Returns prediction + stats + top 3 alternatives
     ↓
-React displays beautiful result card
+Jinja templates display beautiful result card
 ```
 
 ### **3. Fallback System**
@@ -372,7 +377,7 @@ System uses image hash for deterministic selection
     ↓
 Confidence varies realistically (65-90%)
     ↓
-Always returns real stats from CSV
+Always returns real stats from DB
     ↓
 User gets prediction with beautiful display
 ```
@@ -385,10 +390,10 @@ User gets prediction with beautiful display
 
 | File | Purpose | Lines |
 |------|---------|-------|
-| `app.py` | Flask backend with all routes | 340 |
-| `src/App.js` | Main React component | 442 |
-| `src/App.css` | Complete UI styling | 700+ |
-| `pokemon.csv` | Database of 770 Pokemon | 770 rows |
+| `app.py` | Flask backend with all routes | - |
+| `models.py` | SQLAlchemy models | - |
+| `migrate_db.py` | CSV -> SQLite migration + image scan | - |
+| `pokemon.csv` | Source data (migration imports first 151 by default) | - |
 | `class_indices.json` | Model class mapping | 151 classes |
 
 ### **Configuration Files**
@@ -398,9 +403,8 @@ User gets prediction with beautiful display
 | `Dockerfile` | Multi-stage Docker build |
 | `docker-compose.yml` | Container orchestration |
 | `nginx.conf` | Reverse proxy configuration |
-| `docker-entrypoint.sh` | Production startup script |
-| `requirements.txt` | Python dependencies |
-| `package.json` | React dependencies |
+ | `docker-entrypoint.sh` | Production startup script |
+ | `requirements.txt` | Python dependencies |
 
 ### **Documentation**
 
@@ -411,17 +415,7 @@ User gets prediction with beautiful display
 
 ---
 
-## 🎯 Key Components
-
-### **React Frontend (App.js)**
-- ✅ Responsive search with real-time filtering
-- ✅ Beautiful Pokemon card grid with stats
-- ✅ Drag-and-drop image upload
-- ✅ Live prediction results with confidence
-- ✅ Type badges with color coding
-- ✅ Stat visualization with progress bars
-- ✅ Smooth animations and transitions
-- ✅ Mobile-friendly design
+## 🚀 Key Components
 
 ### **Flask Backend (app.py)**
 - ✅ `/search` endpoint with advanced filtering
@@ -430,10 +424,20 @@ User gets prediction with beautiful display
 - ✅ CORS support
 - ✅ Lazy TensorFlow loading
 - ✅ Intelligent fallback predictions
-- ✅ CSV data caching for performance
+- ✅ DB caching for performance
 - ✅ Error handling and validation
 
-### **Styling (App.css)**
+### **Jinja Templates**
+- ✅ Responsive search with real-time filtering
+- ✅ Beautiful Pokémon card grid with stats
+- ✅ Drag-and-drop image upload
+- ✅ Live prediction results with confidence
+- ✅ Type badges with color coding
+- ✅ Stat visualization with progress bars
+- ✅ Smooth animations and transitions
+- ✅ Mobile-friendly design
+
+### **Styling (CSS)**
 - ✅ Glass-morphism design
 - ✅ Gradient backgrounds
 - ✅ Smooth animations
@@ -459,9 +463,7 @@ docker-compose up -d
 ### **2. Traditional Server**
 ```bash
 pip install -r requirements.txt
-npm install
-npm run build
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
+python app.py
 ```
 
 ### **3. Cloud Platforms**
@@ -476,7 +478,7 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 | Frontend Load Time | <2s |
 | Search Response | <100ms |
 | Prediction Response | <500ms |
-| Database Size | 770 Pokemon |
+| Database Size | 151 Pokémon (by default) |
 | Model Size | ~50MB |
 | Image Processing | Real-time |
 
@@ -525,18 +527,16 @@ Reduce workers in docker-entrypoint.sh:
 
 ## 📦 Dependencies
 
-### **Frontend (React)**
-- react@18, react-dom@18, react-scripts@5
-
 ### **Backend (Python)**
 - Flask==2.3.3
 - flask-cors==4.0.0
+- Flask-SQLAlchemy==3.1.1
 - TensorFlow==2.12.0
 - opencv-python==4.8.0.74
 - numpy==1.23.5
 - gunicorn==21.2.0
 
-See `requirements.txt` and `package.json` for complete lists.
+See `requirements.txt` for the complete list.
 
 ---
 
@@ -554,27 +554,10 @@ See `requirements.txt` and `package.json` for complete lists.
 
 ---
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
 ## 👤 Author
 
 Created as a full-stack AI/ML project showcasing:
 - Deep Learning with TensorFlow
-- Frontend development with React
 - Backend development with Flask
 - DevOps with Docker
 - Production deployment practices
@@ -601,12 +584,13 @@ cd PokemonKnower
 # Run with Docker (easiest)
 docker-compose up
 
-# Or run manually (needs Node & Python)
-# Terminal 1: npm start
-# Terminal 2: python app.py
-
-# Open http://localhost:3000
-# Upload a Pokemon image to scan!
+# Or run manually
+pip install -r requirements.txt
+python migrate_db.py
+python app.py
+ 
+# Open http://127.0.0.1:5000
+# Upload a Pokémon image to scan!
 ```
 
 ---

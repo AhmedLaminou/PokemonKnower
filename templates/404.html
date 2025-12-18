@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}404 - Not Found | Pokémon Knower{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <div class="error-code">404</div>
+    <p class="error-message">{{ message or "Oops! This Pokémon escaped into the tall grass." }}</p>
+    <p style="color: var(--text-muted); margin-bottom: 2rem;">The page you're looking for doesn't exist.</p>
+    <div style="display: flex; gap: 1rem; justify-content: center;">
+        <a href="{{ url_for('index') }}" class="btn btn-primary">
+            <i class="fas fa-home"></i> Go Home
+        </a>
+        <a href="{{ url_for('pokedex') }}" class="btn btn-secondary">
+            <i class="fas fa-book-open"></i> Browse Pokédex
+        </a>
+    </div>
+</div>
+{% endblock %}

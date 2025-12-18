@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}{{ pokemon.name }} | Pokémon Knower{% endblock %}
+
+{% block content %}
+<div class="pokemon-detail">
+    <!-- Navigation -->
+    <div class="detail-header">
+        <a href="{{ url_for('pokedex') }}" class="detail-nav-btn">
+            <i class="fas fa-arrow-left"></i> Back to Pokédex
+        </a>
+        
+        <div class="detail-nav">
+            {% if prev_pokemon %}
+            <a href="{{ url_for('pokemon_detail', identifier=prev_pokemon.name) }}" class="detail-nav-btn">
+                <i class="fas fa-chevron-left"></i> #{{ '%03d' % prev_pokemon.number }}
+            </a>
+            {% endif %}
+            
+            {% if next_pokemon %}
+            <a href="{{ url_for('pokemon_detail', identifier=next_pokemon.name) }}" class="detail-nav-btn">
+                #{{ '%03d' % next_pokemon.number }} <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Main Detail Card -->
+    <div class="detail-card" data-type="{{ pokemon.main_type|lower }}">
+        <!-- Image Section with Carousel -->
+        <div class="detail-image-section">
+            <div class="image-carousel">
+                <div class="carousel-main">
+                    {% if images and images|length > 0 %}
+                    <img id="mainImage" src="{{ image_url(images[0].path) }}" alt="{{ pokemon.name }}">
+                    {% else %}
+                    <img id="mainImage" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ pokemon.number }}.png" 
+                         alt="{{ pokemon.name }}"
+                         onerror="this.src='{{ url_for('static', filename='images/pokeball.png') }}'">
+                    {% endif %}
+                    
+                    {% if images and images|length > 1 %}
+                    <button class="carousel-nav prev" id="carouselPrev">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="carousel-nav next" id="carouselNext">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    {% endif %}
+                </div>
+                
+                {% if images and images|length > 1 %}
+                <div class="carousel-thumbnails" id="thumbnails">
+                    {% for img in images %}
+                    <div class="carousel-thumb {% if loop.first %}active{% endif %}" data-index="{{ loop.index0 }}" data-src="{{ image_url(img.path) }}">
+                        <img src="{{ image_url(img.path) }}" alt="{{ pokemon.name }} {{ loop.index }}">
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Info Section -->
+        <div class="detail-info-section">
+            <p class="detail-number">#{{ '%03d' % pokemon.number }}</p>
+            <h1 class="detail-name">{{ pokemon.name }}</h1>
+            <p class="detail-category">{{ pokemon.category }} Pokémon</p>
+            
+            <!-- Types -->
+            <div class="detail-types">
+                <span class="type-badge {{ pokemon.main_type|lower }}">
+                    {{ pokemon.main_type }}
+                </span>
+                {% if pokemon.secondary_type %}
+                <span class="type-badge {{ pokemon.secondary_type|lower }}">
+                    {{ pokemon.secondary_type }}
+                </span>
+                {% endif %}
+            </div>
+            
+            <!-- Physical Stats -->
+            <div class="physical-stats">
+                <div class="physical-stat">
+                    <div class="physical-stat-value">{{ pokemon.height }}</div>
+                    <div class="physical-stat-label">Height</div>
+                </div>
+                <div class="physical-stat">
+                    <div class="physical-stat-value">{{ pokemon.weight }}</div>
+                    <div class="physical-stat-label">Weight</div>
+                </div>
+                <div class="physical-stat">
+                    <div class="physical-stat-value">{{ pokemon.region }}</div>
+                    <div class="physical-stat-label">Region</div>
+                </div>
+            </div>
+            
+            <!-- Base Stats -->
+            <div class="base-stats">
+                <h3><i class="fas fa-chart-bar"></i> Base Stats</h3>
+                
+                <div class="stat-row">
+                    <span class="stat-name">HP</span>
+                    <span class="stat-num">{{ pokemon.stamina }}</span>
+                    <div class="stat-bar-bg">
+                        <div class="stat-bar-fill hp" style="width: {{ (pokemon.stamina / 300 * 100)|int }}%"></div>
+                    </div>
+                    <span class="stat-max">300</span>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-name">Attack</span>
+                    <span class="stat-num">{{ pokemon.attack }}</span>
+                    <div class="stat-bar-bg">
+                        <div class="stat-bar-fill attack" style="width: {{ (pokemon.attack / 300 * 100)|int }}%"></div>
+                    </div>
+                    <span class="stat-max">300</span>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-name">Defense</span>
+                    <span class="stat-num">{{ pokemon.defense }}</span>
+                    <div class="stat-bar-bg">
+                        <div class="stat-bar-fill defense" style="width: {{ (pokemon.defense / 300 * 100)|int }}%"></div>
+                    </div>
+                    <span class="stat-max">300</span>
+                </div>
+            </div>
+            
+            <!-- Pokédex Entry -->
+            {% if pokemon.pokedex_desc %}
+            <div class="pokedex-entry">
+                <h3><i class="fas fa-book"></i> Pokédex Entry</h3>
+                <p>{{ pokemon.pokedex_desc }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Additional Info Cards -->
+    <div class="detail-extras">
+        <!-- Battle Info -->
+        <div class="extra-card">
+            <h3><i class="fas fa-gamepad"></i> Battle Info</h3>
+            <div class="extra-grid">
+                <div class="extra-item">
+                    <span class="extra-label">CP Range</span>
+                    <span class="extra-value">{{ pokemon.cp_range or 'N/A' }}</span>
+                </div>
+                <div class="extra-item">
+                    <span class="extra-label">HP Range</span>
+                    <span class="extra-value">{{ pokemon.hp_range or 'N/A' }}</span>
+                </div>
+                <div class="extra-item">
+                    <span class="extra-label">Capture Rate</span>
+                    <span class="extra-value">{{ pokemon.capture_rate or 'N/A' }}</span>
+                </div>
+                <div class="extra-item">
+                    <span class="extra-label">Flee Rate</span>
+                    <span class="extra-value">{{ pokemon.flee_rate or 'N/A' }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Evolution Family -->
+        <div class="extra-card">
+            <h3><i class="fas fa-dna"></i> Family</h3>
+            <p class="family-name">{{ pokemon.pokemon_family or 'Unknown' }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-extras {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .extra-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+    }
+    
+    .extra-card h3 {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .extra-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .extra-item {
+        text-align: center;
+        padding: 0.75rem;
+        background: var(--bg-darker);
+        border-radius: var(--radius-sm);
+    }
+    
+    .extra-label {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+    
+    .extra-value {
+        font-weight: 600;
+        color: var(--pokemon-yellow);
+    }
+    
+    .family-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        text-align: center;
+        padding: 1rem;
+        background: var(--bg-darker);
+        border-radius: var(--radius-md);
+    }
+    
+    /* Type-based card styling */
+    .detail-card[data-type="fire"] { border-top: 4px solid var(--type-fire); }
+    .detail-card[data-type="water"] { border-top: 4px solid var(--type-water); }
+    .detail-card[data-type="grass"] { border-top: 4px solid var(--type-grass); }
+    .detail-card[data-type="electric"] { border-top: 4px solid var(--type-electric); }
+    .detail-card[data-type="psychic"] { border-top: 4px solid var(--type-psychic); }
+    .detail-card[data-type="ice"] { border-top: 4px solid var(--type-ice); }
+    .detail-card[data-type="dragon"] { border-top: 4px solid var(--type-dragon); }
+    .detail-card[data-type="dark"] { border-top: 4px solid var(--type-dark); }
+    .detail-card[data-type="fairy"] { border-top: 4px solid var(--type-fairy); }
+    .detail-card[data-type="normal"] { border-top: 4px solid var(--type-normal); }
+    .detail-card[data-type="fighting"] { border-top: 4px solid var(--type-fighting); }
+    .detail-card[data-type="flying"] { border-top: 4px solid var(--type-flying); }
+    .detail-card[data-type="poison"] { border-top: 4px solid var(--type-poison); }
+    .detail-card[data-type="ground"] { border-top: 4px solid var(--type-ground); }
+    .detail-card[data-type="rock"] { border-top: 4px solid var(--type-rock); }
+    .detail-card[data-type="bug"] { border-top: 4px solid var(--type-bug); }
+    .detail-card[data-type="ghost"] { border-top: 4px solid var(--type-ghost); }
+    .detail-card[data-type="steel"] { border-top: 4px solid var(--type-steel); }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Image Carousel Logic
+    const mainImage = document.getElementById('mainImage');
+    const thumbnails = document.querySelectorAll('.carousel-thumb');
+    const prevBtn = document.getElementById('carouselPrev');
+    const nextBtn = document.getElementById('carouselNext');
+    
+    if (thumbnails.length > 0) {
+        let currentIndex = 0;
+        
+        function updateCarousel(index) {
+            currentIndex = index;
+            const thumb = thumbnails[index];
+            mainImage.src = thumb.dataset.src;
+            
+            thumbnails.forEach(t => t.classList.remove('active'));
+            thumb.classList.add('active');
+        }
+        
+        thumbnails.forEach((thumb, index) => {
+            thumb.addEventListener('click', () => updateCarousel(index));
+        });
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                const newIndex = currentIndex > 0 ? currentIndex - 1 : thumbnails.length - 1;
+                updateCarousel(newIndex);
+            });
+        }
+        
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                const newIndex = currentIndex < thumbnails.length - 1 ? currentIndex + 1 : 0;
+                updateCarousel(newIndex);
+            });
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' && prevBtn) prevBtn.click();
+            if (e.key === 'ArrowRight' && nextBtn) nextBtn.click();
+        });
+    }
+});
+</script>
+{% endblock %}

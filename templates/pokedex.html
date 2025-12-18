@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Pokédex | Pokémon Knower{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="pokedex-header">
+    <h1 class="pokedex-title"><i class="fas fa-book-open"></i> Pokédex</h1>
+    <p class="pokedex-count">Explore all 151 original Pokémon</p>
+</div>
+
+<!-- Type Filter -->
+<div class="type-filter" id="typeFilter">
+    <button class="type-filter-btn active" data-type="">All</button>
+    <button class="type-filter-btn" data-type="normal" style="--btn-color: var(--type-normal)">Normal</button>
+    <button class="type-filter-btn" data-type="fire" style="--btn-color: var(--type-fire)">Fire</button>
+    <button class="type-filter-btn" data-type="water" style="--btn-color: var(--type-water)">Water</button>
+    <button class="type-filter-btn" data-type="electric" style="--btn-color: var(--type-electric)">Electric</button>
+    <button class="type-filter-btn" data-type="grass" style="--btn-color: var(--type-grass)">Grass</button>
+    <button class="type-filter-btn" data-type="ice" style="--btn-color: var(--type-ice)">Ice</button>
+    <button class="type-filter-btn" data-type="fighting" style="--btn-color: var(--type-fighting)">Fighting</button>
+    <button class="type-filter-btn" data-type="poison" style="--btn-color: var(--type-poison)">Poison</button>
+    <button class="type-filter-btn" data-type="ground" style="--btn-color: var(--type-ground)">Ground</button>
+    <button class="type-filter-btn" data-type="flying" style="--btn-color: var(--type-flying)">Flying</button>
+    <button class="type-filter-btn" data-type="psychic" style="--btn-color: var(--type-psychic)">Psychic</button>
+    <button class="type-filter-btn" data-type="bug" style="--btn-color: var(--type-bug)">Bug</button>
+    <button class="type-filter-btn" data-type="rock" style="--btn-color: var(--type-rock)">Rock</button>
+    <button class="type-filter-btn" data-type="ghost" style="--btn-color: var(--type-ghost)">Ghost</button>
+    <button class="type-filter-btn" data-type="dragon" style="--btn-color: var(--type-dragon)">Dragon</button>
+    <button class="type-filter-btn" data-type="steel" style="--btn-color: var(--type-steel)">Steel</button>
+    <button class="type-filter-btn" data-type="fairy" style="--btn-color: var(--type-fairy)">Fairy</button>
+</div>
+
+<!-- Pokémon Grid -->
+<div class="pokemon-grid" id="pokemonGrid">
+    {% for pokemon in pokemon_list %}
+    <a href="{{ url_for('pokemon_detail', identifier=pokemon.name) }}" class="pokemon-card" data-type="{{ pokemon.main_type|lower }}">
+        <div class="card-header">
+            <span class="card-number">#{{ '%03d' % pokemon.number }}</span>
+            <div class="card-types">
+                <span class="type-badge {{ pokemon.main_type|lower }}">{{ pokemon.main_type }}</span>
+                {% if pokemon.secondary_type %}
+                <span class="type-badge {{ pokemon.secondary_type|lower }}">{{ pokemon.secondary_type }}</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card-image">
+            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ pokemon.number }}.png" 
+                 alt="{{ pokemon.name }}"
+                 loading="lazy"
+                 onerror="this.src='{{ url_for('static', filename='images/pokeball.png') }}'">
+        </div>
+        
+        <div class="card-body">
+            <h3 class="card-name">{{ pokemon.name }}</h3>
+            <p class="card-category">{{ pokemon.category }}</p>
+            
+            <div class="card-stats">
+                <div class="stat-item">
+                    <span class="stat-label">ATK</span>
+                    <span class="stat-value">{{ pokemon.attack }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">DEF</span>
+                    <span class="stat-value">{{ pokemon.defense }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">HP</span>
+                    <span class="stat-value">{{ pokemon.stamina }}</span>
+                </div>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if pagination.pages > 1 %}
+<div class="pagination">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('pokedex', page=pagination.prev_num) }}" class="page-btn">
+        <i class="fas fa-chevron-left"></i>
+    </a>
+    {% endif %}
+    
+    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if page_num %}
+            <a href="{{ url_for('pokedex', page=page_num) }}" 
+               class="page-btn {% if page_num == pagination.page %}active{% endif %}">
+                {{ page_num }}
+            </a>
+        {% else %}
+            <span class="page-ellipsis">...</span>
+        {% endif %}
+    {% endfor %}
+    
+    {% if pagination.has_next %}
+    <a href="{{ url_for('pokedex', page=pagination.next_num) }}" class="page-btn">
+        <i class="fas fa-chevron-right"></i>
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .type-filter-btn:hover,
+    .type-filter-btn.active {
+        background: var(--btn-color, var(--pokemon-red));
+        border-color: var(--btn-color, var(--pokemon-red));
+    }
+    
+    .page-ellipsis {
+        padding: 0 0.5rem;
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Type filter functionality
+    const filterBtns = document.querySelectorAll('.type-filter-btn');
+    const pokemonCards = document.querySelectorAll('.pokemon-card');
+    
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Update active state
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const filterType = btn.dataset.type.toLowerCase();
+            
+            // Filter cards
+            pokemonCards.forEach(card => {
+                const cardType = card.dataset.type.toLowerCase();
+                if (!filterType || cardType === filterType) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

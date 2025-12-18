@@ -3,133 +3,413 @@
 {% block title %}About | Pokémon Knower{% endblock %}
 
 {% block content %}
-<!-- Background -->
-<div class="bg-overlay"></div>
-<div class="about-bg-overlay"></div>
+<div class="about-page">
+    <!-- Hero -->
+    <div class="about-hero">
+        <h1><i class="fas fa-info-circle"></i> About Pokémon Knower</h1>
+        <p>AI-powered Pokémon identification and comprehensive Pokédex</p>
+    </div>
 
-<div class="about-container">
     <!-- Mission Section -->
-    <section class="about-section mission-section">
-        <h1 class="section-title">
-            <i class="fas fa-bullseye"></i> Our Mission
-        </h1>
-        <div class="card glass-card">
-            <div class="card-content">
-                <div class="mission-icon">
-                    <i class="fa-solid fa-rocket fa-3x icon-highlight"></i>
-                </div>
-                <p>
-                    To provide every Pokémon Trainer with the ultimate AI companion. 
-                    We leverage state-of-the-art <strong>Deep Learning</strong> to identify any Pokémon instantly, 
-                    helping you complete your Pokédex and become the very best, like no one ever was.
-                </p>
+    <section class="about-section">
+        <div class="about-card">
+            <div class="about-card-icon">
+                <i class="fas fa-rocket"></i>
+            </div>
+            <h2>Our Mission</h2>
+            <p>
+                To provide every Pokémon Trainer with the ultimate AI companion. 
+                We leverage state-of-the-art <strong>Deep Learning</strong> to identify any Pokémon instantly, 
+                helping you complete your Pokédex and become the very best, like no one ever was.
+            </p>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="about-section">
+        <h2 class="section-heading"><i class="fas fa-star"></i> Features</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fas fa-camera"></i>
+                <h3>AI Scanner</h3>
+                <p>Upload or capture images to instantly identify Pokémon using our deep learning model.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-book-open"></i>
+                <h3>Complete Pokédex</h3>
+                <p>Browse detailed information on all 151 original Pokémon with stats, types, and descriptions.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-images"></i>
+                <h3>Image Gallery</h3>
+                <p>View multiple images of each Pokémon with our built-in image carousel.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-video"></i>
+                <h3>Real-time Camera</h3>
+                <p>Use your device camera for real-time Pokémon identification.</p>
             </div>
         </div>
     </section>
 
-    <!-- Tech Stack Section -->
-    <section class="about-section tech-section">
-        <h1 class="section-title">
-            <i class="fas fa-medal"></i> Gym Badges (Tech Stack)
-        </h1>
-        <div class="badges-grid">
-            <div class="badge-card">
-                <div class="badge-icon">
-                    <i class="fa-brands fa-python fa-3x"></i>
-                </div>
-                <h3>Python</h3>
-                <p>The core language powering our backend and AI logic.</p>
+    <!-- Tech Stack -->
+    <section class="about-section">
+        <h2 class="section-heading"><i class="fas fa-code"></i> Tech Stack</h2>
+        <div class="tech-grid">
+            <div class="tech-item">
+                <i class="fab fa-python"></i>
+                <span>Python</span>
             </div>
-            <div class="badge-card">
-                <div class="badge-icon tensorflow">
-                    <i class="fa-solid fa-brain fa-3x"></i>
-                </div>
-                <h3>TensorFlow</h3>
-                <p>MobileNetV2 architecture for high-accuracy image classification.</p>
+            <div class="tech-item">
+                <i class="fas fa-brain"></i>
+                <span>TensorFlow</span>
             </div>
-            <div class="badge-card">
-                <div class="badge-icon flask">
-                    <i class="fa-solid fa-flask fa-3x"></i>
-                </div>
-                <h3>Flask</h3>
-                <p>Lightweight and fast web server for seamless interaction.</p>
+            <div class="tech-item">
+                <i class="fas fa-flask"></i>
+                <span>Flask</span>
             </div>
-            <div class="badge-card">
-                <div class="badge-icon html">
-                    <i class="fa-brands fa-html5 fa-3x"></i>
-                </div>
-                <h3>HTML5 & CSS3</h3>
-                <p>Modern, responsive, and animated frontend design.</p>
+            <div class="tech-item">
+                <i class="fas fa-database"></i>
+                <span>SQLite</span>
+            </div>
+            <div class="tech-item">
+                <i class="fab fa-html5"></i>
+                <span>HTML5</span>
+            </div>
+            <div class="tech-item">
+                <i class="fab fa-css3-alt"></i>
+                <span>CSS3</span>
+            </div>
+            <div class="tech-item">
+                <i class="fab fa-js"></i>
+                <span>JavaScript</span>
             </div>
         </div>
     </section>
 
-    <!-- How It Works Section -->
-    <section class="about-section how-section">
-        <h1 class="section-title">
-            <i class="fas fa-cogs"></i> How It Works
-        </h1>
+    <!-- How It Works -->
+    <section class="about-section">
+        <h2 class="section-heading"><i class="fas fa-cogs"></i> How It Works</h2>
         <div class="steps-container">
-            <div class="step-card">
+            <div class="step">
                 <div class="step-number">1</div>
-                <div class="step-icon"><i class="fas fa-upload"></i></div>
-                <h3>Upload Image</h3>
-                <p>Drag and drop or click to upload any Pokémon image</p>
+                <div class="step-content">
+                    <h3>Upload Image</h3>
+                    <p>Drag and drop or click to upload any Pokémon image</p>
+                </div>
             </div>
             <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
-            <div class="step-card">
+            <div class="step">
                 <div class="step-number">2</div>
-                <div class="step-icon"><i class="fas fa-brain"></i></div>
-                <h3>AI Analysis</h3>
-                <p>Our deep learning model processes and analyzes the image</p>
+                <div class="step-content">
+                    <h3>AI Analysis</h3>
+                    <p>Our MobileNetV2 model processes and classifies the image</p>
+                </div>
             </div>
             <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
-            <div class="step-card">
+            <div class="step">
                 <div class="step-number">3</div>
-                <div class="step-icon"><i class="fas fa-check-circle"></i></div>
-                <h3>Get Results</h3>
-                <p>Instantly receive the Pokémon identification with confidence score</p>
+                <div class="step-content">
+                    <h3>Get Results</h3>
+                    <p>Instantly see the identified Pokémon with confidence score and full details</p>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Developer Section -->
-    <section class="about-section dev-section">
-        <h1 class="section-title">
-            <i class="fas fa-user-astronaut"></i> The Developer
-        </h1>
-        <div class="dev-card glass-card">
+    <!-- Developer -->
+    <section class="about-section">
+        <h2 class="section-heading"><i class="fas fa-user"></i> The Developer</h2>
+        <div class="dev-card">
             <div class="dev-avatar">
-                <img src="{{ url_for('static', filename='images/pikachu.jpeg') }}" alt="Developer Avatar" onerror="this.src='{{ url_for('static', filename='images/pokeball.png') }}'">
+                <img src="{{ url_for('static', filename='images/pikachu.jpeg') }}" 
+                     alt="Developer" 
+                     onerror="this.src='{{ url_for('static', filename='images/pokeball.png') }}'">
             </div>
             <div class="dev-info">
-                <h2>Pokémon Master</h2>
-                <p class="role">Lead AI Researcher & Full Stack Developer</p>
-                <p>
-                    Passionate about merging the world of Pokémon with cutting-edge technology. 
-                    Building tools to help trainers worldwide.
+                <h3>Ahmed Laminou</h3>
+                <p class="dev-role">AI Researcher & Full Stack Developer</p>
+                <p class="dev-bio">
+                    Passionate about merging the world of Pokémon with cutting-edge AI technology. 
+                    Building tools to help trainers worldwide identify and learn about Pokémon.
                 </p>
-                <div class="social-links">
-                    <a href="#" title="GitHub"><i class="fa-brands fa-github"></i></a>
-                    <a href="#" title="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
-                    <a href="#" title="Twitter"><i class="fa-brands fa-twitter"></i></a>
+                <div class="dev-social">
+                    <a href="https://github.com/AhmedLaminou" target="_blank" title="GitHub">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="https://linkedin.com/in/ahmedlaminou" target="_blank" title="LinkedIn">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="https://twitter.com/ahmedlaminou" target="_blank" title="Twitter">
+                        <i class="fab fa-twitter"></i>
+                    </a>
                 </div>
             </div>
         </div>
     </section>
 </div>
-
 {% endblock %}
 
-{% block extra_js %}
-<script>
-    // Simple parallax effect
-    window.addEventListener('scroll', () => {
-        const scrolled = window.pageYOffset;
-        const overlay = document.querySelector('.about-bg-overlay');
-        if (overlay) {
-            overlay.style.transform = `translateY(${scrolled * 0.3}px)`;
+{% block extra_css %}
+<style>
+    .about-page {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .about-hero {
+        text-align: center;
+        padding: 3rem 0;
+    }
+    
+    .about-hero h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .about-hero p {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+    }
+    
+    .about-section {
+        margin-bottom: 3rem;
+    }
+    
+    .section-heading {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .section-heading i {
+        color: var(--pokemon-yellow);
+    }
+    
+    .about-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .about-card-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: var(--gradient-pokemon);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: #fff;
+    }
+    
+    .about-card h2 {
+        margin-bottom: 1rem;
+    }
+    
+    .about-card p {
+        color: var(--text-secondary);
+        line-height: 1.8;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .feature-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        text-align: center;
+        transition: var(--transition-normal);
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .feature-card i {
+        font-size: 2.5rem;
+        color: var(--pokemon-yellow);
+        margin-bottom: 1rem;
+    }
+    
+    .feature-card h3 {
+        margin-bottom: 0.5rem;
+    }
+    
+    .feature-card p {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+    
+    .tech-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+    }
+    
+    .tech-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        background: var(--bg-card);
+        border-radius: var(--radius-xl);
+        font-weight: 500;
+    }
+    
+    .tech-item i {
+        font-size: 1.25rem;
+        color: var(--pokemon-yellow);
+    }
+    
+    .steps-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .step {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: var(--bg-card);
+        padding: 1.5rem;
+        border-radius: var(--radius-md);
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .step-number {
+        width: 50px;
+        height: 50px;
+        background: var(--gradient-pokemon);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #fff;
+        flex-shrink: 0;
+    }
+    
+    .step-content h3 {
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .step-content p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+    
+    .step-arrow {
+        color: var(--text-muted);
+        font-size: 1.5rem;
+    }
+    
+    .dev-card {
+        display: flex;
+        gap: 2rem;
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        align-items: center;
+    }
+    
+    .dev-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        overflow: hidden;
+        flex-shrink: 0;
+        border: 4px solid var(--pokemon-yellow);
+    }
+    
+    .dev-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .dev-info h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .dev-role {
+        color: var(--pokemon-yellow);
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+    }
+    
+    .dev-bio {
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+        line-height: 1.6;
+    }
+    
+    .dev-social {
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    .dev-social a {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-darker);
+        border-radius: 50%;
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        transition: var(--transition-normal);
+    }
+    
+    .dev-social a:hover {
+        background: var(--gradient-pokemon);
+        color: #fff;
+        transform: translateY(-3px);
+    }
+    
+    @media (max-width: 768px) {
+        .step-arrow {
+            display: none;
         }
-    });
-</script>
+        
+        .steps-container {
+            flex-direction: column;
+        }
+        
+        .step {
+            width: 100%;
+        }
+        
+        .dev-card {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .dev-social {
+            justify-content: center;
+        }
+    }
+</style>
 {% endblock %}

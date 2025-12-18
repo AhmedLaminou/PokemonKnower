@@ -3,33 +3,43 @@
 {% block title %}Pokémon Knower | AI-Powered Pokédex{% endblock %}
 
 {% block content %}
-<!-- Background Elements -->
-<div class="bg-overlay"></div>
-<div class="particles" id="particles"></div>
-
 <!-- Hero Section -->
-<section id="hero" class="hero-section">
-    <div class="hero-content">
-        <h1>Gotta Know <u>'Em All</u>!</h1>
-        <p class="hero-subtitle">The Ultimate AI-Powered Pokémon Identifier</p>
+<section class="hero" id="home">
+    <div class="hero-container">
+        <h1 class="hero-title">Gotta Know 'Em All!</h1>
+        <p class="hero-subtitle">The ultimate AI-powered Pokémon identifier and comprehensive Pokédex. Upload any image to identify Pokémon instantly!</p>
         
-        <!-- Search Bar -->
-        <div class="search-wrapper">
-            <div class="search-container glass-effect">
-                <input type="text" id="search-input" placeholder="Search for a Pokémon..." autocomplete="off">
-                <button id="search-btn" title="Search">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </button>
-                <button id="advanced-search-toggle" class="btn-icon" title="Advanced Filters">
-                    <i class="fas fa-sliders-h"></i>
-                </button>
-            </div>
-            
-            <!-- Advanced Search Panel -->
-            <div id="advanced-search-panel" class="advanced-search-panel glass-effect">
+        <!-- Quick Actions -->
+        <div class="hero-actions">
+            <a href="#scanner" class="btn btn-primary">
+                <i class="fas fa-camera"></i> Start Scanning
+            </a>
+            <a href="{{ url_for('pokedex') }}" class="btn btn-secondary">
+                <i class="fas fa-book-open"></i> Browse Pokédex
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Search Section -->
+<section class="search-section" id="search">
+    <div class="search-container">
+        <div class="search-box">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search Pokémon by name...">
+            <button class="filter-btn" id="filterToggle" title="Advanced Filters">
+                <i class="fas fa-sliders-h"></i>
+            </button>
+            <button class="search-btn" id="searchBtn">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+        
+        <!-- Advanced Filters -->
+        <div class="filters-panel" id="filtersPanel">
+            <div class="filters-grid">
                 <div class="filter-group">
-                    <label for="type-filter">Pokémon Type</label>
-                    <select id="type-filter" class="filter-select">
+                    <label for="typeFilter">Type</label>
+                    <select id="typeFilter">
                         <option value="">All Types</option>
                         <option value="normal">Normal</option>
                         <option value="fire">Fire</option>
@@ -51,126 +61,200 @@
                         <option value="fairy">Fairy</option>
                     </select>
                 </div>
-                
                 <div class="filter-group">
-                    <label>Weight (kg)</label>
-                    <div class="range-inputs">
-                        <input type="number" id="min-weight" placeholder="Min" min="0" step="0.1">
-                        <span>to</span>
-                        <input type="number" id="max-weight" placeholder="Max" min="0" step="0.1">
-                    </div>
+                    <label for="minAttack">Min Attack</label>
+                    <input type="number" id="minAttack" min="0" placeholder="0">
                 </div>
-                
                 <div class="filter-group">
-                    <label>Height (m)</label>
-                    <div class="range-inputs">
-                        <input type="number" id="min-height" placeholder="Min" min="0" step="0.1">
-                        <span>to</span>
-                        <input type="number" id="max-height" placeholder="Max" min="0" step="0.1">
+                    <label for="minDefense">Min Defense</label>
+                    <input type="number" id="minDefense" min="0" placeholder="0">
+                </div>
+                <div class="filter-group">
+                    <label for="minStamina">Min HP</label>
+                    <input type="number" id="minStamina" min="0" placeholder="0">
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-secondary" id="resetFilters">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+                <button class="btn btn-primary" id="applyFilters">
+                    <i class="fas fa-check"></i> Apply
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Search Results -->
+    <div id="searchResults" class="pokemon-grid"></div>
+    <div id="searchPagination" class="pagination"></div>
+</section>
+
+<!-- AI Scanner Section -->
+<section class="scanner-section" id="scanner">
+    <h2 class="scanner-title"><i class="fas fa-magic"></i> AI Pokémon Scanner</h2>
+    <p class="scanner-subtitle">Upload or drop an image to identify any Pokémon using our deep learning model</p>
+    
+    <div class="scanner-container">
+        <!-- Upload Zone -->
+        <div class="upload-zone" id="uploadZone">
+            <div class="upload-placeholder">
+                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                <h3>Drop Image Here</h3>
+                <p>or click to browse files</p>
+                <p class="upload-hint">Supports: PNG, JPG, JPEG, GIF, WEBP</p>
+            </div>
+            <img class="upload-preview" id="uploadPreview" src="" alt="Preview">
+            <input type="file" id="fileInput" accept="image/*" hidden>
+        </div>
+        
+        <!-- Results Panel -->
+        <div class="results-panel" id="resultsPanel">
+            <div class="results-placeholder">
+                <i class="fas fa-search"></i>
+                <h3>Ready to Scan</h3>
+                <p>Upload a Pokémon image to identify it</p>
+            </div>
+            
+            <div class="results-content">
+                <div class="result-card">
+                    <div class="result-image">
+                        <img id="resultImage" src="" alt="Identified Pokémon">
                     </div>
+                    <h2 class="result-name" id="resultName">???</h2>
+                    <div class="result-types" id="resultTypes"></div>
+                    <div class="result-confidence" id="resultConfidence">0%</div>
+                    
+                    <a href="#" class="btn btn-primary" id="viewDetailsBtn" style="display: none;">
+                        <i class="fas fa-info-circle"></i> View Full Details
+                    </a>
                 </div>
                 
-                <div class="stats-filters">
-                    <div class="stat-filter">
-                        <label for="min-attack">ATK</label>
-                        <input type="number" id="min-attack" min="0" value="0">
-                    </div>
-                    <div class="stat-filter">
-                        <label for="min-defense">DEF</label>
-                        <input type="number" id="min-defense" min="0" value="0">
-                    </div>
-                    <div class="stat-filter">
-                        <label for="min-stamina">HP</label>
-                        <input type="number" id="min-stamina" min="0" value="0">
-                    </div>
-                </div>
-                
-                <div class="filter-actions">
-                    <button id="reset-filters" class="btn-secondary">
-                        <i class="fas fa-undo"></i> Reset
-                    </button>
-                    <button id="apply-filters" class="btn-primary">
-                        <i class="fas fa-search"></i> Apply Filters
-                    </button>
+                <div class="top-matches">
+                    <h4><i class="fas fa-list-ol"></i> Top Matches</h4>
+                    <div id="topMatches"></div>
                 </div>
             </div>
         </div>
-        
-        <!-- Search Results Container -->
-        <div id="search-results" class="search-results"></div>
-        <div id="pagination" class="pagination"></div>
-        
-        <!-- CTA Button -->
-        <div class="initial-state">
-            <button class="cta-btn" onclick="document.getElementById('pokedex').scrollIntoView({behavior: 'smooth'})">
-                <i class="fas fa-camera"></i> START SCANNING
+    </div>
+    
+    <!-- Scanner Actions -->
+    <div class="scanner-actions">
+        <button class="scan-btn primary" id="scanBtn" disabled>
+            <i class="fas fa-search"></i> Identify Pokémon
+        </button>
+        <button class="scan-btn secondary" id="retryBtn" style="display: none;">
+            <i class="fas fa-redo"></i> Try Another Image
+        </button>
+        <button class="scan-btn secondary" id="cameraBtn">
+            <i class="fas fa-camera"></i> Use Camera
+        </button>
+    </div>
+</section>
+
+<!-- Camera Modal for Real-time Identification -->
+<div class="modal" id="cameraModal" style="display: none;">
+    <div class="modal-content camera-modal">
+        <div class="modal-header">
+            <h3><i class="fas fa-video"></i> Real-time Scanner</h3>
+            <button class="close-modal" id="closeCameraModal">&times;</button>
+        </div>
+        <div class="camera-container">
+            <video id="cameraFeed" autoplay playsinline></video>
+            <canvas id="cameraCanvas" style="display: none;"></canvas>
+        </div>
+        <div class="camera-actions">
+            <button class="btn btn-primary" id="captureBtn">
+                <i class="fas fa-camera"></i> Capture & Identify
             </button>
         </div>
     </div>
-</section>
-
-<!-- Pokédex Scanner Section -->
-<section id="pokedex" class="pokedex-section">
-    <div class="pokedex-container">
-        <!-- Left Panel - Camera/Upload -->
-        <div class="pokedex-left">
-            <div class="screen-container">
-                <div class="screen" id="drop-zone">
-                    <div class="upload-placeholder">
-                        <i class="fa-solid fa-camera"></i>
-                        <h3>Drop Image Here</h3>
-                        <p>or click to browse files</p>
-                    </div>
-                    <img id="image-preview" src="" alt="Pokémon Preview" style="display: none;">
-                    <input type="file" id="file-input" accept="image/*" hidden>
-                </div>
-                
-                <!-- Scan Button inside Pokédex -->
-                <div style="text-align: center; margin-top: 1.5rem;">
-                    <button id="predict-btn" disabled>
-                        <i class="fas fa-search"></i> IDENTIFY POKÉMON
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Right Panel - Results -->
-        <div class="pokedex-right">
-            <div class="info-screen">
-                <div class="scan-line"></div>
-                
-                <!-- Initial State -->
-                <div class="initial-state">
-                    <i class="fas fa-pokemon" style="font-size: 3rem; color: var(--pokemon-yellow); margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <h3>Ready to Scan</h3>
-                    <p>Upload a Pokémon image to identify it</p>
-                </div>
-                
-                <!-- Loader -->
-                <div id="loader"></div>
-                
-                <!-- Results -->
-                <div class="result-state">
-                    <h2 id="pokemon-name">???</h2>
-                    <div id="confidence-badge">Confidence: 0%</div>
-                    <div class="stats-display">
-                        <h4><i class="fas fa-chart-bar"></i> Top Matches</h4>
-                        <ul id="stats-list">
-                            <!-- Populated by JavaScript -->
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Pokemon Modal (for search results) -->
-<div id="pokemon-modal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <span class="close-modal">&times;</span>
-        <div id="modal-body"></div>
-    </div>
 </div>
 
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .upload-hint {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+    }
+    
+    .camera-modal {
+        max-width: 600px;
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 1rem;
+    }
+    
+    .modal-header h3 {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .camera-container {
+        position: relative;
+        background: #000;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        aspect-ratio: 4/3;
+    }
+    
+    .camera-container video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .camera-actions {
+        margin-top: 1rem;
+        text-align: center;
+    }
+    
+    .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        padding: 1rem;
+    }
+    
+    .modal-content {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .close-modal {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+    }
+    
+    .close-modal:hover {
+        color: var(--pokemon-red);
+    }
+</style>
 {% endblock %}
