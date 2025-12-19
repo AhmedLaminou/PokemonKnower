@@ -2,11 +2,13 @@
 
 A Flask web application that identifies Pokémon from images using deep learning and also works as a modern Pokédex.
 
-This version uses a **SQLite database** (via **Flask-SQLAlchemy**) instead of reading from CSV at runtime.
+This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Flask-SQLAlchemy**, with **Stytch** for authentication and **Stripe** for donations.
 
 [![Flask](https://img.shields.io/badge/Flask-2.3-green?logo=flask)](https://flask.palletsprojects.com)
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-2.12-orange?logo=tensorflow)](https://tensorflow.org)
-[![SQLite](https://img.shields.io/badge/SQLite-3-blue?logo=sqlite)](https://www.sqlite.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?logo=postgresql)](https://www.postgresql.org)
+[![Stytch](https://img.shields.io/badge/Stytch-Auth-purple)](https://stytch.com)
+[![Stripe](https://img.shields.io/badge/Stripe-Payments-blueviolet?logo=stripe)](https://stripe.com)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](https://www.docker.com)
 [![License](https://img.shields.io/badge/License-MIT-green)]()
 
@@ -53,6 +55,26 @@ This version uses a **SQLite database** (via **Flask-SQLAlchemy**) instead of re
 - Interactive stat visualizations
 - Real-time search results
 
+### 🔐 **User Authentication**
+- Magic link email login (passwordless)
+- Google OAuth login
+- User profiles with avatars
+- Admin role system
+- Secure session management via Stytch
+
+### 💰 **Donations & Support**
+- Stripe Checkout integration
+- Multiple donation amounts
+- Custom donation messages
+- Donation history tracking
+- Webhook handling for payment status
+
+### 👑 **Admin Dashboard**
+- User management (view, toggle admin)
+- Donation tracking and analytics
+- Revenue statistics
+- Quick action buttons
+
 ### 🚀 **Production Ready**
 - Docker containerization with multi-stage builds
 - Docker Compose orchestration
@@ -61,6 +83,7 @@ This version uses a **SQLite database** (via **Flask-SQLAlchemy**) instead of re
 - Health checks and auto-restart
 - Volume persistence for uploads
 - CORS enabled for cross-origin requests
+- **Render deployment ready** with PostgreSQL support
 
 ---
 
@@ -75,18 +98,24 @@ This version uses a **SQLite database** (via **Flask-SQLAlchemy**) instead of re
 - **Flask 2.3** - Web framework
 - **Flask-CORS** - Cross-Origin Resource Sharing
 - **Flask-SQLAlchemy** - ORM
-- **SQLite** - Local database (`pokemon.db`)
+- **SQLite** - Local database (dev)
+- **PostgreSQL** - Production database (via `DATABASE_URL`)
 - **TensorFlow 2.12** - Deep learning framework
 - **Keras** - Neural network API
 - **OpenCV** - Image processing
 - **NumPy** - Numerical computing
 - **Python 3.11** - Runtime
 
+### **Authentication & Payments**
+- **Stytch** - Magic link + Google OAuth authentication
+- **Stripe** - Donation/payment processing
+
 ### **DevOps & Deployment**
 - **Docker** - Containerization
 - **Docker Compose** - Multi-container orchestration
 - **Nginx** - Reverse proxy & static serving
 - **Gunicorn** - WSGI application server
+- **Render** - Recommended hosting platform
 
 ---
 
@@ -191,14 +220,13 @@ python app.py
 
 ### **Database**
 
-- **Database engine**: SQLite
-- **Database file name**: `pokemon.db`
-- **Location**: project root (same folder as `app.py`)
-- **How it’s created**: run `python migrate_db.py`
+- **Local dev**: SQLite (`sqlite:///pokemon.db`)
+- **Production (Render)**: PostgreSQL (Render provides `DATABASE_URL`)
+- **How it’s created / updated**: run `python migrate_db.py`
 
 ### **Environment Variables**
 
-Create `.env` file:
+Create `.env` file (recommended). You can start from `.env.example`:
 ```bash
 FLASK_ENV=development
 FLASK_APP=app.py
@@ -206,6 +234,10 @@ FLASK_DEBUG=1
 PORT=5000
 
 # Optional overrides
+# You can store dataset images in either:
+# - PokemonData/<PokemonName>/*
+# - static/images/PokemonData/<PokemonName>/*
+# Set this if you want to force a specific directory:
 POKEMON_DATA_DIR=PokemonData
 # Limit how many Pokédex numbers to import (example: 151)
 # MAX_POKEDEX_NUMBER=151
@@ -219,13 +251,52 @@ Use this pattern:
 - `PokemonData/Abra/*.jpg`
 - `PokemonData/Bulbasaur/*.png`
 
+If you already have them under `static/images/PokemonData/<PokemonName>/*` (also supported), you can either:
+
+- Keep that structure (the app will auto-detect it), or
+- Set `POKEMON_DATA_DIR=static/images/PokemonData`
+
 Then re-run:
 
 ```bash
 python migrate_db.py
 ```
 
-The app serves these images at `/pokedata/...` automatically.
+### **Database mode (SQLite vs PostgreSQL)**
+
+- **Local development:** if `DATABASE_URL` is NOT set, the app uses **SQLite** (`sqlite:///pokemon.db`).
+- **Production (Render):** Render provides `DATABASE_URL`, so the app uses **PostgreSQL** automatically.
+
+---
+
+## 💳 Stripe Webhooks (CLI via Docker)
+
+If you prefer not to install the Stripe CLI locally, you can run it via Docker.
+
+1) Make sure your Flask app is running locally at `http://127.0.0.1:5000`.
+
+2) Start Stripe webhook forwarding (Windows + Docker Desktop):
+
+```bash
+docker run --rm -it stripe/stripe-cli:latest listen --api-key sk_test_xxx --forward-to http://host.docker.internal:5000/donate/webhook
+```
+
+If you want to reference an environment variable instead:
+
+- PowerShell: `--api-key $env:STRIPE_SECRET_KEY`
+- CMD: `--api-key %STRIPE_SECRET_KEY%`
+- Bash: `--api-key $STRIPE_SECRET_KEY`
+
+3) The CLI will print a webhook signing secret like `whsec_...`.
+Set it in your `.env`:
+
+```bash
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+For production, create a webhook endpoint in Stripe Dashboard pointing to:
+
+- `https://YOUR-APP.onrender.com/donate/webhook`
 
 ---
 
@@ -452,7 +523,45 @@ User gets prediction with beautiful display
 
 ## 🚀 Deployment Options
 
-### **1. Docker (Recommended)**
+### **1. Render (Recommended for Production)**
+
+Deploy to [Render](https://render.com) with PostgreSQL:
+
+**Step 1: Create PostgreSQL Database**
+- Go to Render Dashboard → New → PostgreSQL
+- Note the `Internal Database URL`
+
+**Step 2: Create Web Service**
+- Go to Render Dashboard → New → Web Service
+- Connect your GitHub repo
+- Settings:
+  - **Build Command:** `pip install -r requirements.txt && python migrate_db.py`
+  - **Start Command:** `gunicorn app:app --bind 0.0.0.0:$PORT`
+  - **Environment:** Python 3
+
+**Step 3: Set Environment Variables**
+```
+DATABASE_URL=<from your Render PostgreSQL>
+SECRET_KEY=<generate a secure random string>
+BASE_URL=https://your-app.onrender.com
+
+# Stytch (get from https://stytch.com)
+STYTCH_PROJECT_ID=project-xxx
+STYTCH_SECRET=secret-xxx
+STYTCH_ENV=test
+
+# Stripe (get from https://stripe.com)
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_PUBLISHABLE_KEY=pk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+```
+
+**Step 4: Configure Stytch Redirect URLs**
+In Stytch Dashboard, add these URLs:
+- `https://your-app.onrender.com/auth/authenticate`
+- `https://your-app.onrender.com/auth/oauth/callback`
+
+### **2. Docker**
 ```bash
 docker-compose up -d
 ```
@@ -461,14 +570,15 @@ docker-compose up -d
 - ✅ Auto-restart on crash
 - ✅ Health checks included
 
-### **2. Traditional Server**
+### **3. Traditional Server**
 ```bash
 pip install -r requirements.txt
+python migrate_db.py
 python app.py
 ```
 
-### **3. Cloud Platforms**
-- Heroku, AWS, Google Cloud, Azure, DigitalOcean
+### **4. Other Cloud Platforms**
+- Heroku, AWS, Google Cloud, Azure, DigitalOcean, Railway
 
 ---
 

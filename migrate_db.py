@@ -1,12 +1,15 @@
 """
-Migration script to import Pokémon data from CSV into SQLite database
-Also scans for local images in static/images/{pokemon_name}/ folders
+Migration script to import Pokémon data from CSV into database.
+Supports both SQLite (local dev) and PostgreSQL (production via DATABASE_URL).
+Idempotent: safe to run multiple times (uses upsert logic).
+Also scans for local images in static/images/ and PokemonData/ folders.
 """
 
 import os
 import csv
 import sys
 import re
+from dotenv import load_dotenv
 
 # Add the project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -17,15 +20,36 @@ from models import db, Pokemon, PokemonImage, PokemonType
 # Configuration
 CSV_PATH = 'pokemon.csv'
 IMAGES_DIR = 'static/images'
-POKEMON_DATA_DIR = os.environ.get('POKEMON_DATA_DIR', 'PokemonData')
-DATABASE_PATH = 'pokemon.db'
+load_dotenv()
+load_dotenv('.env.example', override=False)
+
+def resolve_pokemon_data_dir() -> str:
+    configured = (os.environ.get('POKEMON_DATA_DIR') or '').strip()
+    if configured and os.path.isdir(configured):
+        return configured
+    if os.path.isdir('PokemonData'):
+        return 'PokemonData'
+    if os.path.isdir(os.path.join('static', 'images', 'PokemonData')):
+        return os.path.join('static', 'images', 'PokemonData')
+    return 'PokemonData'
+
+POKEMON_DATA_DIR = resolve_pokemon_data_dir()
 MAX_POKEDEX_NUMBER_RAW = (os.environ.get('MAX_POKEDEX_NUMBER', '') or '').strip()
 MAX_POKEDEX_NUMBER = int(MAX_POKEDEX_NUMBER_RAW) if MAX_POKEDEX_NUMBER_RAW else None
+
+def get_database_uri():
+    """Get database URI from environment or default to SQLite"""
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        if database_url.startswith('postgres://'):
+            database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        return database_url
+    return 'sqlite:///pokemon.db'
 
 def create_app():
     """Create Flask app for database context"""
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DATABASE_PATH}'
+    app.config['SQLALCHEMY_DATABASE_URI'] = get_database_uri()
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
     return app
@@ -38,17 +62,12 @@ def parse_int(value, default=0):
         return default
 
 def migrate_csv_data(app):
-    """Import Pokémon data from CSV to database"""
+    """Import Pokémon data from CSV to database (idempotent upsert)"""
     print("Starting CSV migration...")
     
     with app.app_context():
         # Create all tables
         db.create_all()
-        
-        # Clear existing data
-        PokemonImage.query.delete()
-        Pokemon.query.delete()
-        db.session.commit()
         
         # Read CSV and import
         if not os.path.exists(CSV_PATH):
@@ -71,39 +90,70 @@ def migrate_csv_data(app):
                 if not name:
                     continue
 
-                pokemon = Pokemon(
-                    number=number,
-                    name=name,
-                    main_type=row.get('main_type', 'Normal'),
-                    secondary_type=row.get('secondary_type', '') or None,
-                    region=row.get('region', 'Kanto'),
-                    category=row.get('category', ''),
-                    height=row.get('height', ''),
-                    weight=row.get('weight', ''),
-                    pokemon_family=row.get('pokemon_family', ''),
-                    attack=parse_int(row.get('attack', 0)),
-                    defense=parse_int(row.get('defense', 0)),
-                    stamina=parse_int(row.get('stamina', 0)),
-                    cp_range=row.get('cp_range', ''),
-                    hp_range=row.get('hp_range', ''),
-                    capture_rate=row.get('capture_rate', ''),
-                    flee_rate=row.get('flee_rate', ''),
-                    male_perc=row.get('male_perc', ''),
-                    female_perc=row.get('female_perc', ''),
-                    resistance=row.get('resistance', ''),
-                    weakness=row.get('weakness', ''),
-                    wild_avail=row.get('wild_avail', ''),
-                    egg_avail=row.get('egg_avail', ''),
-                    raid_avail=row.get('raid_avail', ''),
-                    research_avail=row.get('research_avail', ''),
-                    shiny=row.get('shiny', ''),
-                    shadow=row.get('shadow', ''),
-                    pokedex_desc=row.get('pkedex_desc', ''),
-                    possible_attacks=row.get('poss_attacks', ''),
-                    pic_url=row.get('pic_url', '')
-                )
-                
-                db.session.add(pokemon)
+                # Upsert: update if exists, insert if not
+                existing = Pokemon.query.filter_by(number=number).first()
+                if existing:
+                    existing.name = name
+                    existing.main_type = row.get('main_type', 'Normal')
+                    existing.secondary_type = row.get('secondary_type', '') or None
+                    existing.region = row.get('region', 'Kanto')
+                    existing.category = row.get('category', '')
+                    existing.height = row.get('height', '')
+                    existing.weight = row.get('weight', '')
+                    existing.pokemon_family = row.get('pokemon_family', '')
+                    existing.attack = parse_int(row.get('attack', 0))
+                    existing.defense = parse_int(row.get('defense', 0))
+                    existing.stamina = parse_int(row.get('stamina', 0))
+                    existing.cp_range = row.get('cp_range', '')
+                    existing.hp_range = row.get('hp_range', '')
+                    existing.capture_rate = row.get('capture_rate', '')
+                    existing.flee_rate = row.get('flee_rate', '')
+                    existing.male_perc = row.get('male_perc', '')
+                    existing.female_perc = row.get('female_perc', '')
+                    existing.resistance = row.get('resistance', '')
+                    existing.weakness = row.get('weakness', '')
+                    existing.wild_avail = row.get('wild_avail', '')
+                    existing.egg_avail = row.get('egg_avail', '')
+                    existing.raid_avail = row.get('raid_avail', '')
+                    existing.research_avail = row.get('research_avail', '')
+                    existing.shiny = row.get('shiny', '')
+                    existing.shadow = row.get('shadow', '')
+                    existing.pokedex_desc = row.get('pkedex_desc', '')
+                    existing.possible_attacks = row.get('poss_attacks', '')
+                    existing.pic_url = row.get('pic_url', '')
+                else:
+                    pokemon = Pokemon(
+                        number=number,
+                        name=name,
+                        main_type=row.get('main_type', 'Normal'),
+                        secondary_type=row.get('secondary_type', '') or None,
+                        region=row.get('region', 'Kanto'),
+                        category=row.get('category', ''),
+                        height=row.get('height', ''),
+                        weight=row.get('weight', ''),
+                        pokemon_family=row.get('pokemon_family', ''),
+                        attack=parse_int(row.get('attack', 0)),
+                        defense=parse_int(row.get('defense', 0)),
+                        stamina=parse_int(row.get('stamina', 0)),
+                        cp_range=row.get('cp_range', ''),
+                        hp_range=row.get('hp_range', ''),
+                        capture_rate=row.get('capture_rate', ''),
+                        flee_rate=row.get('flee_rate', ''),
+                        male_perc=row.get('male_perc', ''),
+                        female_perc=row.get('female_perc', ''),
+                        resistance=row.get('resistance', ''),
+                        weakness=row.get('weakness', ''),
+                        wild_avail=row.get('wild_avail', ''),
+                        egg_avail=row.get('egg_avail', ''),
+                        raid_avail=row.get('raid_avail', ''),
+                        research_avail=row.get('research_avail', ''),
+                        shiny=row.get('shiny', ''),
+                        shadow=row.get('shadow', ''),
+                        pokedex_desc=row.get('pkedex_desc', ''),
+                        possible_attacks=row.get('poss_attacks', ''),
+                        pic_url=row.get('pic_url', '')
+                    )
+                    db.session.add(pokemon)
                 count += 1
             
             db.session.commit()
@@ -119,12 +169,16 @@ def normalize_folder_name(name: str) -> str:
     return name
 
 def scan_local_images(app):
-    """Scan static/images/ for Pokémon image folders and add to database"""
+    """Scan static/images/ for Pokémon image folders and add to database (idempotent)"""
     print("Scanning for local Pokémon images...")
     
     with app.app_context():
         if not os.path.exists(IMAGES_DIR):
             os.makedirs(IMAGES_DIR, exist_ok=True)
+        
+        # Clear existing images (will be re-scanned)
+        PokemonImage.query.delete()
+        db.session.commit()
         
         # Get all Pokémon from database
         pokemon_list = Pokemon.query.all()
@@ -133,6 +187,23 @@ def scan_local_images(app):
         pokemon_by_number = {p.number: p for p in pokemon_list}
         
         image_count = 0
+
+        # Track per-Pokémon ordering to avoid duplicate primaries when combining sources
+        next_order_by_pokemon_id = {}
+
+        def add_image(pokemon, filename: str, path: str):
+            nonlocal image_count
+            current_order = next_order_by_pokemon_id.get(pokemon.id, 0)
+            pokemon_image = PokemonImage(
+                pokemon_id=pokemon.id,
+                filename=filename,
+                path=path,
+                is_primary=(current_order == 0),
+                order=current_order,
+            )
+            db.session.add(pokemon_image)
+            next_order_by_pokemon_id[pokemon.id] = current_order + 1
+            image_count += 1
 
         # 1) Support flat numeric files directly in static/images (e.g. 1.jpeg -> Bulbasaur)
         valid_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
@@ -157,15 +228,7 @@ def scan_local_images(app):
                 continue
 
             img_path = f"images/{filename}"
-            pokemon_image = PokemonImage(
-                pokemon_id=pokemon.id,
-                filename=filename,
-                path=img_path,
-                is_primary=True,
-                order=0
-            )
-            db.session.add(pokemon_image)
-            image_count += 1
+            add_image(pokemon, filename=filename, path=img_path)
         
         def scan_folder_tree(root_dir: str, path_prefix: str):
             nonlocal image_count
@@ -204,16 +267,8 @@ def scan_local_images(app):
                 
                 for idx, filename in enumerate(images[:12]):  # Limit to 12 images per Pokémon
                     img_path = f"{path_prefix}/{folder_name}/{filename}"
-                    
-                    pokemon_image = PokemonImage(
-                        pokemon_id=pokemon.id,
-                        filename=filename,
-                        path=img_path,
-                        is_primary=(idx == 0),
-                        order=idx
-                    )
-                    db.session.add(pokemon_image)
-                    image_count += 1
+
+                    add_image(pokemon, filename=filename, path=img_path)
 
         scan_folder_tree(IMAGES_DIR, 'images')
         scan_folder_tree(POKEMON_DATA_DIR, 'pokedata')
@@ -222,24 +277,29 @@ def scan_local_images(app):
         print(f"Added {image_count} local images to database")
 
 def seed_type_data(app):
-    """Seed the Pokémon types table"""
+    """Seed the Pokémon types table (idempotent upsert)"""
     print("Seeding type data...")
     
     with app.app_context():
-        PokemonType.query.delete()
-        
         type_data = PokemonType.get_type_data()
+        count = 0
         
         for name, data in type_data.items():
-            ptype = PokemonType(
-                name=name.capitalize(),
-                color=data['color'],
-                icon=data['icon']
-            )
-            db.session.add(ptype)
+            existing = PokemonType.query.filter_by(name=name.capitalize()).first()
+            if existing:
+                existing.color = data['color']
+                existing.icon = data['icon']
+            else:
+                ptype = PokemonType(
+                    name=name.capitalize(),
+                    color=data['color'],
+                    icon=data['icon']
+                )
+                db.session.add(ptype)
+            count += 1
         
         db.session.commit()
-        print(f"Added {len(type_data)} Pokémon types")
+        print(f"Synced {count} Pokémon types")
 
 def main():
     """Run the full migration"""
@@ -262,7 +322,7 @@ def main():
     
     print("=" * 50)
     print("Migration completed successfully!")
-    print(f"Database created at: {DATABASE_PATH}")
+    print(f"Database URI: {get_database_uri()[:50]}...")
     print("=" * 50)
     
     return True

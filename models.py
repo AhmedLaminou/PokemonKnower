@@ -1,12 +1,72 @@
 """
 Database models for Pokémon Knower
-Using SQLAlchemy with SQLite
+Using SQLAlchemy with SQLite (local) or PostgreSQL (production)
 """
 
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
 db = SQLAlchemy()
+
+
+class User(db.Model):
+    """User model for authentication (linked to Stytch)"""
+    __tablename__ = 'users'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    stytch_user_id = db.Column(db.String(255), unique=True, nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    name = db.Column(db.String(255), nullable=True)
+    avatar_url = db.Column(db.String(500), nullable=True)
+    role = db.Column(db.String(50), default='user')  # 'user', 'admin'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_login = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationship to donations
+    donations = db.relationship('Donation', backref='user', lazy=True)
+    
+    @property
+    def is_admin(self):
+        return self.role == 'admin'
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'email': self.email,
+            'name': self.name,
+            'avatar_url': self.avatar_url,
+            'role': self.role,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class Donation(db.Model):
+    """Track donations made via Stripe"""
+    __tablename__ = 'donations'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    stripe_session_id = db.Column(db.String(255), unique=True, nullable=False)
+    stripe_payment_intent_id = db.Column(db.String(255), nullable=True)
+    amount = db.Column(db.Integer, nullable=False)  # Amount in cents
+    currency = db.Column(db.String(10), default='usd')
+    status = db.Column(db.String(50), default='pending')  # pending, succeeded, failed
+    donor_email = db.Column(db.String(255), nullable=True)
+    donor_name = db.Column(db.String(255), nullable=True)
+    message = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'amount': self.amount / 100,  # Convert cents to dollars
+            'currency': self.currency,
+            'status': self.status,
+            'donor_name': self.donor_name,
+            'message': self.message,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
 
 class Pokemon(db.Model):
     """Main Pokémon table with all stats and info"""

@@ -7,28 +7,64 @@ import os
 import json
 import numpy as np
 import cv2
-from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory
+from dotenv import load_dotenv
+from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory, session
 from flask_cors import CORS
-from models import db, Pokemon, PokemonImage, PokemonType
+from models import db, Pokemon, PokemonImage, PokemonType, User, Donation
+
+load_dotenv()
+load_dotenv('.env.example', override=False)
 
 app = Flask(__name__)
 CORS(app)
 
 # Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pokemon.db'
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    if DATABASE_URL.startswith('postgres://'):
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pokemon.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'pokemon-knower-secret-key'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'pokemon-knower-dev-secret-key')
 
 MODEL_PATH = 'pokemon_classifier_model_V3.h5'
 CLASS_INDICES_PATH = 'class_indices.json'
 UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-POKEMON_DATA_DIR = os.environ.get('POKEMON_DATA_DIR', 'PokemonData')
+
+def resolve_pokemon_data_dir() -> str:
+    configured = (os.environ.get('POKEMON_DATA_DIR') or '').strip()
+    if configured and os.path.isdir(configured):
+        return configured
+    if os.path.isdir('PokemonData'):
+        return 'PokemonData'
+    if os.path.isdir(os.path.join('static', 'images', 'PokemonData')):
+        return os.path.join('static', 'images', 'PokemonData')
+    return 'PokemonData'
+
+POKEMON_DATA_DIR = resolve_pokemon_data_dir()
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Initialize database
 db.init_app(app)
+
+# Register blueprints
+from auth import auth_bp, get_current_user
+from donations import donations_bp
+from admin import admin_bp
+
+app.register_blueprint(auth_bp)
+app.register_blueprint(donations_bp)
+app.register_blueprint(admin_bp)
+
+# Context processor to make current_user available in all templates
+@app.context_processor
+def inject_user():
+    return dict(current_user=get_current_user())
 
 # Global variables
 target_size = (224, 224)
@@ -142,6 +178,19 @@ def index():
 def about():
     """About page"""
     return render_template('about.html')
+
+
+# Route aliases for navbar links
+@app.route('/donate')
+def donate():
+    """Redirect to donations blueprint"""
+    return redirect(url_for('donations.donate_page'))
+
+
+@app.route('/admin-dashboard')
+def admin_dashboard():
+    """Redirect to admin blueprint"""
+    return redirect(url_for('admin.dashboard'))
 
 @app.route('/pokedex')
 def pokedex():
