@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}My Favorites | Pokémon Knower{% endblock %}
+
+{% block content %}
+<div class="favorites-page">
+    <div class="page-header">
+        <h1><i class="fas fa-heart"></i> My Favorites</h1>
+        <p>Your personal collection of favorite Pokémon</p>
+    </div>
+
+    {% if favorites %}
+    <div class="favorites-stats">
+        <div class="stat-pill">
+            <i class="fas fa-heart"></i>
+            <span>{{ favorites|length }} Favorites</span>
+        </div>
+    </div>
+
+    <div class="pokemon-grid">
+        {% for fav in favorites %}
+        <a href="{{ url_for('pokemon_detail', identifier=fav.pokemon.name) }}" class="pokemon-card" data-type="{{ fav.pokemon.main_type|lower }}">
+            <button class="favorite-btn active" data-pokemon-id="{{ fav.pokemon.id }}" onclick="event.preventDefault(); toggleFavorite({{ fav.pokemon.id }}, this);">
+                <i class="fas fa-heart"></i>
+            </button>
+            <div class="card-header">
+                <span class="card-number">#{{ '%03d' % fav.pokemon.number }}</span>
+                <div class="card-types">
+                    <span class="type-badge {{ fav.pokemon.main_type|lower }}">{{ fav.pokemon.main_type }}</span>
+                    {% if fav.pokemon.secondary_type %}
+                    <span class="type-badge {{ fav.pokemon.secondary_type|lower }}">{{ fav.pokemon.secondary_type }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-image">
+                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ fav.pokemon.number }}.png" 
+                     alt="{{ fav.pokemon.name }}"
+                     loading="lazy"
+                     onerror="this.src='/static/images/pokeball.png'">
+            </div>
+            <div class="card-body">
+                <h3 class="card-name">{{ fav.pokemon.name }}</h3>
+                <p class="card-category">{{ fav.pokemon.category or '' }}</p>
+                <div class="card-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">ATK</span>
+                        <span class="stat-value">{{ fav.pokemon.attack }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">DEF</span>
+                        <span class="stat-value">{{ fav.pokemon.defense }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">HP</span>
+                        <span class="stat-value">{{ fav.pokemon.stamina }}</span>
+                    </div>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-heart-broken"></i>
+        <h2>No Favorites Yet</h2>
+        <p>Start exploring the Pokédex and add your favorite Pokémon!</p>
+        <a href="{{ url_for('pokedex') }}" class="btn btn-primary">
+            <i class="fas fa-book-open"></i> Browse Pokédex
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .favorites-page {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-header h1 i {
+        color: #ff6b6b;
+    }
+
+    .page-header p {
+        color: var(--text-muted);
+    }
+
+    .favorites-stats {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-pill {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 107, 107, 0.2);
+        border-radius: 20px;
+        color: #ff6b6b;
+    }
+
+    .pokemon-card {
+        position: relative;
+    }
+
+    .favorite-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        z-index: 10;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.5);
+        border: none;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .favorite-btn:hover {
+        transform: scale(1.1);
+    }
+
+    .favorite-btn.active {
+        color: #ff6b6b;
+        background: rgba(255, 107, 107, 0.3);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h2 {
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function toggleFavorite(pokemonId, btn) {
+    try {
+        const response = await fetch(`/api/favorites/${pokemonId}`, {
+            method: 'DELETE'
+        });
+        const data = await response.json();
+        if (data.success) {
+            btn.closest('.pokemon-card').remove();
+            // Check if no favorites left
+            const cards = document.querySelectorAll('.pokemon-card');
+            if (cards.length === 0) {
+                location.reload();
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+</script>
+{% endblock %}

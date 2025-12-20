@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}Compare Pokémon | Pokémon Knower{% endblock %}
+
+{% block content %}
+<div class="compare-page">
+    <div class="page-header">
+        <h1><i class="fas fa-balance-scale"></i> Compare Pokémon</h1>
+        <p>Compare stats and abilities side by side (2-4 Pokémon)</p>
+    </div>
+
+    <!-- Pokemon Selector -->
+    <div class="compare-selector">
+        <div class="selector-grid" id="selectorSlots">
+            <div class="selector-slot" data-slot="0">
+                <select class="pokemon-select" onchange="updateComparison()">
+                    <option value="">Select Pokémon</option>
+                    {% for pokemon in pokemon_list %}
+                    <option value="{{ pokemon.id }}" data-number="{{ pokemon.number }}">
+                        #{{ '%03d' % pokemon.number }} {{ pokemon.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="selector-slot" data-slot="1">
+                <select class="pokemon-select" onchange="updateComparison()">
+                    <option value="">Select Pokémon</option>
+                    {% for pokemon in pokemon_list %}
+                    <option value="{{ pokemon.id }}" data-number="{{ pokemon.number }}">
+                        #{{ '%03d' % pokemon.number }} {{ pokemon.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="selector-slot" data-slot="2">
+                <select class="pokemon-select" onchange="updateComparison()">
+                    <option value="">Select Pokémon (Optional)</option>
+                    {% for pokemon in pokemon_list %}
+                    <option value="{{ pokemon.id }}" data-number="{{ pokemon.number }}">
+                        #{{ '%03d' % pokemon.number }} {{ pokemon.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="selector-slot" data-slot="3">
+                <select class="pokemon-select" onchange="updateComparison()">
+                    <option value="">Select Pokémon (Optional)</option>
+                    {% for pokemon in pokemon_list %}
+                    <option value="{{ pokemon.id }}" data-number="{{ pokemon.number }}">
+                        #{{ '%03d' % pokemon.number }} {{ pokemon.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison Display -->
+    <div class="comparison-container" id="comparisonContainer" style="display: none;">
+        <div class="comparison-cards" id="comparisonCards"></div>
+
+        <!-- Stats Comparison -->
+        <div class="stats-comparison" id="statsComparison">
+            <h3><i class="fas fa-chart-bar"></i> Stats Comparison</h3>
+            <div class="stat-bars" id="statBars"></div>
+        </div>
+    </div>
+
+    <div class="empty-comparison" id="emptyComparison">
+        <i class="fas fa-exchange-alt"></i>
+        <p>Select at least 2 Pokémon to compare</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .compare-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 i {
+        color: var(--pokemon-yellow);
+    }
+
+    .compare-selector {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .selector-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+    }
+
+    .selector-slot select {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--bg-darker);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+
+    .comparison-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .compare-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        text-align: center;
+        border-top: 4px solid var(--pokemon-red);
+    }
+
+    .compare-card img {
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+        margin-bottom: 1rem;
+    }
+
+    .compare-card h3 {
+        margin-bottom: 0.25rem;
+    }
+
+    .compare-card .card-number {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .compare-card .card-types {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .compare-card .physical-stats {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .stats-comparison {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+    }
+
+    .stats-comparison h3 {
+        margin-bottom: 1.5rem;
+    }
+
+    .stats-comparison h3 i {
+        color: var(--pokemon-yellow);
+    }
+
+    .stat-row {
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-row-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-row-label {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .stat-row-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .stat-bar-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .stat-bar-name {
+        width: 100px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .stat-bar-track {
+        flex: 1;
+        height: 16px;
+        background: var(--bg-darker);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .stat-bar-fill {
+        height: 100%;
+        border-radius: 8px;
+        transition: width 0.5s ease;
+    }
+
+    .stat-bar-value {
+        width: 40px;
+        text-align: right;
+        font-weight: 700;
+    }
+
+    .empty-comparison {
+        text-align: center;
+        padding: 4rem;
+        color: var(--text-muted);
+    }
+
+    .empty-comparison i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    @media (max-width: 768px) {
+        .selector-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const colors = ['#DC0A2D', '#FFCB05', '#3B5CA8', '#78C850'];
+
+async function updateComparison() {
+    const selects = document.querySelectorAll('.pokemon-select');
+    const selectedIds = [];
+    
+    selects.forEach(select => {
+        if (select.value) {
+            selectedIds.push(parseInt(select.value));
+        }
+    });
+    
+    if (selectedIds.length < 2) {
+        document.getElementById('comparisonContainer').style.display = 'none';
+        document.getElementById('emptyComparison').style.display = 'block';
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/compare', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pokemon_ids: selectedIds })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+        
+        displayComparison(data.pokemon);
+    } catch (error) {
+        console.error('Comparison error:', error);
+    }
+}
+
+function displayComparison(pokemonList) {
+    document.getElementById('comparisonContainer').style.display = 'block';
+    document.getElementById('emptyComparison').style.display = 'none';
+    
+    // Display cards
+    const cardsContainer = document.getElementById('comparisonCards');
+    cardsContainer.innerHTML = pokemonList.map((p, i) => `
+        <div class="compare-card" style="border-top-color: ${colors[i]}">
+            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.number}.png" alt="${p.name}">
+            <h3>${p.name}</h3>
+            <p class="card-number">#${String(p.number).padStart(3, '0')}</p>
+            <div class="card-types">
+                <span class="type-badge ${p.main_type.toLowerCase()}">${p.main_type}</span>
+                ${p.secondary_type ? `<span class="type-badge ${p.secondary_type.toLowerCase()}">${p.secondary_type}</span>` : ''}
+            </div>
+            <div class="physical-stats">
+                <span>${p.height}</span>
+                <span>•</span>
+                <span>${p.weight}</span>
+            </div>
+        </div>
+    `).join('');
+    
+    // Display stat bars
+    const stats = ['attack', 'defense', 'stamina'];
+    const statLabels = { attack: 'Attack', defense: 'Defense', stamina: 'HP' };
+    const maxStat = 300;
+    
+    const barsContainer = document.getElementById('statBars');
+    barsContainer.innerHTML = stats.map(stat => `
+        <div class="stat-row">
+            <div class="stat-row-header">
+                <span class="stat-row-label">${statLabels[stat]}</span>
+            </div>
+            <div class="stat-row-bars">
+                ${pokemonList.map((p, i) => `
+                    <div class="stat-bar-item">
+                        <span class="stat-bar-name">${p.name}</span>
+                        <div class="stat-bar-track">
+                            <div class="stat-bar-fill" style="width: ${(p[stat] / maxStat) * 100}%; background: ${colors[i]}"></div>
+                        </div>
+                        <span class="stat-bar-value">${p[stat]}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+</script>
+{% endblock %}

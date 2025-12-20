@@ -177,6 +177,119 @@ class PokemonImage(db.Model):
         }
 
 
+class Favorite(db.Model):
+    """User's favorite Pokémon"""
+    __tablename__ = 'favorites'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    pokemon_id = db.Column(db.Integer, db.ForeignKey('pokemon.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    notes = db.Column(db.Text, nullable=True)
+    
+    user = db.relationship('User', backref=db.backref('favorites', lazy=True))
+    pokemon = db.relationship('Pokemon', backref=db.backref('favorited_by', lazy=True))
+    
+    __table_args__ = (db.UniqueConstraint('user_id', 'pokemon_id', name='unique_user_pokemon'),)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'pokemon_id': self.pokemon_id,
+            'pokemon': self.pokemon.to_dict() if self.pokemon else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'notes': self.notes
+        }
+
+
+class Team(db.Model):
+    """User's Pokémon teams"""
+    __tablename__ = 'teams'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False, default='My Team')
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = db.relationship('User', backref=db.backref('teams', lazy=True))
+    members = db.relationship('TeamMember', backref='team', lazy=True, cascade='all, delete-orphan')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'members': [m.to_dict() for m in self.members],
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+class TeamMember(db.Model):
+    """Pokémon in a team (max 6)"""
+    __tablename__ = 'team_members'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=False)
+    pokemon_id = db.Column(db.Integer, db.ForeignKey('pokemon.id'), nullable=False)
+    slot = db.Column(db.Integer, nullable=False)  # 1-6
+    nickname = db.Column(db.String(50), nullable=True)
+    
+    pokemon = db.relationship('Pokemon')
+    
+    __table_args__ = (
+        db.UniqueConstraint('team_id', 'slot', name='unique_team_slot'),
+        db.CheckConstraint('slot >= 1 AND slot <= 6', name='valid_slot')
+    )
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'slot': self.slot,
+            'nickname': self.nickname,
+            'pokemon': self.pokemon.to_dict() if self.pokemon else None
+        }
+
+
+class QuizScore(db.Model):
+    """Track quiz scores for leaderboard"""
+    __tablename__ = 'quiz_scores'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    score = db.Column(db.Integer, nullable=False)
+    total_questions = db.Column(db.Integer, nullable=False, default=10)
+    quiz_type = db.Column(db.String(50), default='whos_that_pokemon')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref=db.backref('quiz_scores', lazy=True))
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_name': self.user.name if self.user else 'Anonymous',
+            'score': self.score,
+            'total_questions': self.total_questions,
+            'percentage': round((self.score / self.total_questions) * 100, 1),
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class SiteStats(db.Model):
+    """Track site usage statistics"""
+    __tablename__ = 'site_stats'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    stat_date = db.Column(db.Date, nullable=False, unique=True)
+    page_views = db.Column(db.Integer, default=0)
+    unique_visitors = db.Column(db.Integer, default=0)
+    scans_performed = db.Column(db.Integer, default=0)
+    searches_performed = db.Column(db.Integer, default=0)
+    new_users = db.Column(db.Integer, default=0)
+
+
 class PokemonType(db.Model):
     """Reference table for Pokémon types with colors"""
     __tablename__ = 'pokemon_types'

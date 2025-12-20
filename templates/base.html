@@ -51,14 +51,95 @@
                     <i class="fas fa-home"></i>
                     <span>Home</span>
                 </a>
-                <a href="{{ url_for('pokedex') }}" class="nav-link {% if request.endpoint == 'pokedex' %}active{% endif %}">
-                    <i class="fas fa-book-open"></i>
-                    <span>Pokédex</span>
-                </a>
+                
+                <!-- Pokédex Dropdown -->
+                <div class="nav-dropdown">
+                    <a href="{{ url_for('pokedex') }}" class="nav-link {% if request.endpoint in ['pokedex', 'gallery', 'type_chart'] %}active{% endif %}">
+                        <i class="fas fa-book-open"></i>
+                        <span>Pokédex</span>
+                        <i class="fas fa-chevron-down dropdown-arrow"></i>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="{{ url_for('pokedex') }}" class="dropdown-item">
+                            <i class="fas fa-list"></i> Full Pokédex
+                        </a>
+                        <a href="{{ url_for('gallery') }}" class="dropdown-item">
+                            <i class="fas fa-images"></i> Gallery View
+                        </a>
+                        <a href="{{ url_for('type_chart') }}" class="dropdown-item">
+                            <i class="fas fa-table"></i> Type Chart
+                        </a>
+                        <a href="{{ url_for('compare_page') }}" class="dropdown-item">
+                            <i class="fas fa-balance-scale"></i> Compare
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Tools Dropdown -->
+                <div class="nav-dropdown">
+                    <button class="nav-link">
+                        <i class="fas fa-tools"></i>
+                        <span>Tools</span>
+                        <i class="fas fa-chevron-down dropdown-arrow"></i>
+                    </button>
+                    <div class="nav-dropdown-menu">
+                        <a href="{{ url_for('team_builder') }}" class="dropdown-item">
+                            <i class="fas fa-users"></i> Team Builder
+                        </a>
+                        <a href="{{ url_for('quiz_page') }}" class="dropdown-item">
+                            <i class="fas fa-question-circle"></i> Who's That Pokémon?
+                        </a>
+                        <a href="{{ url_for('compare_page') }}" class="dropdown-item">
+                            <i class="fas fa-balance-scale"></i> Compare Pokémon
+                        </a>
+                        {% if current_user %}
+                        <a href="{{ url_for('favorites_page') }}" class="dropdown-item">
+                            <i class="fas fa-heart"></i> My Favorites
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
                 <a href="{{ url_for('about') }}" class="nav-link {% if request.endpoint == 'about' %}active{% endif %}">
                     <i class="fas fa-info-circle"></i>
                     <span>About</span>
                 </a>
+                <a href="{{ url_for('donate') }}" class="nav-link donate-link {% if request.endpoint == 'donate' %}active{% endif %}">
+                    <i class="fas fa-heart"></i>
+                    <span>Support</span>
+                </a>
+                
+                {% if current_user %}
+                <div class="nav-user">
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin_dashboard') }}" class="nav-link admin-link">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Admin</span>
+                    </a>
+                    {% endif %}
+                    <div class="user-dropdown">
+                        <button class="user-btn">
+                            {% if current_user.avatar_url %}
+                            <img src="{{ current_user.avatar_url }}" alt="{{ current_user.name or current_user.email }}" class="user-avatar">
+                            {% else %}
+                            <i class="fas fa-user-circle"></i>
+                            {% endif %}
+                            <span>{{ current_user.name or current_user.email.split('@')[0] }}</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a href="{{ url_for('auth.logout') }}" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <a href="{{ url_for('auth.login') }}" class="nav-link login-link">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Login</span>
+                </a>
+                {% endif %}
             </div>
         </div>
     </nav>

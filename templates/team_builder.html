@@ -1,0 +1,554 @@
+{% extends "base.html" %}
+
+{% block title %}Team Builder | Pokémon Knower{% endblock %}
+
+{% block content %}
+<div class="team-builder-page">
+    <div class="page-header">
+        <h1><i class="fas fa-users"></i> Team Builder</h1>
+        <p>Build your ultimate Pokémon team (max 6)</p>
+    </div>
+
+    <div class="builder-container">
+        <!-- Team Slots -->
+        <div class="team-section">
+            <div class="team-header">
+                <h2>Your Team</h2>
+                {% if current_user %}
+                <div class="team-actions">
+                    <button class="btn btn-secondary" onclick="saveTeam()">
+                        <i class="fas fa-save"></i> Save Team
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearTeam()">
+                        <i class="fas fa-trash"></i> Clear
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="team-slots" id="teamSlots">
+                {% for i in range(6) %}
+                <div class="team-slot" data-slot="{{ i + 1 }}" ondrop="dropPokemon(event)" ondragover="allowDrop(event)">
+                    <div class="slot-empty">
+                        <i class="fas fa-plus"></i>
+                        <span>Slot {{ i + 1 }}</span>
+                    </div>
+                    <div class="slot-pokemon" style="display: none;">
+                        <img src="" alt="">
+                        <span class="pokemon-name"></span>
+                        <button class="remove-btn" onclick="removeFromSlot({{ i + 1 }})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Team Analysis -->
+            <div class="team-analysis" id="teamAnalysis" style="display: none;">
+                <h3><i class="fas fa-chart-pie"></i> Type Coverage</h3>
+                <div class="type-coverage" id="typeCoverage"></div>
+            </div>
+        </div>
+
+        <!-- Pokemon Selector -->
+        <div class="selector-section">
+            <div class="selector-header">
+                <h2>Available Pokémon</h2>
+                <div class="selector-filters">
+                    <input type="text" id="pokemonSearch" placeholder="Search Pokémon..." class="search-input">
+                    <select id="typeFilter" class="type-select">
+                        <option value="">All Types</option>
+                        {% for type_name in types.keys() %}
+                        <option value="{{ type_name }}">{{ type_name|capitalize }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="pokemon-selector" id="pokemonSelector">
+                {% for pokemon in pokemon_list %}
+                <div class="selector-pokemon" 
+                     draggable="true" 
+                     ondragstart="dragPokemon(event)"
+                     data-id="{{ pokemon.id }}"
+                     data-name="{{ pokemon.name }}"
+                     data-number="{{ pokemon.number }}"
+                     data-type="{{ pokemon.main_type|lower }}"
+                     onclick="addToTeam({{ pokemon.id }}, '{{ pokemon.name }}', {{ pokemon.number }})">
+                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{{ pokemon.number }}.png" 
+                         alt="{{ pokemon.name }}"
+                         loading="lazy">
+                    <span class="selector-name">{{ pokemon.name }}</span>
+                    <span class="selector-number">#{{ '%03d' % pokemon.number }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% if current_user and teams %}
+    <!-- Saved Teams -->
+    <div class="saved-teams-section">
+        <h2><i class="fas fa-folder"></i> Saved Teams</h2>
+        <div class="saved-teams-grid">
+            {% for team in teams %}
+            <div class="saved-team-card" onclick="loadTeam({{ team.id }})">
+                <h3>{{ team.name }}</h3>
+                <p>{{ team.description or 'No description' }}</p>
+                <div class="team-preview">
+                    {% for member in team.members[:6] %}
+                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{{ member.pokemon.number }}.png" 
+                         alt="{{ member.pokemon.name }}">
+                    {% endfor %}
+                </div>
+                <button class="delete-team-btn" onclick="event.stopPropagation(); deleteTeam({{ team.id }})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .team-builder-page {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 i {
+        color: var(--pokemon-yellow);
+    }
+
+    .builder-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    .team-section, .selector-section {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+    }
+
+    .team-header, .selector-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .team-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .team-slots {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .team-slot {
+        aspect-ratio: 1;
+        background: var(--bg-darker);
+        border-radius: var(--radius-md);
+        border: 2px dashed var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .team-slot.has-pokemon {
+        border-style: solid;
+        border-color: var(--pokemon-yellow);
+    }
+
+    .team-slot.dragover {
+        border-color: var(--pokemon-yellow);
+        background: rgba(255, 203, 5, 0.1);
+    }
+
+    .slot-empty {
+        text-align: center;
+        color: var(--text-muted);
+    }
+
+    .slot-empty i {
+        font-size: 2rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .slot-pokemon {
+        text-align: center;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem;
+    }
+
+    .slot-pokemon img {
+        width: 70%;
+        height: auto;
+    }
+
+    .slot-pokemon .pokemon-name {
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+
+    .remove-btn {
+        position: absolute;
+        top: 0.25rem;
+        right: 0.25rem;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--pokemon-red);
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+    }
+
+    .selector-filters {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .selector-filters .search-input {
+        padding: 0.5rem 1rem;
+        background: var(--bg-darker);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        width: 200px;
+    }
+
+    .type-select {
+        padding: 0.5rem;
+        background: var(--bg-darker);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+    }
+
+    .pokemon-selector {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 0.5rem;
+        max-height: 500px;
+        overflow-y: auto;
+        padding: 0.5rem;
+    }
+
+    .selector-pokemon {
+        background: var(--bg-darker);
+        border-radius: var(--radius-sm);
+        padding: 0.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+    }
+
+    .selector-pokemon:hover {
+        border-color: var(--pokemon-yellow);
+        transform: scale(1.05);
+    }
+
+    .selector-pokemon img {
+        width: 50px;
+        height: 50px;
+    }
+
+    .selector-name {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .selector-number {
+        font-size: 0.6rem;
+        color: var(--text-muted);
+    }
+
+    .team-analysis {
+        background: var(--bg-darker);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+    }
+
+    .team-analysis h3 {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .type-coverage {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .saved-teams-section {
+        margin-top: 2rem;
+    }
+
+    .saved-teams-section h2 {
+        margin-bottom: 1rem;
+    }
+
+    .saved-teams-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .saved-team-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .saved-team-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .saved-team-card h3 {
+        margin-bottom: 0.25rem;
+    }
+
+    .saved-team-card p {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .team-preview {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .team-preview img {
+        width: 32px;
+        height: 32px;
+    }
+
+    .delete-team-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--pokemon-red);
+        color: white;
+        border: none;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .saved-team-card:hover .delete-team-btn {
+        opacity: 1;
+    }
+
+    @media (max-width: 900px) {
+        .builder-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentTeam = [null, null, null, null, null, null];
+
+function dragPokemon(ev) {
+    const data = {
+        id: ev.target.closest('.selector-pokemon').dataset.id,
+        name: ev.target.closest('.selector-pokemon').dataset.name,
+        number: ev.target.closest('.selector-pokemon').dataset.number
+    };
+    ev.dataTransfer.setData('text/plain', JSON.stringify(data));
+}
+
+function allowDrop(ev) {
+    ev.preventDefault();
+    ev.target.closest('.team-slot').classList.add('dragover');
+}
+
+function dropPokemon(ev) {
+    ev.preventDefault();
+    const slot = ev.target.closest('.team-slot');
+    slot.classList.remove('dragover');
+    
+    try {
+        const data = JSON.parse(ev.dataTransfer.getData('text/plain'));
+        const slotIndex = parseInt(slot.dataset.slot) - 1;
+        addToSlot(slotIndex, data.id, data.name, data.number);
+    } catch (e) {
+        console.error('Drop error:', e);
+    }
+}
+
+function addToTeam(id, name, number) {
+    const emptySlot = currentTeam.findIndex(s => s === null);
+    if (emptySlot === -1) {
+        alert('Team is full! Remove a Pokémon first.');
+        return;
+    }
+    addToSlot(emptySlot, id, name, number);
+}
+
+function addToSlot(slotIndex, id, name, number) {
+    currentTeam[slotIndex] = { id, name, number };
+    updateSlotUI(slotIndex);
+    updateAnalysis();
+}
+
+function removeFromSlot(slot) {
+    currentTeam[slot - 1] = null;
+    updateSlotUI(slot - 1);
+    updateAnalysis();
+}
+
+function updateSlotUI(index) {
+    const slot = document.querySelector(`.team-slot[data-slot="${index + 1}"]`);
+    const pokemon = currentTeam[index];
+    
+    if (pokemon) {
+        slot.classList.add('has-pokemon');
+        slot.querySelector('.slot-empty').style.display = 'none';
+        const pokemonEl = slot.querySelector('.slot-pokemon');
+        pokemonEl.style.display = 'flex';
+        pokemonEl.querySelector('img').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.number}.png`;
+        pokemonEl.querySelector('.pokemon-name').textContent = pokemon.name;
+    } else {
+        slot.classList.remove('has-pokemon');
+        slot.querySelector('.slot-empty').style.display = 'block';
+        slot.querySelector('.slot-pokemon').style.display = 'none';
+    }
+}
+
+function updateAnalysis() {
+    const analysis = document.getElementById('teamAnalysis');
+    const teamSize = currentTeam.filter(p => p !== null).length;
+    
+    if (teamSize > 0) {
+        analysis.style.display = 'block';
+        // Simplified analysis
+        document.getElementById('typeCoverage').innerHTML = `<span class="stat-pill">${teamSize}/6 Pokémon selected</span>`;
+    } else {
+        analysis.style.display = 'none';
+    }
+}
+
+function clearTeam() {
+    currentTeam = [null, null, null, null, null, null];
+    for (let i = 0; i < 6; i++) {
+        updateSlotUI(i);
+    }
+    updateAnalysis();
+}
+
+async function saveTeam() {
+    const teamName = prompt('Enter team name:', 'My Team');
+    if (!teamName) return;
+    
+    const members = currentTeam
+        .map((p, i) => p ? { pokemon_id: parseInt(p.id), slot: i + 1 } : null)
+        .filter(m => m !== null);
+    
+    if (members.length === 0) {
+        alert('Add at least one Pokémon to your team!');
+        return;
+    }
+    
+    try {
+        const createRes = await fetch('/api/teams', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: teamName })
+        });
+        const createData = await createRes.json();
+        
+        if (createData.success) {
+            await fetch(`/api/teams/${createData.team.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ members })
+            });
+            alert('Team saved!');
+            location.reload();
+        }
+    } catch (error) {
+        console.error('Save error:', error);
+        alert('Failed to save team');
+    }
+}
+
+async function deleteTeam(teamId) {
+    if (!confirm('Delete this team?')) return;
+    
+    try {
+        await fetch(`/api/teams/${teamId}`, { method: 'DELETE' });
+        location.reload();
+    } catch (error) {
+        console.error('Delete error:', error);
+    }
+}
+
+// Filters
+document.getElementById('pokemonSearch')?.addEventListener('input', filterPokemon);
+document.getElementById('typeFilter')?.addEventListener('change', filterPokemon);
+
+function filterPokemon() {
+    const search = document.getElementById('pokemonSearch').value.toLowerCase();
+    const type = document.getElementById('typeFilter').value.toLowerCase();
+    
+    document.querySelectorAll('.selector-pokemon').forEach(el => {
+        const name = el.dataset.name.toLowerCase();
+        const pokemonType = el.dataset.type.toLowerCase();
+        
+        const matchesSearch = !search || name.includes(search);
+        const matchesType = !type || pokemonType === type;
+        
+        el.style.display = matchesSearch && matchesType ? 'block' : 'none';
+    });
+}
+</script>
+{% endblock %}

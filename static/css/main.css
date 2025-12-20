@@ -303,6 +303,191 @@ img {
     transition: var(--transition-fast);
 }
 
+/* User Navigation */
+.nav-user {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.user-dropdown {
+    position: relative;
+}
+
+.user-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-xl);
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: var(--transition-normal);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+}
+
+.user-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-btn i.fa-user-circle {
+    font-size: 1.5rem;
+}
+
+.user-btn i.fa-chevron-down {
+    font-size: 0.75rem;
+    transition: var(--transition-fast);
+}
+
+.user-dropdown:hover .user-btn i.fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    min-width: 160px;
+    background: rgba(30, 30, 46, 0.98);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.5rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: var(--transition-fast);
+    z-index: 100;
+}
+
+.user-dropdown:hover .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    transition: var(--transition-fast);
+}
+
+.dropdown-item:hover {
+    background: var(--pokemon-red);
+    color: white;
+}
+
+/* Navigation Dropdowns */
+.nav-dropdown {
+    position: relative;
+}
+
+.nav-dropdown > .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-dropdown .dropdown-arrow {
+    font-size: 0.65rem;
+    transition: transform 0.2s ease;
+}
+
+.nav-dropdown:hover .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.nav-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 200px;
+    background: rgba(30, 30, 46, 0.98);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.nav-dropdown:hover .nav-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.nav-dropdown-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.nav-dropdown-menu .dropdown-item:hover {
+    background: var(--pokemon-red);
+    color: white;
+}
+
+.nav-dropdown-menu .dropdown-item i {
+    width: 16px;
+    text-align: center;
+}
+
+/* Special Nav Links */
+.donate-link {
+    color: #ff6b6b !important;
+}
+
+.donate-link:hover {
+    background: rgba(255, 107, 107, 0.2) !important;
+}
+
+.donate-link.active {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a5a) !important;
+    color: white !important;
+}
+
+.login-link {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+}
+
+.login-link:hover {
+    background: var(--pokemon-red);
+    border-color: var(--pokemon-red);
+    color: white;
+}
+
+.admin-link {
+    color: var(--pokemon-yellow) !important;
+}
+
+.admin-link:hover {
+    background: rgba(255, 203, 5, 0.2) !important;
+}
+
 /* ==========================================
    Main Content
    ========================================== */

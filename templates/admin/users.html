@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users | Admin | Pokémon Knower{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <div class="header-left">
+            <a href="{{ url_for('admin.dashboard') }}" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+                <h1><i class="fas fa-users"></i> Manage Users</h1>
+                <p>View and manage user accounts</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-section">
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Joined</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users.items %}
+                    <tr data-user-id="{{ user.id }}">
+                        <td>
+                            <div class="user-cell">
+                                {% if user.avatar_url %}
+                                <img src="{{ user.avatar_url }}" alt="" class="user-avatar-small">
+                                {% else %}
+                                <i class="fas fa-user-circle"></i>
+                                {% endif %}
+                                <span>{{ user.name or 'No name' }}</span>
+                            </div>
+                        </td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            <span class="role-badge {{ user.role }}">{{ user.role }}</span>
+                        </td>
+                        <td>{{ user.created_at.strftime('%b %d, %Y') }}</td>
+                        <td>{{ user.last_login.strftime('%b %d, %Y %H:%M') if user.last_login else 'Never' }}</td>
+                        <td>
+                            <button class="action-btn-small toggle-admin" 
+                                    data-user-id="{{ user.id }}"
+                                    {% if user.id == current_user.id %}disabled title="Cannot modify yourself"{% endif %}>
+                                <i class="fas fa-shield-alt"></i>
+                                {{ 'Remove Admin' if user.is_admin else 'Make Admin' }}
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="empty">No users found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if users.pages > 1 %}
+        <div class="pagination">
+            {% if users.has_prev %}
+            <a href="{{ url_for('admin.users', page=users.prev_num) }}" class="page-btn">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            {% for page_num in users.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    <a href="{{ url_for('admin.users', page=page_num) }}" 
+                       class="page-btn {% if page_num == users.page %}active{% endif %}">
+                        {{ page_num }}
+                    </a>
+                {% else %}
+                    <span class="page-ellipsis">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if users.has_next %}
+            <a href="{{ url_for('admin.users', page=users.next_num) }}" class="page-btn">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .admin-header {
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .back-link {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+    }
+
+    .back-link:hover {
+        background: var(--pokemon-red);
+    }
+
+    .admin-header h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .admin-header h1 i {
+        color: var(--pokemon-yellow);
+    }
+
+    .admin-header p {
+        color: var(--text-muted);
+    }
+
+    .admin-section {
+        background: rgba(30, 30, 46, 0.95);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .admin-table-container {
+        overflow-x: auto;
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .admin-table th {
+        color: var(--text-muted);
+        font-weight: 500;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+    }
+
+    .admin-table td.empty {
+        text-align: center;
+        color: var(--text-muted);
+        padding: 3rem;
+    }
+
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .user-avatar-small {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+    }
+
+    .user-cell i {
+        font-size: 2rem;
+        color: var(--text-muted);
+    }
+
+    .role-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .role-badge.admin {
+        background: rgba(220, 10, 45, 0.2);
+        color: var(--pokemon-red);
+    }
+
+    .role-badge.user {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-muted);
+    }
+
+    .action-btn-small {
+        padding: 0.5rem 0.75rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        border-radius: 6px;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .action-btn-small:hover:not(:disabled) {
+        background: var(--pokemon-red);
+    }
+
+    .action-btn-small:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .page-btn {
+        padding: 0.5rem 0.75rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .page-btn:hover,
+    .page-btn.active {
+        background: var(--pokemon-red);
+    }
+
+    .page-ellipsis {
+        padding: 0.5rem;
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.toggle-admin').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const userId = btn.dataset.userId;
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch(`/admin/users/${userId}/toggle-admin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'Failed to update user');
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                alert('An error occurred');
+                btn.disabled = false;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}Donations | Admin | Pokémon Knower{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <div class="header-left">
+            <a href="{{ url_for('admin.dashboard') }}" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+                <h1><i class="fas fa-heart"></i> Donations</h1>
+                <p>View all donation transactions</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+        <a href="{{ url_for('admin.donations') }}" 
+           class="filter-btn {% if not status_filter %}active{% endif %}">All</a>
+        <a href="{{ url_for('admin.donations', status='succeeded') }}" 
+           class="filter-btn {% if status_filter == 'succeeded' %}active{% endif %}">Succeeded</a>
+        <a href="{{ url_for('admin.donations', status='pending') }}" 
+           class="filter-btn {% if status_filter == 'pending' %}active{% endif %}">Pending</a>
+        <a href="{{ url_for('admin.donations', status='failed') }}" 
+           class="filter-btn {% if status_filter == 'failed' %}active{% endif %}">Failed</a>
+    </div>
+
+    <div class="admin-section">
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Donor</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Message</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for donation in donations.items %}
+                    <tr>
+                        <td class="id-cell">#{{ donation.id }}</td>
+                        <td>
+                            <div class="donor-info">
+                                <span class="donor-name">{{ donation.donor_name or 'Anonymous' }}</span>
+                                {% if donation.donor_email %}
+                                <span class="donor-email">{{ donation.donor_email }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="amount">${{ "%.2f"|format(donation.amount / 100) }}</td>
+                        <td>
+                            <span class="status-badge {{ donation.status }}">{{ donation.status }}</span>
+                        </td>
+                        <td class="message-cell">{{ donation.message[:50] + '...' if donation.message and donation.message|length > 50 else donation.message or '-' }}</td>
+                        <td>{{ donation.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="empty">No donations found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if donations.pages > 1 %}
+        <div class="pagination">
+            {% if donations.has_prev %}
+            <a href="{{ url_for('admin.donations', page=donations.prev_num, status=status_filter) }}" class="page-btn">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            {% for page_num in donations.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    <a href="{{ url_for('admin.donations', page=page_num, status=status_filter) }}" 
+                       class="page-btn {% if page_num == donations.page %}active{% endif %}">
+                        {{ page_num }}
+                    </a>
+                {% else %}
+                    <span class="page-ellipsis">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if donations.has_next %}
+            <a href="{{ url_for('admin.donations', page=donations.next_num, status=status_filter) }}" class="page-btn">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .admin-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .back-link {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+    }
+
+    .back-link:hover {
+        background: var(--pokemon-red);
+    }
+
+    .admin-header h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .admin-header h1 i {
+        color: #fb7185;
+    }
+
+    .admin-header p {
+        color: var(--text-muted);
+    }
+
+    .filter-bar {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+        background: var(--pokemon-red);
+        color: white;
+    }
+
+    .admin-section {
+        background: rgba(30, 30, 46, 0.95);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .admin-table-container {
+        overflow-x: auto;
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .admin-table th {
+        color: var(--text-muted);
+        font-weight: 500;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+    }
+
+    .admin-table td.empty {
+        text-align: center;
+        color: var(--text-muted);
+        padding: 3rem;
+    }
+
+    .id-cell {
+        color: var(--text-muted);
+        font-family: monospace;
+    }
+
+    .donor-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .donor-name {
+        font-weight: 500;
+    }
+
+    .donor-email {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .amount {
+        color: #4ade80;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-badge.succeeded {
+        background: rgba(74, 222, 128, 0.2);
+        color: #4ade80;
+    }
+
+    .status-badge.pending {
+        background: rgba(251, 191, 36, 0.2);
+        color: #fbbf24;
+    }
+
+    .status-badge.failed,
+    .status-badge.expired {
+        background: rgba(248, 113, 113, 0.2);
+        color: #f87171;
+    }
+
+    .message-cell {
+        max-width: 200px;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .page-btn {
+        padding: 0.5rem 0.75rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .page-btn:hover,
+    .page-btn.active {
+        background: var(--pokemon-red);
+    }
+
+    .page-ellipsis {
+        padding: 0.5rem;
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}

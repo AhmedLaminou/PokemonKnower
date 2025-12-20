@@ -10,6 +10,25 @@
             <i class="fas fa-arrow-left"></i> Back to Pokédex
         </a>
         
+        <div class="detail-actions">
+            <!-- Favorite Button -->
+            <button class="action-btn favorite-btn" id="favoriteBtn" data-pokemon-id="{{ pokemon.id }}" onclick="toggleFavorite()">
+                <i class="far fa-heart"></i>
+                <span>Favorite</span>
+            </button>
+            
+            <!-- Download Button -->
+            <button class="action-btn download-btn" onclick="downloadCard()">
+                <i class="fas fa-download"></i>
+                <span>Download</span>
+            </button>
+            
+            <!-- Share Button -->
+            <button class="action-btn share-btn" onclick="shareCard()">
+                <i class="fas fa-share-alt"></i>
+            </button>
+        </div>
+        
         <div class="detail-nav">
             {% if prev_pokemon %}
             <a href="{{ url_for('pokemon_detail', identifier=prev_pokemon.name) }}" class="detail-nav-btn">
@@ -248,12 +267,88 @@
     .detail-card[data-type="bug"] { border-top: 4px solid var(--type-bug); }
     .detail-card[data-type="ghost"] { border-top: 4px solid var(--type-ghost); }
     .detail-card[data-type="steel"] { border-top: 4px solid var(--type-steel); }
+    /* Action Buttons */
+    .detail-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+    }
+
+    .action-btn:hover {
+        background: var(--bg-card-hover);
+        color: var(--text-primary);
+    }
+
+    .favorite-btn.active {
+        background: rgba(255, 107, 107, 0.2);
+        border-color: #ff6b6b;
+        color: #ff6b6b;
+    }
+
+    .favorite-btn.active i {
+        font-weight: 900;
+    }
+
+    .download-btn:hover {
+        background: rgba(74, 222, 128, 0.2);
+        border-color: #4ade80;
+        color: #4ade80;
+    }
+
+    .share-btn:hover {
+        background: rgba(96, 165, 250, 0.2);
+        border-color: #60a5fa;
+        color: #60a5fa;
+    }
+
+    @media (max-width: 600px) {
+        .detail-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .detail-actions {
+            order: 3;
+        }
+        
+        .action-btn span {
+            display: none;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // Check if Pokemon is favorited
+    checkFavoriteStatus();
+    
+    async function checkFavoriteStatus() {
+        try {
+            const response = await fetch('/api/favorites/check/{{ pokemon.id }}');
+            const data = await response.json();
+            const btn = document.getElementById('favoriteBtn');
+            if (data.is_favorite) {
+                btn.classList.add('active');
+                btn.querySelector('i').classList.replace('far', 'fas');
+                btn.querySelector('span').textContent = 'Favorited';
+            }
+        } catch (e) {}
+    }
     // Image Carousel Logic
     const mainImage = document.getElementById('mainImage');
     const thumbnails = document.querySelectorAll('.carousel-thumb');
@@ -297,5 +392,114 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+async function toggleFavorite() {
+    const btn = document.getElementById('favoriteBtn');
+    const pokemonId = btn.dataset.pokemonId;
+    const isActive = btn.classList.contains('active');
+    
+    try {
+        const response = await fetch(`/api/favorites/${pokemonId}`, {
+            method: isActive ? 'DELETE' : 'POST'
+        });
+        const data = await response.json();
+        
+        if (data.error === 'Login required') {
+            window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
+            return;
+        }
+        
+        if (data.success || data.favorite) {
+            btn.classList.toggle('active');
+            const icon = btn.querySelector('i');
+            const text = btn.querySelector('span');
+            if (btn.classList.contains('active')) {
+                icon.classList.replace('far', 'fas');
+                text.textContent = 'Favorited';
+            } else {
+                icon.classList.replace('fas', 'far');
+                text.textContent = 'Favorite';
+            }
+        }
+    } catch (error) {
+        console.error('Favorite error:', error);
+    }
+}
+
+function downloadCard() {
+    const pokemonId = document.getElementById('favoriteBtn').dataset.pokemonId;
+    const pokemonName = '{{ pokemon.name }}';
+    const pokemonNumber = {{ pokemon.number }};
+    
+    // Create card canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 560;
+    const ctx = canvas.getContext('2d');
+    
+    // Background
+    const gradient = ctx.createLinearGradient(0, 0, 0, 560);
+    gradient.addColorStop(0, '#1a1a2e');
+    gradient.addColorStop(1, '#16213e');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 400, 560);
+    
+    // Border
+    ctx.strokeStyle = '#FFCB05';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(10, 10, 380, 540);
+    
+    // Load and draw Pokemon image
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+        ctx.drawImage(img, 100, 80, 200, 200);
+        
+        // Pokemon name
+        ctx.fillStyle = '#FFCB05';
+        ctx.font = 'bold 28px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(pokemonName, 200, 320);
+        
+        // Number
+        ctx.fillStyle = '#888';
+        ctx.font = '18px Poppins, sans-serif';
+        ctx.fillText('#' + String(pokemonNumber).padStart(3, '0'), 200, 350);
+        
+        // Types
+        ctx.fillStyle = '#fff';
+        ctx.font = '16px Poppins, sans-serif';
+        ctx.fillText('{{ pokemon.main_type }}{% if pokemon.secondary_type %} / {{ pokemon.secondary_type }}{% endif %}', 200, 380);
+        
+        // Stats
+        ctx.fillStyle = '#DC0A2D';
+        ctx.fillText('ATK: {{ pokemon.attack }} | DEF: {{ pokemon.defense }} | HP: {{ pokemon.stamina }}', 200, 420);
+        
+        // Watermark
+        ctx.fillStyle = '#444';
+        ctx.font = '12px Poppins, sans-serif';
+        ctx.fillText('Pokémon Knower', 200, 530);
+        
+        // Download
+        const link = document.createElement('a');
+        link.download = `${pokemonName}_card.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    };
+    img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonNumber}.png`;
+}
+
+function shareCard() {
+    const url = window.location.href;
+    const text = `Check out {{ pokemon.name }} on Pokémon Knower!`;
+    
+    if (navigator.share) {
+        navigator.share({ title: '{{ pokemon.name }}', text, url });
+    } else {
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Link copied to clipboard!');
+        });
+    }
+}
 </script>
 {% endblock %}

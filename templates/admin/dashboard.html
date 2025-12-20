@@ -1,0 +1,545 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | Pokémon Knower{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1><i class="fas fa-shield-alt"></i> Admin Dashboard</h1>
+        <p>Manage your Pokémon Knower application</p>
+    </div>
+
+    <!-- Primary Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon users">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_users }}</h3>
+                <p>Total Users</p>
+                <span class="stat-sub">{{ admin_count }} admins</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon donations">
+                <i class="fas fa-heart"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_donations }}</h3>
+                <p>Donations</p>
+                <span class="stat-sub">Avg: ${{ "%.2f"|format(avg_donation) }}</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon revenue">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="stat-info">
+                <h3>${{ "%.2f"|format(total_revenue) }}</h3>
+                <p>Total Revenue</p>
+                <span class="stat-sub">${{ "%.2f"|format(monthly_revenue) }} this month</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon pokemon">
+                <i class="fas fa-dragon"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_pokemon }}</h3>
+                <p>Pokémon</p>
+                <span class="stat-sub">{{ total_images }} images</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Engagement Stats -->
+    <div class="stats-grid secondary">
+        <div class="stat-card small">
+            <div class="stat-icon favorites">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_favorites }}</h3>
+                <p>Total Favorites</p>
+            </div>
+        </div>
+        <div class="stat-card small">
+            <div class="stat-icon teams">
+                <i class="fas fa-users-cog"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_teams }}</h3>
+                <p>Teams Created</p>
+            </div>
+        </div>
+        <div class="stat-card small">
+            <div class="stat-icon quiz">
+                <i class="fas fa-question-circle"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_quiz_plays }}</h3>
+                <p>Quiz Plays</p>
+                <span class="stat-sub">Avg: {{ "%.1f"|format(avg_quiz_score) }}%</span>
+            </div>
+        </div>
+        <div class="stat-card small">
+            <div class="stat-icon active">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ active_users_week }}</h3>
+                <p>Active (7d)</p>
+                <span class="stat-sub">{{ new_users_week }} new</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="admin-section">
+        <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+        <div class="quick-actions">
+            <a href="{{ url_for('admin.users') }}" class="action-btn">
+                <i class="fas fa-users-cog"></i>
+                <span>Manage Users</span>
+            </a>
+            <a href="{{ url_for('admin.donations') }}" class="action-btn">
+                <i class="fas fa-hand-holding-heart"></i>
+                <span>View Donations</span>
+            </a>
+            <a href="{{ url_for('pokedex') }}" class="action-btn">
+                <i class="fas fa-book-open"></i>
+                <span>View Pokédex</span>
+            </a>
+            <a href="{{ url_for('gallery') }}" class="action-btn">
+                <i class="fas fa-images"></i>
+                <span>Gallery</span>
+            </a>
+            <a href="{{ url_for('quiz_page') }}" class="action-btn">
+                <i class="fas fa-gamepad"></i>
+                <span>Quiz</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Analytics Row -->
+    <div class="admin-grid analytics-row">
+        <!-- Top Favorited Pokemon -->
+        <div class="admin-section">
+            <h2><i class="fas fa-fire"></i> Top Favorited Pokémon</h2>
+            {% if top_favorited %}
+            <div class="top-list">
+                {% for name, number, count in top_favorited %}
+                <div class="top-item">
+                    <span class="top-rank">#{{ loop.index }}</span>
+                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{{ number }}.png" alt="{{ name }}">
+                    <span class="top-name">{{ name }}</span>
+                    <span class="top-count"><i class="fas fa-heart"></i> {{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty-text">No favorites yet</p>
+            {% endif %}
+        </div>
+
+        <!-- Type Distribution -->
+        <div class="admin-section">
+            <h2><i class="fas fa-chart-pie"></i> Type Distribution</h2>
+            <div class="type-dist">
+                {% for type_name, count in type_distribution[:10] %}
+                <div class="type-bar-item">
+                    <span class="type-badge {{ type_name|lower }}">{{ type_name }}</span>
+                    <div class="type-bar-track">
+                        <div class="type-bar-fill" style="width: {{ (count / total_pokemon * 100)|int }}%"></div>
+                    </div>
+                    <span class="type-count">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-grid">
+        <!-- Recent Donations -->
+        <div class="admin-section">
+            <h2><i class="fas fa-heart"></i> Recent Donations</h2>
+            <div class="admin-table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Donor</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for donation in recent_donations %}
+                        <tr>
+                            <td>{{ donation.donor_name or donation.donor_email or 'Anonymous' }}</td>
+                            <td class="amount">${{ "%.2f"|format(donation.amount / 100) }}</td>
+                            <td>{{ donation.created_at.strftime('%b %d, %Y') }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="empty">No donations yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Users -->
+        <div class="admin-section">
+            <h2><i class="fas fa-users"></i> Recent Users</h2>
+            <div class="admin-table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in recent_users %}
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    {% if user.avatar_url %}
+                                    <img src="{{ user.avatar_url }}" alt="" class="user-avatar-small">
+                                    {% else %}
+                                    <i class="fas fa-user-circle"></i>
+                                    {% endif %}
+                                    <span>{{ user.name or user.email.split('@')[0] }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="role-badge {{ user.role }}">{{ user.role }}</span>
+                            </td>
+                            <td>{{ user.created_at.strftime('%b %d, %Y') }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="empty">No users yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .admin-header {
+        margin-bottom: 2rem;
+    }
+
+    .admin-header h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .admin-header h1 i {
+        color: var(--pokemon-yellow);
+    }
+
+    .admin-header p {
+        color: var(--text-muted);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: rgba(30, 30, 46, 0.95);
+        border-radius: 16px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .stat-icon.users { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+    .stat-icon.donations { background: rgba(244, 63, 94, 0.2); color: #fb7185; }
+    .stat-icon.revenue { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .stat-icon.pokemon { background: rgba(255, 203, 5, 0.2); color: var(--pokemon-yellow); }
+
+    .stat-info h3 {
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-info p {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .stat-sub {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        opacity: 0.8;
+    }
+
+    .stats-grid.secondary {
+        margin-bottom: 2rem;
+    }
+
+    .stat-card.small {
+        padding: 1rem;
+    }
+
+    .stat-card.small .stat-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+
+    .stat-card.small .stat-info h3 {
+        font-size: 1.25rem;
+    }
+
+    .stat-icon.favorites { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+    .stat-icon.teams { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+    .stat-icon.quiz { background: rgba(236, 72, 153, 0.2); color: #f472b6; }
+    .stat-icon.active { background: rgba(34, 211, 238, 0.2); color: #22d3ee; }
+
+    .admin-section {
+        background: rgba(30, 30, 46, 0.95);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .admin-section h2 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .admin-section h2 i {
+        color: var(--pokemon-red);
+    }
+
+    .quick-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .action-btn:hover {
+        background: var(--pokemon-red);
+        transform: translateY(-2px);
+    }
+
+    .action-btn i {
+        font-size: 1.1rem;
+    }
+
+    .admin-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .admin-table-container {
+        overflow-x: auto;
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .admin-table th {
+        color: var(--text-muted);
+        font-weight: 500;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+    }
+
+    .admin-table td.amount {
+        color: #4ade80;
+        font-weight: 600;
+    }
+
+    .admin-table td.empty {
+        text-align: center;
+        color: var(--text-muted);
+        padding: 2rem;
+    }
+
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .user-avatar-small {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+    }
+
+    .user-cell i {
+        font-size: 1.5rem;
+        color: var(--text-muted);
+    }
+
+    .role-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .role-badge.admin {
+        background: rgba(220, 10, 45, 0.2);
+        color: var(--pokemon-red);
+    }
+
+    .role-badge.user {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-muted);
+    }
+
+    .analytics-row {
+        margin-bottom: 1.5rem;
+    }
+
+    .top-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .top-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+    }
+
+    .top-rank {
+        font-weight: 700;
+        color: var(--pokemon-yellow);
+        min-width: 24px;
+    }
+
+    .top-item img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .top-name {
+        flex: 1;
+        font-weight: 500;
+    }
+
+    .top-count {
+        color: #fb7185;
+        font-size: 0.85rem;
+    }
+
+    .type-dist {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .type-bar-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .type-bar-item .type-badge {
+        min-width: 70px;
+        text-align: center;
+        font-size: 0.7rem;
+    }
+
+    .type-bar-track {
+        flex: 1;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .type-bar-fill {
+        height: 100%;
+        background: var(--pokemon-red);
+        border-radius: 4px;
+    }
+
+    .type-count {
+        min-width: 30px;
+        text-align: right;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .empty-text {
+        text-align: center;
+        color: var(--text-muted);
+        padding: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .admin-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

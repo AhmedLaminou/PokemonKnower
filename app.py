@@ -10,7 +10,7 @@ import cv2
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory, session
 from flask_cors import CORS
-from models import db, Pokemon, PokemonImage, PokemonType, User, Donation
+from models import db, Pokemon, PokemonImage, PokemonType, User, Donation, Favorite, Team, TeamMember, QuizScore
 
 load_dotenv()
 load_dotenv('.env.example', override=False)
@@ -206,6 +206,11 @@ def pokedex():
                          pokemon_list=pokemon_list.items,
                          pagination=pokemon_list,
                          types=PokemonType.get_type_data())
+
+@app.route('/pokemon/')
+def pokemon_list_redirect():
+    """Redirect /pokemon/ to pokedex"""
+    return redirect(url_for('pokedex'))
 
 @app.route('/pokemon/<identifier>')
 def pokemon_detail(identifier):
@@ -418,6 +423,377 @@ def api_stats():
         'total_images': total_images,
         'types_distribution': {t: c for t, c in types}
     })
+
+# ==================== FAVORITES ====================
+
+@app.route('/favorites')
+def favorites_page():
+    """User's favorites page"""
+    user = get_current_user()
+    if not user:
+        return redirect(url_for('auth.login', next=request.url))
+    
+    favorites = Favorite.query.filter_by(user_id=user.id).order_by(Favorite.created_at.desc()).all()
+    return render_template('favorites.html', favorites=favorites)
+
+@app.route('/api/favorites', methods=['GET'])
+def api_get_favorites():
+    """Get user's favorites"""
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Login required'}), 401
+    
+    favorites = Favorite.query.filter_by(user_id=user.id).all()
+    return jsonify([f.to_dict() for f in favorites])
+
+@app.route('/api/favorites/<int:pokemon_id>', methods=['POST'])
+def api_add_favorite(pokemon_id):
+    """Add a Pokemon to favorites"""
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Login required'}), 401
+    
+    pokemon = Pokemon.query.get(pokemon_id)
+    if not pokemon:
+        return jsonify({'error': 'Pokemon not found'}), 404
+    
+    existing = Favorite.query.filter_by(user_id=user.id, pokemon_id=pokemon_id).first()
+    if existing:
+        return jsonify({'error': 'Already in favorites'}), 400
+    
+    favorite = Favorite(user_id=user.id, pokemon_id=pokemon_id)
+    db.session.add(favorite)
+    db.session.commit()
+    
+    return jsonify({'success': True, 'favorite': favorite.to_dict()})
+
+@app.route('/api/favorites/<int:pokemon_id>', methods=['DELETE'])
+def api_remove_favorite(pokemon_id):
+    """Remove a Pokemon from favorites"""
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Login required'}), 401
+    
+    favorite = Favorite.query.filter_by(user_id=user.id, pokemon_id=pokemon_id).first()
+    if not favorite:
+        return jsonify({'error': 'Not in favorites'}), 404
+    
+    db.session.delete(favorite)
+    db.session.commit()
+    
+    return jsonify({'success': True})
+
+@app.route('/api/favorites/check/<int:pokemon_id>')
+def api_check_favorite(pokemon_id):
+    """Check if Pokemon is in favorites"""
+    user = get_current_user()
+    if not user:
+        return jsonify({'is_favorite': False})
+    
+    is_fav = Favorite.query.filter_by(user_id=user.id, pokemon_id=pokemon_id).first() is not None
+    return jsonify({'is_favorite': is_fav})
+
+# ==================== TEAM BUILDER ====================
+
+@app.route('/team-builder')
+def team_builder():
+    """Team builder page"""
+    user = get_current_user()
+    teams = []
+    if user:
+        teams = Team.query.filter_by(user_id=user.id).order_by(Team.updated_at.desc()).all()
+    
+    pokemon_list = Pokemon.query.order_by(Pokemon.number).all()
+    return render_template('team_builder.html', teams=teams, pokemon_list=pokemon_list, types=PokemonType.get_type_data())
+
+@app.route('/api/teams', methods=['GET'])
+def api_get_teams():
+    """Get user's teams"""
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Login required'}), 401
+    
+    teams = Team.query.filter_by(user_id=user.id).all()
+    return jsonify([t.to_dict() for t in teams])
+
+@app.route('/api/teams', methods=['POST'])
+def api_create_team():
+    """Create a new team"""
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Login required'}), 401
+    
+    data = request.get_json()
+    team = Team(
+        user_id=user.id,
+        name=data.get('name', 'My Team'),
+        description=data.get('description', '')
+    )
+    db.session.add(team)
+    db.session.commit()
+    
+    return jsonify({'success': True, 'team': team.to_dict()})
+
+@app.route('/api/teams/<int:team_id>', methods=['PUT'])
+def api_update_team(team_id):
+    """Update team details or members"""
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Login required'}), 401
+    
+    team = Team.query.filter_by(id=team_id, user_id=user.id).first()
+    if not team:
+        return jsonify({'error': 'Team not found'}), 404
+    
+    data = request.get_json()
+    
+    if 'name' in data:
+        team.name = data['name']
+    if 'description' in data:
+        team.description = data['description']
+    
+    if 'members' in data:
+        TeamMember.query.filter_by(team_id=team.id).delete()
+        for member_data in data['members']:
+            if member_data.get('pokemon_id'):
+                member = TeamMember(
+                    team_id=team.id,
+                    pokemon_id=member_data['pokemon_id'],
+                    slot=member_data['slot'],
+                    nickname=member_data.get('nickname')
+                )
+                db.session.add(member)
+    
+    db.session.commit()
+    return jsonify({'success': True, 'team': team.to_dict()})
+
+@app.route('/api/teams/<int:team_id>', methods=['DELETE'])
+def api_delete_team(team_id):
+    """Delete a team"""
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Login required'}), 401
+    
+    team = Team.query.filter_by(id=team_id, user_id=user.id).first()
+    if not team:
+        return jsonify({'error': 'Team not found'}), 404
+    
+    db.session.delete(team)
+    db.session.commit()
+    
+    return jsonify({'success': True})
+
+@app.route('/api/team-analysis', methods=['POST'])
+def api_team_analysis():
+    """Analyze team type coverage"""
+    data = request.get_json()
+    pokemon_ids = data.get('pokemon_ids', [])
+    
+    if not pokemon_ids:
+        return jsonify({'error': 'No Pokemon provided'}), 400
+    
+    pokemon_list = Pokemon.query.filter(Pokemon.id.in_(pokemon_ids)).all()
+    
+    type_coverage = {}
+    weaknesses = {}
+    resistances = {}
+    
+    all_types = list(PokemonType.get_type_data().keys())
+    
+    for t in all_types:
+        type_coverage[t] = 0
+        weaknesses[t] = 0
+        resistances[t] = 0
+    
+    for p in pokemon_list:
+        if p.main_type:
+            type_coverage[p.main_type.lower()] = type_coverage.get(p.main_type.lower(), 0) + 1
+        if p.secondary_type:
+            type_coverage[p.secondary_type.lower()] = type_coverage.get(p.secondary_type.lower(), 0) + 1
+    
+    return jsonify({
+        'type_coverage': type_coverage,
+        'team_size': len(pokemon_list),
+        'pokemon': [p.to_dict() for p in pokemon_list]
+    })
+
+# ==================== TYPE CHART ====================
+
+@app.route('/type-chart')
+def type_chart():
+    """Interactive type effectiveness chart"""
+    return render_template('type_chart.html', types=PokemonType.get_type_data())
+
+# ==================== QUIZ ====================
+
+@app.route('/quiz')
+def quiz_page():
+    """Who's That Pokemon quiz"""
+    return render_template('quiz.html')
+
+@app.route('/api/quiz/question')
+def api_quiz_question():
+    """Get a random quiz question"""
+    from sqlalchemy.sql.expression import func
+    
+    correct = Pokemon.query.order_by(func.random()).first()
+    if not correct:
+        return jsonify({'error': 'No Pokemon available'}), 404
+    
+    wrong = Pokemon.query.filter(Pokemon.id != correct.id).order_by(func.random()).limit(3).all()
+    
+    options = [correct] + wrong
+    import random
+    random.shuffle(options)
+    
+    return jsonify({
+        'pokemon_id': correct.id,
+        'pokemon_number': correct.number,
+        'options': [{'id': p.id, 'name': p.name} for p in options]
+    })
+
+@app.route('/api/quiz/submit', methods=['POST'])
+def api_quiz_submit():
+    """Submit quiz score"""
+    user = get_current_user()
+    data = request.get_json()
+    
+    score = QuizScore(
+        user_id=user.id if user else None,
+        score=data.get('score', 0),
+        total_questions=data.get('total', 10)
+    )
+    db.session.add(score)
+    db.session.commit()
+    
+    return jsonify({'success': True, 'score': score.to_dict()})
+
+@app.route('/api/quiz/leaderboard')
+def api_quiz_leaderboard():
+    """Get quiz leaderboard"""
+    scores = QuizScore.query.filter(QuizScore.user_id.isnot(None)).order_by(
+        (QuizScore.score * 100 / QuizScore.total_questions).desc(),
+        QuizScore.created_at.desc()
+    ).limit(20).all()
+    
+    return jsonify([s.to_dict() for s in scores])
+
+# ==================== COMPARISON TOOL ====================
+
+@app.route('/compare')
+def compare_page():
+    """Pokemon comparison tool"""
+    pokemon_list = Pokemon.query.order_by(Pokemon.number).all()
+    return render_template('compare.html', pokemon_list=pokemon_list)
+
+@app.route('/api/compare', methods=['POST'])
+def api_compare():
+    """Compare multiple Pokemon"""
+    data = request.get_json()
+    pokemon_ids = data.get('pokemon_ids', [])
+    
+    if len(pokemon_ids) < 2:
+        return jsonify({'error': 'Select at least 2 Pokemon'}), 400
+    if len(pokemon_ids) > 4:
+        return jsonify({'error': 'Maximum 4 Pokemon allowed'}), 400
+    
+    pokemon_list = Pokemon.query.filter(Pokemon.id.in_(pokemon_ids)).all()
+    
+    return jsonify({
+        'pokemon': [p.to_dict() for p in pokemon_list]
+    })
+
+# ==================== GALLERY ====================
+
+@app.route('/gallery')
+def gallery():
+    """Visual gallery of all Pokemon"""
+    generation = request.args.get('gen', '')
+    pokemon_type = request.args.get('type', '')
+    
+    query = Pokemon.query
+    
+    if pokemon_type:
+        query = query.filter(
+            (Pokemon.main_type.ilike(pokemon_type)) | 
+            (Pokemon.secondary_type.ilike(pokemon_type))
+        )
+    
+    if generation:
+        gen_ranges = {
+            '1': (1, 151), '2': (152, 251), '3': (252, 386),
+            '4': (387, 493), '5': (494, 649), '6': (650, 721),
+            '7': (722, 809), '8': (810, 905), '9': (906, 1025)
+        }
+        if generation in gen_ranges:
+            start, end = gen_ranges[generation]
+            query = query.filter(Pokemon.number >= start, Pokemon.number <= end)
+    
+    pokemon_list = query.order_by(Pokemon.number).all()
+    
+    return render_template('gallery.html', 
+                          pokemon_list=pokemon_list, 
+                          types=PokemonType.get_type_data(),
+                          current_type=pokemon_type,
+                          current_gen=generation)
+
+# ==================== DOWNLOAD CARD ====================
+
+@app.route('/api/download-card/<int:pokemon_id>')
+def download_card(pokemon_id):
+    """Generate and download a Pokemon card image"""
+    import io
+    from flask import Response
+    
+    pokemon = Pokemon.query.get(pokemon_id)
+    if not pokemon:
+        return jsonify({'error': 'Pokemon not found'}), 404
+    
+    card_html = f'''Pokemon Card: {pokemon.name} (#{pokemon.number})
+Type: {pokemon.main_type}{' / ' + pokemon.secondary_type if pokemon.secondary_type else ''}
+ATK: {pokemon.attack} | DEF: {pokemon.defense} | HP: {pokemon.stamina}
+{pokemon.pokedex_desc or ''}
+'''
+    
+    response = Response(card_html, mimetype='text/plain')
+    response.headers['Content-Disposition'] = f'attachment; filename={pokemon.name}_card.txt'
+    return response
+
+@app.route('/api/pokemon/<int:pokemon_id>/card-data')
+def get_card_data(pokemon_id):
+    """Get card data for client-side rendering"""
+    pokemon = Pokemon.query.get(pokemon_id)
+    if not pokemon:
+        return jsonify({'error': 'Pokemon not found'}), 404
+    
+    images = PokemonImage.query.filter_by(pokemon_id=pokemon.id).order_by(PokemonImage.order).all()
+    primary_image = images[0].path if images else None
+    
+    return jsonify({
+        'pokemon': pokemon.to_dict(),
+        'primary_image': primary_image,
+        'image_url': f'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{pokemon.number}.png'
+    })
+
+# ==================== POKEMON OF THE DAY ====================
+
+@app.route('/api/pokemon-of-the-day')
+def pokemon_of_the_day():
+    """Get Pokemon of the day (changes daily)"""
+    from datetime import date
+    import hashlib
+    
+    today = date.today().isoformat()
+    day_hash = int(hashlib.md5(today.encode()).hexdigest(), 16)
+    
+    total = Pokemon.query.count()
+    if total == 0:
+        return jsonify({'error': 'No Pokemon available'}), 404
+    
+    offset = day_hash % total
+    pokemon = Pokemon.query.order_by(Pokemon.number).offset(offset).first()
+    
+    return jsonify(pokemon.to_dict())
 
 # Error handlers
 @app.errorhandler(404)

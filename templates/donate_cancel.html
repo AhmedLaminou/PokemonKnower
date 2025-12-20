@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Donation Cancelled | Pokémon Knower{% endblock %}
+
+{% block content %}
+<div class="result-container">
+    <div class="result-card cancelled">
+        <div class="result-icon">
+            <i class="fas fa-times"></i>
+        </div>
+        <h1>Donation Cancelled</h1>
+        <p>Your donation was not completed.</p>
+        <p class="result-message">No worries! You can try again whenever you're ready.</p>
+        <div class="result-actions">
+            <a href="{{ url_for('donate') }}" class="btn btn-primary">
+                <i class="fas fa-heart"></i> Try Again
+            </a>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                <i class="fas fa-home"></i> Back to Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .result-container {
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .result-card {
+        background: rgba(30, 30, 46, 0.95);
+        border-radius: 20px;
+        padding: 3rem;
+        text-align: center;
+        max-width: 500px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .result-card.cancelled {
+        border-color: rgba(255, 107, 107, 0.3);
+    }
+
+    .result-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2.5rem;
+    }
+
+    .cancelled .result-icon {
+        background: rgba(255, 107, 107, 0.2);
+        color: #ff6b6b;
+    }
+
+    .result-card h1 {
+        margin-bottom: 0.5rem;
+        font-size: 2rem;
+    }
+
+    .result-card > p {
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    .result-message {
+        color: var(--text-muted) !important;
+        font-size: 0.95rem;
+        margin-bottom: 2rem !important;
+    }
+
+    .result-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--pokemon-red), #ff4757);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}

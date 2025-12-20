@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Thank You! | Pokémon Knower{% endblock %}
+
+{% block content %}
+<div class="result-container">
+    <div class="result-card success">
+        <div class="result-icon">
+            <i class="fas fa-heart"></i>
+        </div>
+        <h1>Thank You!</h1>
+        <p>Your donation has been received successfully.</p>
+        <p class="result-message">Your support helps keep Pokémon Knower running and growing. We truly appreciate it!</p>
+        <div class="result-actions">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                <i class="fas fa-home"></i> Back to Home
+            </a>
+            <a href="{{ url_for('pokedex') }}" class="btn btn-secondary">
+                <i class="fas fa-book-open"></i> Explore Pokédex
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .result-container {
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .result-card {
+        background: rgba(30, 30, 46, 0.95);
+        border-radius: 20px;
+        padding: 3rem;
+        text-align: center;
+        max-width: 500px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .result-card.success {
+        border-color: rgba(74, 222, 128, 0.3);
+    }
+
+    .result-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2.5rem;
+    }
+
+    .success .result-icon {
+        background: rgba(74, 222, 128, 0.2);
+        color: #4ade80;
+    }
+
+    .result-card h1 {
+        margin-bottom: 0.5rem;
+        font-size: 2rem;
+    }
+
+    .result-card > p {
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    .result-message {
+        color: var(--text-muted) !important;
+        font-size: 0.95rem;
+        margin-bottom: 2rem !important;
+    }
+
+    .result-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--pokemon-red), #ff4757);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}

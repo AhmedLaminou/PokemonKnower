@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}Type Chart | Pokémon Knower{% endblock %}
+
+{% block content %}
+<div class="type-chart-page">
+    <div class="page-header">
+        <h1><i class="fas fa-table"></i> Type Effectiveness Chart</h1>
+        <p>Learn which types are strong or weak against others</p>
+    </div>
+
+    <!-- Type Selector -->
+    <div class="type-selector">
+        <h3>Select a Type to See Details</h3>
+        <div class="type-buttons">
+            {% for type_name, type_data in types.items() %}
+            <button class="type-btn type-badge {{ type_name }}" data-type="{{ type_name }}" onclick="showTypeDetails('{{ type_name }}')">
+                {{ type_name|capitalize }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Type Details Panel -->
+    <div class="type-details" id="typeDetails" style="display: none;">
+        <h2 id="selectedTypeName"></h2>
+        
+        <div class="effectiveness-grid">
+            <div class="effectiveness-card strong">
+                <h3><i class="fas fa-arrow-up"></i> Super Effective Against</h3>
+                <div class="type-list" id="superEffective"></div>
+            </div>
+            <div class="effectiveness-card weak">
+                <h3><i class="fas fa-arrow-down"></i> Not Very Effective Against</h3>
+                <div class="type-list" id="notEffective"></div>
+            </div>
+            <div class="effectiveness-card immune">
+                <h3><i class="fas fa-ban"></i> No Effect Against</h3>
+                <div class="type-list" id="noEffect"></div>
+            </div>
+            <div class="effectiveness-card resist">
+                <h3><i class="fas fa-shield-alt"></i> Resistant To</h3>
+                <div class="type-list" id="resistantTo"></div>
+            </div>
+            <div class="effectiveness-card vulnerable">
+                <h3><i class="fas fa-skull"></i> Weak To</h3>
+                <div class="type-list" id="weakTo"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Chart -->
+    <div class="full-chart-section">
+        <h2><i class="fas fa-th"></i> Full Type Chart</h2>
+        <p class="chart-legend">
+            <span class="legend-item super">2× Super Effective</span>
+            <span class="legend-item not">½× Not Effective</span>
+            <span class="legend-item immune">0× No Effect</span>
+        </p>
+        <div class="chart-container">
+            <table class="type-chart-table" id="typeChartTable">
+                <thead>
+                    <tr>
+                        <th class="corner">ATK ↓ / DEF →</th>
+                        {% for type_name in types.keys() %}
+                        <th><span class="type-badge small {{ type_name }}">{{ type_name[:3]|upper }}</span></th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody id="typeChartBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .type-chart-page {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 i {
+        color: var(--pokemon-yellow);
+    }
+
+    .type-selector {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .type-selector h3 {
+        margin-bottom: 1rem;
+        color: var(--text-secondary);
+    }
+
+    .type-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+
+    .type-btn {
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+    }
+
+    .type-btn:hover, .type-btn.active {
+        transform: scale(1.1);
+        border-color: white;
+    }
+
+    .type-details {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .type-details h2 {
+        text-align: center;
+        text-transform: capitalize;
+        margin-bottom: 1.5rem;
+    }
+
+    .effectiveness-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .effectiveness-card {
+        background: var(--bg-darker);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+    }
+
+    .effectiveness-card h3 {
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .effectiveness-card.strong h3 { color: #4ade80; }
+    .effectiveness-card.weak h3 { color: #fb923c; }
+    .effectiveness-card.immune h3 { color: #94a3b8; }
+    .effectiveness-card.resist h3 { color: #60a5fa; }
+    .effectiveness-card.vulnerable h3 { color: #f87171; }
+
+    .type-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .type-list .type-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+    }
+
+    .full-chart-section {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+    }
+
+    .full-chart-section h2 {
+        margin-bottom: 1rem;
+    }
+
+    .chart-legend {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+
+    .legend-item.super { background: rgba(74, 222, 128, 0.3); color: #4ade80; }
+    .legend-item.not { background: rgba(251, 146, 60, 0.3); color: #fb923c; }
+    .legend-item.immune { background: rgba(100, 100, 100, 0.3); color: #888; }
+
+    .chart-container {
+        overflow-x: auto;
+    }
+
+    .type-chart-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.75rem;
+        min-width: 900px;
+    }
+
+    .type-chart-table th,
+    .type-chart-table td {
+        padding: 0.35rem;
+        text-align: center;
+        border: 1px solid var(--border-color);
+    }
+
+    .type-chart-table th.corner {
+        font-size: 0.65rem;
+        color: var(--text-muted);
+    }
+
+    .type-badge.small {
+        font-size: 0.6rem;
+        padding: 0.15rem 0.3rem;
+    }
+
+    .type-chart-table td.super { background: rgba(74, 222, 128, 0.3); color: #4ade80; font-weight: bold; }
+    .type-chart-table td.not { background: rgba(251, 146, 60, 0.3); color: #fb923c; }
+    .type-chart-table td.immune { background: rgba(100, 100, 100, 0.5); color: #666; }
+    .type-chart-table td.normal { color: var(--text-muted); }
+
+    @media (max-width: 768px) {
+        .effectiveness-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const typeChart = {
+    normal: { superEffective: [], notEffective: ['rock', 'steel'], noEffect: ['ghost'], weakTo: ['fighting'], resistantTo: [], immuneTo: ['ghost'] },
+    fire: { superEffective: ['grass', 'ice', 'bug', 'steel'], notEffective: ['fire', 'water', 'rock', 'dragon'], noEffect: [], weakTo: ['water', 'ground', 'rock'], resistantTo: ['fire', 'grass', 'ice', 'bug', 'steel', 'fairy'], immuneTo: [] },
+    water: { superEffective: ['fire', 'ground', 'rock'], notEffective: ['water', 'grass', 'dragon'], noEffect: [], weakTo: ['electric', 'grass'], resistantTo: ['fire', 'water', 'ice', 'steel'], immuneTo: [] },
+    electric: { superEffective: ['water', 'flying'], notEffective: ['electric', 'grass', 'dragon'], noEffect: ['ground'], weakTo: ['ground'], resistantTo: ['electric', 'flying', 'steel'], immuneTo: [] },
+    grass: { superEffective: ['water', 'ground', 'rock'], notEffective: ['fire', 'grass', 'poison', 'flying', 'bug', 'dragon', 'steel'], noEffect: [], weakTo: ['fire', 'ice', 'poison', 'flying', 'bug'], resistantTo: ['water', 'electric', 'grass', 'ground'], immuneTo: [] },
+    ice: { superEffective: ['grass', 'ground', 'flying', 'dragon'], notEffective: ['fire', 'water', 'ice', 'steel'], noEffect: [], weakTo: ['fire', 'fighting', 'rock', 'steel'], resistantTo: ['ice'], immuneTo: [] },
+    fighting: { superEffective: ['normal', 'ice', 'rock', 'dark', 'steel'], notEffective: ['poison', 'flying', 'psychic', 'bug', 'fairy'], noEffect: ['ghost'], weakTo: ['flying', 'psychic', 'fairy'], resistantTo: ['bug', 'rock', 'dark'], immuneTo: [] },
+    poison: { superEffective: ['grass', 'fairy'], notEffective: ['poison', 'ground', 'rock', 'ghost'], noEffect: ['steel'], weakTo: ['ground', 'psychic'], resistantTo: ['grass', 'fighting', 'poison', 'bug', 'fairy'], immuneTo: [] },
+    ground: { superEffective: ['fire', 'electric', 'poison', 'rock', 'steel'], notEffective: ['grass', 'bug'], noEffect: ['flying'], weakTo: ['water', 'grass', 'ice'], resistantTo: ['poison', 'rock'], immuneTo: ['electric'] },
+    flying: { superEffective: ['grass', 'fighting', 'bug'], notEffective: ['electric', 'rock', 'steel'], noEffect: [], weakTo: ['electric', 'ice', 'rock'], resistantTo: ['grass', 'fighting', 'bug'], immuneTo: ['ground'] },
+    psychic: { superEffective: ['fighting', 'poison'], notEffective: ['psychic', 'steel'], noEffect: ['dark'], weakTo: ['bug', 'ghost', 'dark'], resistantTo: ['fighting', 'psychic'], immuneTo: [] },
+    bug: { superEffective: ['grass', 'psychic', 'dark'], notEffective: ['fire', 'fighting', 'poison', 'flying', 'ghost', 'steel', 'fairy'], noEffect: [], weakTo: ['fire', 'flying', 'rock'], resistantTo: ['grass', 'fighting', 'ground'], immuneTo: [] },
+    rock: { superEffective: ['fire', 'ice', 'flying', 'bug'], notEffective: ['fighting', 'ground', 'steel'], noEffect: [], weakTo: ['water', 'grass', 'fighting', 'ground', 'steel'], resistantTo: ['normal', 'fire', 'poison', 'flying'], immuneTo: [] },
+    ghost: { superEffective: ['psychic', 'ghost'], notEffective: ['dark'], noEffect: ['normal'], weakTo: ['ghost', 'dark'], resistantTo: ['poison', 'bug'], immuneTo: ['normal', 'fighting'] },
+    dragon: { superEffective: ['dragon'], notEffective: ['steel'], noEffect: ['fairy'], weakTo: ['ice', 'dragon', 'fairy'], resistantTo: ['fire', 'water', 'electric', 'grass'], immuneTo: [] },
+    dark: { superEffective: ['psychic', 'ghost'], notEffective: ['fighting', 'dark', 'fairy'], noEffect: [], weakTo: ['fighting', 'bug', 'fairy'], resistantTo: ['ghost', 'dark'], immuneTo: ['psychic'] },
+    steel: { superEffective: ['ice', 'rock', 'fairy'], notEffective: ['fire', 'water', 'electric', 'steel'], noEffect: [], weakTo: ['fire', 'fighting', 'ground'], resistantTo: ['normal', 'grass', 'ice', 'flying', 'psychic', 'bug', 'rock', 'dragon', 'steel', 'fairy'], immuneTo: ['poison'] },
+    fairy: { superEffective: ['fighting', 'dragon', 'dark'], notEffective: ['fire', 'poison', 'steel'], noEffect: [], weakTo: ['poison', 'steel'], resistantTo: ['fighting', 'bug', 'dark'], immuneTo: ['dragon'] }
+};
+
+const typeOrder = ['normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'];
+
+function showTypeDetails(typeName) {
+    document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.type-btn[data-type="${typeName}"]`).classList.add('active');
+    
+    const details = document.getElementById('typeDetails');
+    details.style.display = 'block';
+    
+    document.getElementById('selectedTypeName').textContent = typeName.charAt(0).toUpperCase() + typeName.slice(1) + ' Type';
+    document.getElementById('selectedTypeName').className = `type-badge ${typeName}`;
+    document.getElementById('selectedTypeName').style.display = 'inline-block';
+    document.getElementById('selectedTypeName').style.margin = '0 auto 1.5rem';
+    document.getElementById('selectedTypeName').style.padding = '0.5rem 2rem';
+    document.getElementById('selectedTypeName').style.fontSize = '1.5rem';
+    
+    const data = typeChart[typeName];
+    
+    document.getElementById('superEffective').innerHTML = data.superEffective.map(t => `<span class="type-badge ${t}">${t}</span>`).join('') || '<span style="color: var(--text-muted)">None</span>';
+    document.getElementById('notEffective').innerHTML = data.notEffective.map(t => `<span class="type-badge ${t}">${t}</span>`).join('') || '<span style="color: var(--text-muted)">None</span>';
+    document.getElementById('noEffect').innerHTML = data.noEffect.map(t => `<span class="type-badge ${t}">${t}</span>`).join('') || '<span style="color: var(--text-muted)">None</span>';
+    document.getElementById('resistantTo').innerHTML = data.resistantTo.map(t => `<span class="type-badge ${t}">${t}</span>`).join('') || '<span style="color: var(--text-muted)">None</span>';
+    document.getElementById('weakTo').innerHTML = data.weakTo.map(t => `<span class="type-badge ${t}">${t}</span>`).join('') || '<span style="color: var(--text-muted)">None</span>';
+}
+
+// Build full chart table
+function buildTypeChartTable() {
+    const tbody = document.getElementById('typeChartBody');
+    let html = '';
+    
+    typeOrder.forEach(attackType => {
+        html += `<tr><th><span class="type-badge small ${attackType}">${attackType.substring(0,3).toUpperCase()}</span></th>`;
+        
+        typeOrder.forEach(defendType => {
+            const attackData = typeChart[attackType];
+            let cellClass = 'normal';
+            let cellText = '1×';
+            
+            if (attackData.superEffective.includes(defendType)) {
+                cellClass = 'super';
+                cellText = '2×';
+            } else if (attackData.notEffective.includes(defendType)) {
+                cellClass = 'not';
+                cellText = '½×';
+            } else if (attackData.noEffect.includes(defendType)) {
+                cellClass = 'immune';
+                cellText = '0';
+            }
+            
+            html += `<td class="${cellClass}">${cellText}</td>`;
+        });
+        
+        html += '</tr>';
+    });
+    
+    tbody.innerHTML = html;
+}
+
+document.addEventListener('DOMContentLoaded', buildTypeChartTable);
+</script>
+{% endblock %}

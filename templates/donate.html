@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+
+{% block title %}Support Us | Pokémon Knower{% endblock %}
+
+{% block content %}
+<div class="donate-container">
+    <div class="donate-header">
+        <h1><i class="fas fa-heart"></i> Support Pokémon Knower</h1>
+        <p>Help me keep this project running and growing!</p>
+    </div>
+
+    <div class="donate-content">
+        <div class="donate-card">
+            <div class="donate-info">
+                <h2>Why Donate?</h2>
+                <ul>
+                    <li><i class="fas fa-server"></i> Server & hosting costs</li>
+                    <li><i class="fas fa-brain"></i> AI model improvements</li>
+                    <li><i class="fas fa-database"></i> Dataset expansion</li>
+                    <li><i class="fas fa-code"></i> New features development</li>
+                </ul>
+            </div>
+
+            <form id="donateForm" class="donate-form">
+                <div class="amount-selection">
+                    <h3>Select Amount</h3>
+                    <div class="amount-buttons">
+                        <button type="button" class="amount-btn" data-amount="300">$3</button>
+                        <button type="button" class="amount-btn active" data-amount="500">$5</button>
+                        <button type="button" class="amount-btn" data-amount="1000">$10</button>
+                        <button type="button" class="amount-btn" data-amount="2500">$25</button>
+                        <button type="button" class="amount-btn" data-amount="5000">$50</button>
+                        <button type="button" class="amount-btn custom-btn" data-amount="custom">Custom</button>
+                    </div>
+                    <div id="customAmount" class="custom-amount" style="display: none;">
+                        <label for="customInput">Enter amount ($)</label>
+                        <input type="number" id="customInput" min="1" max="10000" step="1" placeholder="Enter amount">
+                    </div>
+                </div>
+
+                <div class="donor-info">
+                    <div class="form-group">
+                        <label for="donorName"><i class="fas fa-user"></i> Name (optional)</label>
+                        <input type="text" id="donorName" name="name" placeholder="Your name">
+                    </div>
+                    <div class="form-group">
+                        <label for="donorEmail"><i class="fas fa-envelope"></i> Email (for receipt)</label>
+                        <input type="email" id="donorEmail" name="email" placeholder="your@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="donorMessage"><i class="fas fa-comment"></i> Message (optional)</label>
+                        <textarea id="donorMessage" name="message" rows="2" placeholder="Leave a message..."></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="donate-btn" id="donateBtn">
+                    <i class="fas fa-heart"></i> Donate <span id="donateAmount">$5.00</span>
+                </button>
+
+                <p class="secure-notice">
+                    <i class="fas fa-lock"></i> Secure payment powered by Stripe
+                </p>
+            </form>
+        </div>
+
+        <div class="recent-supporters">
+            <h3><i class="fas fa-users"></i> Recent Supporters</h3>
+            <p class="supporters-note">Thank you to everyone who has supported this project!</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .donate-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .donate-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .donate-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .donate-header h1 i {
+        color: #ff6b6b;
+    }
+
+    .donate-header p {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+    }
+
+    .donate-card {
+        background: rgba(30, 30, 46, 0.95);
+        border-radius: 20px;
+        padding: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .donate-info {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .donate-info h2 {
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+    }
+
+    .donate-info ul {
+        list-style: none;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .donate-info li {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-secondary);
+    }
+
+    .donate-info li i {
+        color: var(--pokemon-yellow);
+        width: 20px;
+    }
+
+    .amount-selection h3 {
+        margin-bottom: 1rem;
+        font-size: 1rem;
+        color: var(--text-secondary);
+    }
+
+    .amount-buttons {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .amount-btn {
+        padding: 1rem;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        background: transparent;
+        color: var(--text-primary);
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .amount-btn:hover {
+        border-color: var(--pokemon-yellow);
+        background: rgba(255, 203, 5, 0.1);
+    }
+
+    .amount-btn.active {
+        border-color: var(--pokemon-yellow);
+        background: var(--pokemon-yellow);
+        color: #1a1a2e;
+    }
+
+    .custom-amount {
+        margin-top: 1rem;
+    }
+
+    .custom-amount label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .custom-amount input {
+        width: 100%;
+        padding: 0.875rem;
+        border-radius: 10px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.3);
+        color: var(--text-primary);
+        font-size: 1.1rem;
+    }
+
+    .donor-info {
+        margin: 1.5rem 0;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .form-group label i {
+        margin-right: 0.5rem;
+        color: var(--pokemon-red);
+    }
+
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.3);
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--pokemon-red);
+    }
+
+    .donate-btn {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, #ff6b6b, var(--pokemon-red));
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-size: 1.2rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .donate-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(220, 10, 45, 0.4);
+    }
+
+    .donate-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .secure-notice {
+        text-align: center;
+        margin-top: 1rem;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    .secure-notice i {
+        color: #4ade80;
+        margin-right: 0.25rem;
+    }
+
+    .recent-supporters {
+        background: rgba(30, 30, 46, 0.95);
+        border-radius: 20px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
+    }
+
+    .recent-supporters h3 {
+        margin-bottom: 0.5rem;
+    }
+
+    .recent-supporters h3 i {
+        color: var(--pokemon-yellow);
+    }
+
+    .supporters-note {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    @media (max-width: 600px) {
+        .amount-buttons {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .donate-info ul {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const amountBtns = document.querySelectorAll('.amount-btn');
+    const customAmountDiv = document.getElementById('customAmount');
+    const customInput = document.getElementById('customInput');
+    const donateBtn = document.getElementById('donateBtn');
+    const donateAmount = document.getElementById('donateAmount');
+    const form = document.getElementById('donateForm');
+    
+    let selectedAmount = 500; // Default $5 in cents
+
+    function updateDonateButton() {
+        const dollars = (selectedAmount / 100).toFixed(2);
+        donateAmount.textContent = `$${dollars}`;
+    }
+
+    amountBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            amountBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const amount = btn.dataset.amount;
+            
+            if (amount === 'custom') {
+                customAmountDiv.style.display = 'block';
+                customInput.focus();
+                if (customInput.value) {
+                    selectedAmount = parseInt(customInput.value) * 100;
+                }
+            } else {
+                customAmountDiv.style.display = 'none';
+                selectedAmount = parseInt(amount);
+            }
+            
+            updateDonateButton();
+        });
+    });
+
+    customInput.addEventListener('input', () => {
+        const value = parseInt(customInput.value) || 0;
+        selectedAmount = Math.max(100, Math.min(value * 100, 1000000));
+        updateDonateButton();
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        donateBtn.disabled = true;
+        donateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        
+        try {
+            const response = await fetch('/donate/create-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    amount: selectedAmount,
+                    name: document.getElementById('donorName').value,
+                    email: document.getElementById('donorEmail').value,
+                    message: document.getElementById('donorMessage').value,
+                }),
+            });
+            
+            const data = await response.json();
+            
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                alert(data.error || 'Failed to create checkout session');
+                donateBtn.disabled = false;
+                donateBtn.innerHTML = `<i class="fas fa-heart"></i> Donate <span id="donateAmount">$${(selectedAmount/100).toFixed(2)}</span>`;
+            }
+        } catch (error) {
+            alert('An error occurred. Please try again.');
+            donateBtn.disabled = false;
+            donateBtn.innerHTML = `<i class="fas fa-heart"></i> Donate <span id="donateAmount">$${(selectedAmount/100).toFixed(2)}</span>`;
+        }
+    });
+});
+</script>
+{% endblock %}
