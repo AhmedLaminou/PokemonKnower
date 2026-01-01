@@ -1,23 +1,4 @@
-# Multi-stage build for Pokemon Knower
-# Stage 1: Build React frontend
-FROM node:18-alpine AS react-builder
-
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy source code
-COPY public/ ./public/
-COPY src/ ./src/
-
-# Build React app
-RUN npm run build
-
-# Stage 2: Python Flask backend
+# Dockerfile for Pokemon Knower - Flask Application
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -43,10 +24,7 @@ COPY pokemon.csv .
 COPY class_indices.json .
 COPY pokemon_classifier_model_V3.h5 .
 
-# Copy built React app from stage 1
-COPY --from=react-builder /app/build ./build
-
-# Copy templates and static files (for Flask serving if needed)
+# Copy templates and static files
 COPY templates/ ./templates/
 COPY static/ ./static/
 
