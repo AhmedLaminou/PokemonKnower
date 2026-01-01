@@ -806,7 +806,11 @@ def server_error(e):
 
 # Create database tables on first run
 with app.app_context():
-    db.create_all()
+    from sqlalchemy import inspect
+    inspector = inspect(db.engine)
+    existing_tables = inspector.get_table_names()
+    if not existing_tables:
+        db.create_all()
 
 if __name__ == '__main__':
     print("Starting Pokémon Knower...")
