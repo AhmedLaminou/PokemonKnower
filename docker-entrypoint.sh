@@ -22,6 +22,11 @@ fi
 
 # Start Flask with Gunicorn for production
 echo "📦 Starting Flask with Gunicorn..."
+
+# Initialize database tables before starting workers
+echo "🗃️ Initializing database..."
+python -c "from app import app, db; app.app_context().push(); db.create_all(); print('✅ Database initialized')"
+
 exec gunicorn \
     --bind 0.0.0.0:5000 \
     --workers 4 \
@@ -31,4 +36,5 @@ exec gunicorn \
     --access-logfile - \
     --error-logfile - \
     --log-level info \
+    --preload \
     app:app

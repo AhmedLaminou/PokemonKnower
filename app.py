@@ -804,14 +804,9 @@ def not_found(e):
 def server_error(e):
     return render_template('500.html'), 500
 
-# Create database tables on first run
-with app.app_context():
-    from sqlalchemy import inspect
-    inspector = inspect(db.engine)
-    existing_tables = inspector.get_table_names()
-    if not existing_tables:
-        db.create_all()
-
+# Create database tables on first run (only when running directly, not with Gunicorn)
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
     print("Starting Pokémon Knower...")
     app.run(debug=True, port=5000)
