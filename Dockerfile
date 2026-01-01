@@ -21,6 +21,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy Python application
 COPY app.py .
+COPY models.py .
+COPY auth.py .
+COPY admin.py .
+COPY donations.py .
+COPY migrate_db.py .
 COPY pokemon.csv .
 COPY class_indices.json .
 COPY pokemon_classifier_model_V3.h5 .
