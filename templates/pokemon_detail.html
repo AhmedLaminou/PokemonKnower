@@ -427,66 +427,141 @@ async function toggleFavorite() {
 }
 
 function downloadCard() {
-    const pokemonId = document.getElementById('favoriteBtn').dataset.pokemonId;
     const pokemonName = '{{ pokemon.name }}';
     const pokemonNumber = {{ pokemon.number }};
     
-    // Create card canvas
+    // Create high-res canvas
     const canvas = document.createElement('canvas');
-    canvas.width = 400;
-    canvas.height = 560;
+    canvas.width = 800;
+    canvas.height = 1000;
     const ctx = canvas.getContext('2d');
     
-    // Background
-    const gradient = ctx.createLinearGradient(0, 0, 0, 560);
+    // Background - Premium Dark Gradient
+    const gradient = ctx.createLinearGradient(0, 0, 800, 1000);
     gradient.addColorStop(0, '#1a1a2e');
-    gradient.addColorStop(1, '#16213e');
+    gradient.addColorStop(0.5, '#16213e');
+    gradient.addColorStop(1, '#0f3460');
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 400, 560);
+    ctx.fillRect(0, 0, 800, 1000);
     
-    // Border
-    ctx.strokeStyle = '#FFCB05';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(10, 10, 380, 540);
+    // Header Bar
+    ctx.fillStyle = '#DC0A2D';
+    ctx.fillRect(0, 0, 800, 100);
+    
+    // Card Title
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 50px Outfit, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('POKÉMON DATASHEET', 400, 70);
     
     // Load and draw Pokemon image
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
-        ctx.drawImage(img, 100, 80, 200, 200);
+        // Draw Image container (Glassmorphism look)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.fillRect(50, 130, 300, 300);
+        ctx.strokeStyle = '#FFCB05';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(50, 130, 300, 300);
         
-        // Pokemon name
+        // Draw Pokemon Image
+        ctx.drawImage(img, 60, 140, 280, 280);
+        
+        // --- Info Section (Right side) ---
+        ctx.textAlign = 'left';
+        
+        // Wait for font to load
+        await document.fonts.load('bold 60px Outfit');
+        
+        // Name & Number
         ctx.fillStyle = '#FFCB05';
-        ctx.font = 'bold 28px Poppins, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(pokemonName, 200, 320);
+        ctx.font = 'bold 60px "Outfit", sans-serif';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 10;
+        ctx.fillText(pokemonName.toUpperCase(), 380, 200);
+        ctx.shadowBlur = 0;
         
-        // Number
-        ctx.fillStyle = '#888';
-        ctx.font = '18px Poppins, sans-serif';
-        ctx.fillText('#' + String(pokemonNumber).padStart(3, '0'), 200, 350);
+        ctx.fillStyle = '#aaa';
+        ctx.font = '500 40px "Outfit", sans-serif';
+        ctx.fillText('#' + String(pokemonNumber).padStart(4, '0'), 380, 250);
         
-        // Types
+        // Types - styled badges
+        const typeText = 'TYPE: {{ pokemon.main_type }}{% if pokemon.secondary_type %} / {{ pokemon.secondary_type }}{% endif %}';
         ctx.fillStyle = '#fff';
-        ctx.font = '16px Poppins, sans-serif';
-        ctx.fillText('{{ pokemon.main_type }}{% if pokemon.secondary_type %} / {{ pokemon.secondary_type }}{% endif %}', 200, 380);
+        ctx.font = 'bold 30px "Outfit", sans-serif';
+        ctx.fillText(typeText, 380, 310);
         
-        // Stats
-        ctx.fillStyle = '#DC0A2D';
-        ctx.fillText('ATK: {{ pokemon.attack }} | DEF: {{ pokemon.defense }} | HP: {{ pokemon.stamina }}', 200, 420);
+        // Category/Family
+        ctx.font = 'italic 24px Outfit, sans-serif';
+        ctx.fillStyle = '#ddd';
+        ctx.fillText('{{ pokemon.category }} Pokémon', 380, 350);
+        ctx.fillText('Family: {{ pokemon.pokemon_family }}', 380, 380);
         
-        // Watermark
-        ctx.fillStyle = '#444';
-        ctx.font = '12px Poppins, sans-serif';
-        ctx.fillText('Pokémon Knower', 200, 530);
+        // --- Stats Grid (Bottom Section) ---
+        const startY = 500;
+        
+        // Stat Box Background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(50, startY, 700, 420);
+        ctx.strokeStyle = '#444';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(50, startY, 700, 420);
+        
+        ctx.fillStyle = '#FFCB05';
+        ctx.font = 'bold 36px Outfit, sans-serif';
+        ctx.fillText('BATTLE STATISTICS', 80, startY + 50);
+        
+        // Stats function
+        function drawStat(label, value, x, y) {
+            ctx.fillStyle = '#aaa';
+            ctx.font = 'bold 24px Outfit, sans-serif';
+            ctx.fillText(label, x, y);
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = '30px Outfit, sans-serif';
+            ctx.fillText(value, x + 180, y);
+            
+            // Bar
+            const barWidth = 200;
+            const fillWidth = Math.min((value / 255) * barWidth, barWidth);
+            
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x + 250, y - 20, barWidth, 20);
+            
+            ctx.fillStyle = value > 100 ? '#00ff00' : (value > 60 ? '#ffff00' : '#ff0000');
+            ctx.fillRect(x + 250, y - 20, fillWidth, 20);
+        }
+        
+        // Left Column Attributes
+        drawStat('HP', {{ pokemon.stamina }}, 80, startY + 120);
+        drawStat('Attack', {{ pokemon.attack }}, 80, startY + 180);
+        drawStat('Defense', {{ pokemon.defense }}, 80, startY + 240);
+        
+        // Right Column Attributes
+        drawStat('Sp. Atk', {{ pokemon.sp_attack }}, 80, startY + 300);
+        drawStat('Sp. Def', {{ pokemon.sp_defense }}, 80, startY + 360);
+        drawStat('Speed', {{ pokemon.speed }}, 80, startY + 420);
+        
+        // Physical Details
+        ctx.fillStyle = '#fff';
+        ctx.font = '24px Outfit, sans-serif';
+        ctx.fillText(`Height: {{ pokemon.height }}m   Weight: {{ pokemon.weight }}kg`, 420, startY + 120);
+        ctx.fillText(`Catch Rate: {{ pokemon.capture_rate or 'N/A' }}`, 420, startY + 160);
+        
+        // Footer / Watermark
+        ctx.fillStyle = '#888';
+        ctx.font = '20px Outfit, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Generated by Pokémon Knower AI', 400, 960);
         
         // Download
         const link = document.createElement('a');
-        link.download = `${pokemonName}_card.png`;
+        link.download = `ReferenceCard_${pokemonName}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
     };
-    img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonNumber}.png`;
+    img.src = document.getElementById('mainImage').src || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonNumber}.png`;
 }
 
 function shareCard() {

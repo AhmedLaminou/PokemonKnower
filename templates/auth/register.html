@@ -1,17 +1,54 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Register</title>
-</head>
-<body>
-    <h1>Create Account</h1>
-    {% if error %}<p style="color:red">{{ error }}</p>{% endif %}
-    <form method="POST">
-        <input type="text" name="name" placeholder="Full Name" required>
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit">Register</button>
-    </form>
-    <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></p>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Register | Pokémon Knower{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Join the Journey</h1>
+            <p>Create your account to track your Pokémon discovery</p>
+        </div>
+        
+        {% if error %}
+        <div style="background: rgba(220, 10, 45, 0.2); border: 1px solid var(--pokedex-red); color: #ffcccc; padding: 10px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+            <i class="fas fa-exclamation-circle"></i> {{ error }}
+        </div>
+        {% endif %}
+        
+        <form method="POST" class="auth-form">
+            <div class="form-group">
+                <input type="text" name="name" placeholder="Trainer Name" required class="glass-input">
+                <i class="fas fa-user input-icon"></i>
+            </div>
+            
+            <div class="form-group">
+                <input type="email" name="email" placeholder="Email Address" required class="glass-input">
+                <i class="fas fa-envelope input-icon"></i>
+            </div>
+            
+            <div class="form-group">
+                <input type="password" name="password" placeholder="Password" required class="glass-input">
+                <i class="fas fa-lock input-icon"></i>
+            </div>
+            
+            <button type="submit" class="auth-btn pulse-on-hover">
+                Start Adventure <i class="fas fa-arrow-right" style="position: static; transform: none; margin-left: 8px;"></i>
+            </button>
+            
+            <div class="divider">
+                <span>OR</span>
+            </div>
+            
+            <a href="{{ url_for('auth.google_login') }}" class="google-btn">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="20">
+                <span>Join with Google</span>
+            </a>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Already a trainer? <a href="{{ url_for('auth.login') }}">Login here</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

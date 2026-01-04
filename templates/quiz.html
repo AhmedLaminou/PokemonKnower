@@ -17,6 +17,11 @@
                 <i class="fas fa-gamepad quiz-icon"></i>
                 <h2>Ready to Test Your Knowledge?</h2>
                 <p>You'll see a silhouette and need to guess the Pokémon!</p>
+                <div class="streak-display" id="streakDisplay" style="display: none;">
+                    <i class="fas fa-fire streak-icon"></i> 
+                    <span>Daily Streak: <strong id="streakCount">0</strong> days</span>
+                </div>
+
                 <div class="quiz-options">
                     <label>Number of Questions:</label>
                     <select id="questionCount">
@@ -126,6 +131,29 @@
     .start-card p {
         color: var(--text-muted);
         margin-bottom: 1.5rem;
+    }
+
+    .streak-display {
+        margin-bottom: 2rem;
+        padding: 0.75rem 1.5rem;
+        background: rgba(255, 107, 107, 0.1);
+        border: 1px solid #ff6b6b;
+        border-radius: 50px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #ff6b6b;
+        animation: pulse 2s infinite;
+    }
+
+    .streak-icon {
+        font-size: 1.25rem;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(255, 107, 107, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
     }
 
     .quiz-options {
@@ -353,6 +381,23 @@ let currentQuestion = 0;
 let score = 0;
 let totalQuestions = 10;
 let questions = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check for streak
+    try {
+        const response = await fetch('/api/user/streak');
+        const data = await response.json();
+        const streakDisplay = document.getElementById('streakDisplay');
+        const streakCount = document.getElementById('streakCount');
+        
+        if (data.streak > 0) {
+            streakCount.textContent = data.streak;
+            streakDisplay.style.display = 'inline-flex';
+        }
+    } catch (e) {
+        console.error('Streak fetch error:', e);
+    }
+});
 
 async function startQuiz() {
     totalQuestions = parseInt(document.getElementById('questionCount').value);

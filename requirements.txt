@@ -11,3 +11,6 @@ requests==2.31.0
 psycopg2-binary==2.9.9
 stytch==9.3.0
 stripe==7.8.0
+langchain-openai==1.1.6
+langchain-community==0.4.1
+langgraph==1.0.5

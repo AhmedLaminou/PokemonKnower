@@ -429,4 +429,85 @@ document.addEventListener('DOMContentLoaded', () => {
             if (filtersPanel) filtersPanel.classList.remove('show');
         }
     });
+
+    // ==================== Chat Widget ====================
+    window.toggleChat = function() {
+        const chatWidget = document.getElementById('chat-widget');
+        const chatIcon = document.getElementById('chat-toggle-icon');
+        
+        chatWidget.classList.toggle('open');
+        
+        if (chatWidget.classList.contains('open')) {
+            chatIcon.classList.remove('fa-chevron-up');
+            chatIcon.classList.add('fa-chevron-down');
+        } else {
+            chatIcon.classList.remove('fa-chevron-down');
+            chatIcon.classList.add('fa-chevron-up');
+        }
+    }
+
+    window.handleChatInput = function(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    window.sendMessage = async function() {
+        const input = document.getElementById('chat-input');
+        const message = input.value.trim();
+        const chatBody = document.getElementById('chat-body');
+        
+        if (!message) return;
+        
+        // Add user message
+        appendMessage('user', message);
+        input.value = '';
+        
+        // Show loading state
+        const loadingId = 'loading-' + Date.now();
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'chat-message bot-message';
+        loadingDiv.id = loadingId;
+        loadingDiv.innerHTML = `<div class="message-content"><i class="fas fa-spinner fa-spin"></i> Thinking...</div>`;
+        chatBody.appendChild(loadingDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+        
+        try {
+            const response = await fetch('/chat/message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: message })
+            });
+            
+            const data = await response.json();
+            
+            // Remove loading
+            document.getElementById(loadingId).remove();
+            
+            if (data.error) {
+                appendMessage('bot', 'Error: ' + data.error);
+            } else {
+                appendMessage('bot', data.response);
+            }
+        } catch (error) {
+            document.getElementById(loadingId).remove();
+            appendMessage('bot', 'Sorry, I encountered an error. Please try again.');
+            console.error('Chat error:', error);
+        }
+    }
+
+    function appendMessage(sender, text) {
+        const chatBody = document.getElementById('chat-body');
+        const div = document.createElement('div');
+        div.className = `chat-message ${sender}-message`;
+        
+        // Convert newlines to breaks for display
+        const formattedText = text.replace(/\n/g, '<br>');
+        
+        div.innerHTML = `<div class="message-content">${formattedText}</div>`;
+        chatBody.appendChild(div);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
 });

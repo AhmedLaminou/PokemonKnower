@@ -73,8 +73,8 @@ class Pokemon(db.Model):
     __tablename__ = 'pokemon'
     
     id = db.Column(db.Integer, primary_key=True)
-    number = db.Column(db.Integer, unique=True, nullable=False)
-    name = db.Column(db.String(100), unique=True, nullable=False)
+    number = db.Column(db.Integer, nullable=False) # Not unique anymore (Mega/Forms)
+    name = db.Column(db.String(100), nullable=False) # Name might duplicate for forms? Best to keep unique constraint off if strict names aren't guaranteed unique
     
     # Types
     main_type = db.Column(db.String(50), nullable=False)
@@ -83,47 +83,47 @@ class Pokemon(db.Model):
     # Basic Info
     region = db.Column(db.String(50), default='Kanto')
     category = db.Column(db.String(100))
-    height = db.Column(db.String(20))  # e.g., "0.7 m"
-    weight = db.Column(db.String(20))  # e.g., "6.9 kg"
+    height = db.Column(db.String(20))
+    weight = db.Column(db.String(20))
     pokemon_family = db.Column(db.String(100))
     
-    # Combat Stats (from Pokemon GO data)
+    # Combat Stats (Main Series + GO)
+    hp = db.Column(db.Integer, default=0)
     attack = db.Column(db.Integer, default=0)
     defense = db.Column(db.Integer, default=0)
-    stamina = db.Column(db.Integer, default=0)
+    sp_attack = db.Column(db.Integer, default=0)
+    sp_defense = db.Column(db.Integer, default=0)
+    speed = db.Column(db.Integer, default=0)
+    bst = db.Column(db.Integer, default=0) # Base Stat Total
     
-    # Game Info
-    cp_range = db.Column(db.String(50))
-    hp_range = db.Column(db.String(50))
-    capture_rate = db.Column(db.String(10))
-    flee_rate = db.Column(db.String(10))
+    # Abilities & Meta
+    abilities = db.Column(db.String(500)) # stored as string/JSON
+    generation = db.Column(db.Float)
+    catch_rate = db.Column(db.Integer)
     
-    # Gender
-    male_perc = db.Column(db.String(10))
-    female_perc = db.Column(db.String(10))
+    # Forms & Flags
+    is_legendary = db.Column(db.Boolean, default=False)
+    is_mega = db.Column(db.Boolean, default=False)
+    is_alolan = db.Column(db.Boolean, default=False)
+    is_galarian = db.Column(db.Boolean, default=False)
     
-    # Type effectiveness (stored as JSON strings)
-    resistance = db.Column(db.Text)
-    weakness = db.Column(db.Text)
-    
-    # Availability
-    wild_avail = db.Column(db.String(100))
-    egg_avail = db.Column(db.String(100))
-    raid_avail = db.Column(db.String(100))
-    research_avail = db.Column(db.String(100))
-    shiny = db.Column(db.String(10))
-    shadow = db.Column(db.String(10))
+    # Type Effectiveness (JSON)
+    against_types = db.Column(db.Text) 
     
     # Description & Moves
     pokedex_desc = db.Column(db.Text)
-    possible_attacks = db.Column(db.Text)
+    possible_attacks = db.Column(db.Text) # JSON or comma-separated
     
-    # External image URL (from original CSV)
+    # External image URL
     pic_url = db.Column(db.String(500))
     
     # Relationship to images
     images = db.relationship('PokemonImage', backref='pokemon', lazy=True)
     
+    @property
+    def stamina(self):
+        return self.hp
+
     def to_dict(self):
         """Convert to dictionary for JSON responses"""
         return {
@@ -136,21 +136,19 @@ class Pokemon(db.Model):
             'category': self.category,
             'height': self.height,
             'weight': self.weight,
-            'pokemon_family': self.pokemon_family,
+            'hp': self.hp,
             'attack': self.attack,
             'defense': self.defense,
-            'stamina': self.stamina,
-            'hp': self.stamina,  # Alias for compatibility
-            'cp_range': self.cp_range,
-            'hp_range': self.hp_range,
-            'capture_rate': self.capture_rate,
-            'flee_rate': self.flee_rate,
-            'male_perc': self.male_perc,
-            'female_perc': self.female_perc,
-            'resistance': self.resistance,
-            'weakness': self.weakness,
+            'sp_attack': self.sp_attack,
+            'sp_defense': self.sp_defense,
+            'speed': self.speed,
+            'bst': self.bst,
+            'generation': self.generation,
+            'is_legendary': self.is_legendary,
+            'is_mega': self.is_mega,
+            'is_alolan': self.is_alolan,
+            'is_galarian': self.is_galarian,
             'pokedex_desc': self.pokedex_desc,
-            'possible_attacks': self.possible_attacks,
             'pic_url': self.pic_url,
             'images': [img.to_dict() for img in self.images]
         }

@@ -56,10 +56,12 @@ db.init_app(app)
 from auth import auth_bp, get_current_user
 from donations import donations_bp
 from admin import admin_bp
+from chat import chat_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(donations_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(chat_bp)
 
 # Context processor to make current_user available in all templates
 @app.context_processor
@@ -678,8 +680,147 @@ def api_quiz_leaderboard():
     
     return jsonify([s.to_dict() for s in scores])
 
+@app.route('/api/user/streak')
+def api_user_streak():
+    """Calculate user's daily play streak"""
+    user = get_current_user()
+    if not user:
+        return jsonify({'streak': 0, 'played_today': False})
+    
+    from sqlalchemy import func, cast, Date
+    from datetime import date, timedelta
+    
+    # Get all unique dates the user played a quiz
+    # SQLite vs Postgres date extraction difference handled roughly here or via ORM
+    # For SQLite cast to Date works if stored accurately, otherwise might need string manip
+    # But let's try a simpler approach retrieving dates and processing in python for reliability across DBs
+    
+    scores = QuizScore.query.filter_by(user_id=user.id).order_by(QuizScore.created_at.desc()).all()
+    
+    if not scores:
+        return jsonify({'streak': 0, 'played_today': False})
+    
+    played_dates = sorted(list(set(s.created_at.date() for s in scores)), reverse=True)
+    
+    if not played_dates:
+        return jsonify({'streak': 0, 'played_today': False})
+        
+    today = date.today()
+    played_today = played_dates[0] == today
+    
+    current_streak = 0
+    check_date = today 
+    
+    # If they haven't played today, we check if they played yesterday to keep the streak alive
+    # If they played today, we start counting from today
+    # If they missed yesterday (and today), streak is 0 (unless we are generous and day didn't end)
+    
+    # Logic:
+    # 1. Check if today is present. If yes, streak += 1, check yesterday.
+    # 2. If today not present, check yesterday. If yes, streak relates to previous run?
+    # Actually simpler: Look for consecutive days starting from today OR yesterday.
+    
+    if played_today:
+        check_date = today
+    elif played_dates[0] == today - timedelta(days=1):
+        check_date = today - timedelta(days=1)
+    else:
+        # Last play was before yesterday -> Streak broken
+        return jsonify({'streak': 0, 'played_today': False})
+        
+    for d in played_dates:
+        if d == check_date:
+            current_streak += 1
+            check_date -= timedelta(days=1)
+        elif d > check_date:
+            continue # Should not happen if sorted desc unique
+        else:
+            break # Gap found
+            
+    return jsonify({
+        'streak': current_streak,
+        'played_today': played_today,
+        'last_played': played_dates[0].isoformat()
+    })
+
 # ==================== COMPARISON TOOL ====================
 
+@app.route('/api/team/analyze', methods=['POST'])
+def api_analyze_custom():
+    """Analyze an ad-hoc team list"""
+    data = request.json
+    member_ids = data.get('members', [])
+    
+    if not member_ids:
+        return jsonify({'error': 'No members provided'}), 400
+        
+    members = Pokemon.query.filter(Pokemon.id.in_(member_ids)).all()
+    
+    return analyze_pokemon_list(members)
+
+@app.route('/api/team/analysis/<int:team_id>')
+def api_team_analysis_saved(team_id):
+    """Analyze team coverage and stats"""
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Login required'}), 401
+        
+    team = Team.query.get_or_404(team_id)
+    if team.user_id != user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    members = [m.pokemon for m in team.members]
+    return analyze_pokemon_list(members)
+
+def analyze_pokemon_list(pokemon_list):
+    """Helper to analyze a list of Pokemon objects"""
+    types = ['normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground', 
+             'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy']
+             
+    coverage = {t: {'weak': 0, 'resist': 0, 'immune': 0} for t in types}
+    
+    stats_total = {'hp': 0, 'attack': 0, 'defense': 0, 'sp_attack': 0, 'sp_defense': 0, 'speed': 0}
+    member_count = len(pokemon_list)
+    
+    if member_count == 0:
+        return jsonify({'error': 'Team is empty'}), 400
+        
+    import json
+    
+    for p in pokemon_list:
+        # Stats
+        stats_total['hp'] += p.hp
+        stats_total['attack'] += p.attack
+        stats_total['defense'] += p.defense
+        stats_total['sp_attack'] += p.sp_attack
+        stats_total['sp_defense'] += p.sp_defense
+        stats_total['speed'] += p.speed
+        
+        # Coverage (using against_types JSON)
+        if p.against_types:
+            try:
+                # Assuming against_types is stored as JSON: {"fire": 2.0, "water": 0.5, ...}
+                matchups = json.loads(p.against_types)
+                for t, multiplier in matchups.items():
+                    t_lower = t.lower()
+                    if t_lower in coverage:
+                        if multiplier > 1:
+                            coverage[t_lower]['weak'] += 1
+                        elif multiplier < 1 and multiplier > 0:
+                            coverage[t_lower]['resist'] += 1
+                        elif multiplier == 0:
+                            coverage[t_lower]['immune'] += 1
+            except:
+                pass # JSON parse error
+                
+    # Calculate averages
+    stats_avg = {k: round(v / member_count) for k, v in stats_total.items()}
+    
+    return jsonify({
+        'coverage': coverage,
+        'stats_avg': stats_avg,
+        'member_count': member_count
+    })
 @app.route('/compare')
 def compare_page():
     """Pokemon comparison tool"""

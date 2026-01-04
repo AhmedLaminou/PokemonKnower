@@ -385,6 +385,70 @@
         opacity: 1;
     }
 
+    .team-analysis h3 {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        color: var(--text-secondary);
+    }
+    
+    .coverage-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .coverage-item {
+        background: var(--bg-card);
+        padding: 0.5rem;
+        border-radius: var(--radius-sm);
+        text-align: center;
+        border: 1px solid transparent;
+    }
+    
+    .coverage-item.weak { border-color: rgba(248, 113, 113, 0.5); background: rgba(248, 113, 113, 0.1); }
+    .coverage-item.resist { border-color: rgba(74, 222, 128, 0.5); background: rgba(74, 222, 128, 0.1); }
+    
+    .coverage-stats {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 0.25rem;
+        font-size: 0.75rem;
+    }
+    
+    .stat-weak { color: #f87171; }
+    .stat-resist { color: #4ade80; }
+    .stat-immune { color: #60a5fa; }
+    
+    .team-stats-chart {
+        background: var(--bg-card);
+        padding: 1rem;
+        border-radius: var(--radius-md);
+    }
+    
+    .team-stats-chart .stat-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .team-stats-chart .stat-label { width: 70px; }
+    .team-stats-chart .stat-val { width: 30px; text-align: right; font-weight: bold; }
+    .team-stats-chart .stat-bar-container {
+        flex: 1;
+        height: 6px;
+        background: var(--bg-darker);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    .team-stats-chart .stat-bar-fill {
+        height: 100%;
+        background: var(--pokemon-yellow);
+    }
+
     @media (max-width: 900px) {
         .builder-container {
             grid-template-columns: 1fr;
@@ -464,14 +528,66 @@ function updateSlotUI(index) {
     }
 }
 
-function updateAnalysis() {
+async function updateAnalysis() {
     const analysis = document.getElementById('teamAnalysis');
-    const teamSize = currentTeam.filter(p => p !== null).length;
+    const members = currentTeam.filter(p => p !== null).map(p => parseInt(p.id));
     
-    if (teamSize > 0) {
+    if (members.length > 0) {
         analysis.style.display = 'block';
-        // Simplified analysis
-        document.getElementById('typeCoverage').innerHTML = `<span class="stat-pill">${teamSize}/6 Pokémon selected</span>`;
+        document.getElementById('typeCoverage').innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Analyzing team...</p>';
+        
+        try {
+            const response = await fetch('/api/team/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ members })
+            });
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                document.getElementById('typeCoverage').innerHTML = `<p class="error">${data.error}</p>`;
+                return;
+            }
+            
+            // Build Coverage Grid
+            let coverageHtml = '<div class="coverage-grid">';
+            for (const [type, stats] of Object.entries(data.coverage)) {
+                coverageHtml += `
+                    <div class="coverage-item ${stats.weak > 0 ? 'weak' : ''} ${stats.resist > 0 ? 'resist' : ''}">
+                        <span class="type-badge ${type}">${type}</span>
+                        <div class="coverage-stats">
+                            ${stats.weak > 0 ? `<span class="stat-weak" title="Weak"><i class="fas fa-exclamation-triangle"></i> ${stats.weak}</span>` : ''}
+                            ${stats.resist > 0 ? `<span class="stat-resist" title="Resist"><i class="fas fa-shield-alt"></i> ${stats.resist}</span>` : ''}
+                            ${stats.immune > 0 ? `<span class="stat-immune" title="Immune"><i class="fas fa-ban"></i> ${stats.immune}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            coverageHtml += '</div>';
+            
+            // Build Stats Chart
+            let statsHtml = '<div class="team-stats-chart"><h3>Average Stats</h3>';
+            for (const [stat, value] of Object.entries(data.stats_avg)) {
+                const percent = Math.min((value / 255) * 100, 100);
+                statsHtml += `
+                    <div class="stat-row">
+                        <span class="stat-label">${stat.replace('_', ' ').toUpperCase()}</span>
+                        <div class="stat-bar-container">
+                            <div class="stat-bar-fill" style="width: ${percent}%"></div>
+                        </div>
+                        <span class="stat-val">${value}</span>
+                    </div>
+                `;
+            }
+            statsHtml += '</div>';
+            
+            document.getElementById('typeCoverage').innerHTML = coverageHtml + statsHtml;
+            
+        } catch (error) {
+            console.error('Analysis error:', error);
+            document.getElementById('typeCoverage').innerHTML = '<p class="error">Failed to analyze team.</p>';
+        }
     } else {
         analysis.style.display = 'none';
     }

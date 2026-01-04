@@ -9,6 +9,7 @@ import os
 import csv
 import sys
 import re
+import json
 from dotenv import load_dotenv
 
 # Add the project root to path
@@ -18,7 +19,8 @@ from flask import Flask
 from models import db, Pokemon, PokemonImage, PokemonType
 
 # Configuration
-CSV_PATH = 'pokemon.csv'
+MAIN_CSV_PATH = os.path.join('Data', 'pokémon_with_stats', 'All_Pokemon.csv')
+DESC_CSV_PATH = os.path.join('Data', '1025Pokémons', 'pokedex.csv')
 IMAGES_DIR = 'static/images'
 load_dotenv()
 load_dotenv('.env.example', override=False)
@@ -57,9 +59,46 @@ def create_app():
 def parse_int(value, default=0):
     """Safely parse integer from string"""
     try:
-        return int(value) if value else default
+        # Handle float strings like "53.0" by converting to float first
+        return int(float(value)) if value else default
     except (ValueError, TypeError):
         return default
+
+def parse_float(value, default=0.0):
+    """Safely parse float from string"""
+    try:
+        return float(value) if value else default
+    except (ValueError, TypeError):
+        return default
+
+def load_descriptions():
+    """Load descriptions from pokedex.csv keyed by number"""
+    descriptions = {}
+    if not os.path.exists(DESC_CSV_PATH):
+        print(f"Warning: {DESC_CSV_PATH} not found. Descriptions will be empty.")
+        return descriptions
+        
+    try:
+        with open(DESC_CSV_PATH, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                # "id","name","height","weight","hp","attack","defense","s_attack","s_defense","speed","type","evo_set","info"
+                # Some CSVs might handle numeric columns differently, handle strictly
+                try:
+                    num = parse_int(row.get('id') or row.get('number'))
+                    desc = row.get('info') or row.get('description') or ''
+                    if num > 0:
+                        descriptions[num] = desc
+                except Exception:
+                    continue
+    except Exception as e:
+        print(f"Error reading description CSV: {e}")
+        
+    return descriptions
+
+def clean_name(name):
+    """Clean Pokémon name (e.g., remove special chars if needed)"""
+    return (name or '').strip()
 
 def migrate_csv_data(app):
     """Import Pokémon data from CSV to database (idempotent upsert)"""
@@ -69,95 +108,110 @@ def migrate_csv_data(app):
         # Create all tables
         db.create_all()
         
-        # Read CSV and import
-        if not os.path.exists(CSV_PATH):
-            print(f"Error: {CSV_PATH} not found!")
+        # Load descriptions
+        descriptions_map = load_descriptions()
+        
+        # Read Main CSV and import
+        if not os.path.exists(MAIN_CSV_PATH):
+            print(f"Error: {MAIN_CSV_PATH} not found!")
             return False
         
-        with open(CSV_PATH, 'r', encoding='utf-8') as f:
+        with open(MAIN_CSV_PATH, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             count = 0
             
             for row in reader:
-                number = parse_int(row.get('number', 0))
+                # Number,Name,Type 1,Type 2,Abilities,HP,Att,Def,Spa,Spd,Spe,BST,...
+                number = parse_int(row.get('Number', 0))
                 if number <= 0:
                     continue
 
                 if MAX_POKEDEX_NUMBER and number > MAX_POKEDEX_NUMBER:
                     continue
 
-                name = (row.get('pokemon_name', '') or '').strip()
+                name = clean_name(row.get('Name'))
                 if not name:
                     continue
 
-                # Upsert: update if exists, insert if not
-                existing = Pokemon.query.filter_by(number=number).first()
-                if existing:
-                    existing.name = name
-                    existing.main_type = row.get('main_type', 'Normal')
-                    existing.secondary_type = row.get('secondary_type', '') or None
-                    existing.region = row.get('region', 'Kanto')
-                    existing.category = row.get('category', '')
-                    existing.height = row.get('height', '')
-                    existing.weight = row.get('weight', '')
-                    existing.pokemon_family = row.get('pokemon_family', '')
-                    existing.attack = parse_int(row.get('attack', 0))
-                    existing.defense = parse_int(row.get('defense', 0))
-                    existing.stamina = parse_int(row.get('stamina', 0))
-                    existing.cp_range = row.get('cp_range', '')
-                    existing.hp_range = row.get('hp_range', '')
-                    existing.capture_rate = row.get('capture_rate', '')
-                    existing.flee_rate = row.get('flee_rate', '')
-                    existing.male_perc = row.get('male_perc', '')
-                    existing.female_perc = row.get('female_perc', '')
-                    existing.resistance = row.get('resistance', '')
-                    existing.weakness = row.get('weakness', '')
-                    existing.wild_avail = row.get('wild_avail', '')
-                    existing.egg_avail = row.get('egg_avail', '')
-                    existing.raid_avail = row.get('raid_avail', '')
-                    existing.research_avail = row.get('research_avail', '')
-                    existing.shiny = row.get('shiny', '')
-                    existing.shadow = row.get('shadow', '')
-                    existing.pokedex_desc = row.get('pkedex_desc', '')
-                    existing.possible_attacks = row.get('poss_attacks', '')
-                    existing.pic_url = row.get('pic_url', '')
+                # Parse Flags
+                is_legendary = parse_float(row.get('Legendary', 0)) > 0
+                is_mega = parse_float(row.get('Mega Evolution', 0)) > 0
+                is_alolan = parse_float(row.get('Alolan Form', 0)) > 0
+                is_galarian = parse_float(row.get('Galarian Form', 0)) > 0
+                
+                # Parse Stats
+                hp = parse_int(row.get('HP', 0))
+                att = parse_int(row.get('Att', 0))
+                defense = parse_int(row.get('Def', 0))
+                spa = parse_int(row.get('Spa', 0))
+                spd = parse_int(row.get('Spd', 0))
+                speed = parse_int(row.get('Spe', 0))
+                bst = parse_int(row.get('BST', 0))
+                
+                height = str(row.get('Height', ''))
+                weight = str(row.get('Weight', ''))
+                
+                # Abilities (clean string representation)
+                abilities = row.get('Abilities', '')
+                
+                # Collect Type Effectiveness
+                # Columns like "Against Normal", "Against Fire", etc.
+                against = {}
+                for key, val in row.items():
+                    if key.startswith('Against '):
+                        type_name = key.replace('Against ', '')
+                        try:
+                            multiplier = float(val)
+                            if multiplier != 1.0: # Only save non-neutral
+                                against[type_name] = multiplier
+                        except:
+                            pass
+                            
+                # Upsert: update if name matches (unique constraint is on name conceptually for us, though DB allows duplicates now)
+                # We search by name to update specific forms
+                existing = Pokemon.query.filter_by(name=name).first()
+                if not existing:
+                    # Fallback: maybe name changed? Unlikely for automated sync.
+                    # Just create new
+                    pokemon = Pokemon()
                 else:
-                    pokemon = Pokemon(
-                        number=number,
-                        name=name,
-                        main_type=row.get('main_type', 'Normal'),
-                        secondary_type=row.get('secondary_type', '') or None,
-                        region=row.get('region', 'Kanto'),
-                        category=row.get('category', ''),
-                        height=row.get('height', ''),
-                        weight=row.get('weight', ''),
-                        pokemon_family=row.get('pokemon_family', ''),
-                        attack=parse_int(row.get('attack', 0)),
-                        defense=parse_int(row.get('defense', 0)),
-                        stamina=parse_int(row.get('stamina', 0)),
-                        cp_range=row.get('cp_range', ''),
-                        hp_range=row.get('hp_range', ''),
-                        capture_rate=row.get('capture_rate', ''),
-                        flee_rate=row.get('flee_rate', ''),
-                        male_perc=row.get('male_perc', ''),
-                        female_perc=row.get('female_perc', ''),
-                        resistance=row.get('resistance', ''),
-                        weakness=row.get('weakness', ''),
-                        wild_avail=row.get('wild_avail', ''),
-                        egg_avail=row.get('egg_avail', ''),
-                        raid_avail=row.get('raid_avail', ''),
-                        research_avail=row.get('research_avail', ''),
-                        shiny=row.get('shiny', ''),
-                        shadow=row.get('shadow', ''),
-                        pokedex_desc=row.get('pkedex_desc', ''),
-                        possible_attacks=row.get('poss_attacks', ''),
-                        pic_url=row.get('pic_url', '')
-                    )
+                    pokemon = existing
+
+                # Set/Update fields
+                pokemon.number = number
+                pokemon.name = name
+                pokemon.main_type = row.get('Type 1', 'Normal')
+                pokemon.secondary_type = row.get('Type 2', '') or None
+                pokemon.hp = hp
+                pokemon.attack = att
+                pokemon.defense = defense
+                pokemon.sp_attack = spa
+                pokemon.sp_defense = spd
+                pokemon.speed = speed
+                pokemon.bst = bst
+                pokemon.height = height
+                pokemon.weight = weight
+                
+                pokemon.generation = parse_float(row.get('Generation', 1))
+                pokemon.catch_rate = parse_int(row.get('Catch Rate', 0))
+                
+                pokemon.is_legendary = is_legendary
+                pokemon.is_mega = is_mega
+                pokemon.is_alolan = is_alolan
+                pokemon.is_galarian = is_galarian
+                pokemon.abilities = abilities
+                pokemon.against_types = json.dumps(against)
+                
+                # Description mapping (using Number)
+                pokemon.pokedex_desc = descriptions_map.get(number, '')
+                
+                if not existing:
                     db.session.add(pokemon)
+                
                 count += 1
             
             db.session.commit()
-            print(f"Imported {count} Pokémon from CSV")
+            print(f"Imported {count} Pokémon/Forms from CSV")
         
         return True
 
@@ -188,7 +242,7 @@ def scan_local_images(app):
         
         image_count = 0
 
-        # Track per-Pokémon ordering to avoid duplicate primaries when combining sources
+        # Track per-Pokémon ordering 
         next_order_by_pokemon_id = {}
 
         def add_image(pokemon, filename: str, path: str):
@@ -205,7 +259,7 @@ def scan_local_images(app):
             next_order_by_pokemon_id[pokemon.id] = current_order + 1
             image_count += 1
 
-        # 1) Support flat numeric files directly in static/images (e.g. 1.jpeg -> Bulbasaur)
+        # 1) Support flat numeric files directly in static/images
         valid_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
         flat_files = [
             fn for fn in os.listdir(IMAGES_DIR)
@@ -223,6 +277,9 @@ def scan_local_images(app):
             except ValueError:
                 continue
 
+            # Fallback for numeric files: prioritize "base" forms if possible
+            # But here `pokemon_by_number` might point to Mega form if that was last in DB
+            # We will just accept it for now as "good enough" for migration
             pokemon = pokemon_by_number.get(number)
             if not pokemon:
                 continue
@@ -230,6 +287,7 @@ def scan_local_images(app):
             img_path = f"images/{filename}"
             add_image(pokemon, filename=filename, path=img_path)
         
+        # Scan folders matching names
         def scan_folder_tree(root_dir: str, path_prefix: str):
             nonlocal image_count
 
@@ -239,35 +297,28 @@ def scan_local_images(app):
             for folder_name in os.listdir(root_dir):
                 folder_path = os.path.join(root_dir, folder_name)
                 
-                # Skip if not a directory
                 if not os.path.isdir(folder_path):
                     continue
                 
-                # Try to match folder name to Pokémon
                 pokemon_name = normalize_folder_name(folder_name)
                 pokemon = pokemon_by_norm_name.get(pokemon_name)
                 
-                # Also try exact match
                 if not pokemon:
                     pokemon = pokemon_by_name.get((folder_name or '').lower())
                 
                 if not pokemon:
                     continue
                 
-                # Scan images in the folder
                 images = []
-                
                 for filename in os.listdir(folder_path):
                     ext = os.path.splitext(filename)[1].lower()
                     if ext in valid_extensions:
                         images.append(filename)
                 
-                # Sort images and add to database
                 images.sort()
                 
-                for idx, filename in enumerate(images[:12]):  # Limit to 12 images per Pokémon
+                for idx, filename in enumerate(images[:12]):
                     img_path = f"{path_prefix}/{folder_name}/{filename}"
-
                     add_image(pokemon, filename=filename, path=img_path)
 
         scan_folder_tree(IMAGES_DIR, 'images')

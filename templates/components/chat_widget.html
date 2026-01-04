@@ -1,0 +1,144 @@
+<div id="chat-widget" class="chat-widget">
+    <div class="chat-header" onclick="toggleChat()">
+        <div class="chat-title">
+            <i class="fas fa-robot"></i> Rotom AI
+        </div>
+        <div class="chat-controls">
+            <i class="fas fa-chevron-up" id="chat-toggle-icon"></i>
+        </div>
+    </div>
+    
+    <div class="chat-body" id="chat-body">
+        <div class="chat-message bot-message">
+            <div class="message-content">
+                Hello! I'm Rotom AI. Ask me anything about Pokémon stats, types, or team building!
+            </div>
+        </div>
+    </div>
+    
+    <div class="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Ask about a Pokémon..." onkeypress="handleChatInput(event)">
+        <button onclick="sendMessage()">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+
+<style>
+/* Chat Widget Styles - Glassmorphism */
+.chat-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 350px;
+    background: rgba(26, 26, 46, 0.95);
+    backdrop-filter: blur(15px);
+    border: 2px solid var(--glass-border);
+    border-radius: 15px 15px 0 0;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(calc(100% - 50px)); /* Initially collapsed */
+    overflow: hidden;
+}
+
+.chat-widget.open {
+    transform: translateY(0);
+}
+
+.chat-header {
+    background: linear-gradient(90deg, var(--pokedex-red), var(--pokedex-dark-red));
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    color: white;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.chat-title {
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chat-body {
+    height: 400px;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.chat-message {
+    max-width: 85%;
+    display: flex;
+}
+
+.user-message {
+    align-self: flex-end;
+}
+
+.bot-message {
+    align-self: flex-start;
+}
+
+.message-content {
+    padding: 10px 14px;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.user-message .message-content {
+    background: var(--pokemon-blue);
+    color: white;
+    border-bottom-right-radius: 2px;
+}
+
+.bot-message .message-content {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    border: 1px solid var(--glass-border);
+    border-bottom-left-radius: 2px;
+}
+
+.chat-input-area {
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.chat-input-area input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    padding: 8px 12px;
+    border-radius: 20px;
+    color: white;
+    outline: none;
+}
+
+.chat-input-area button {
+    background: var(--pokemon-yellow);
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.chat-input-area button:hover {
+    transform: scale(1.1);
+}
+</style>
