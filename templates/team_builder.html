@@ -44,12 +44,59 @@
                 {% endfor %}
             </div>
 
-            <!-- Team Analysis -->
+            <!-- Enhanced Team Analysis Dashboard -->
             <div class="team-analysis" id="teamAnalysis" style="display: none;">
-                <h3><i class="fas fa-chart-pie"></i> Type Coverage</h3>
-                <div class="type-coverage" id="typeCoverage"></div>
+                <!-- Analysis Tabs -->
+                <div class="analysis-tabs">
+                    <button class="analysis-tab active" data-tab="defensive">
+                        <i class="fas fa-shield-alt"></i> Defensive
+                    </button>
+                    <button class="analysis-tab" data-tab="offensive">
+                        <i class="fas fa-sword"></i> Offensive
+                    </button>
+                    <button class="analysis-tab" data-tab="stats">
+                        <i class="fas fa-chart-radar"></i> Stats
+                    </button>
+                    <button class="analysis-tab" data-tab="coach">
+                        <i class="fas fa-robot"></i> AI Coach
+                    </button>
+                </div>
+                
+                <!-- Defensive Coverage Tab -->
+                <div class="analysis-panel active" id="panel-defensive">
+                    <h3><i class="fas fa-shield-alt"></i> Defensive Coverage Map</h3>
+                    <p class="panel-desc">How many team members are weak/resistant to each type</p>
+                    <div class="type-coverage" id="defensiveCoverage"></div>
+                </div>
+                
+                <!-- Offensive Coverage Tab -->
+                <div class="analysis-panel" id="panel-offensive">
+                    <h3><i class="fas fa-fire-alt"></i> Offensive Coverage</h3>
+                    <p class="panel-desc">Types your team can hit for super-effective damage (via STAB)</p>
+                    <div class="offensive-grid" id="offensiveCoverage"></div>
+                </div>
+                
+                <!-- Stats Radar Chart Tab -->
+                <div class="analysis-panel" id="panel-stats">
+                    <h3><i class="fas fa-chart-pie"></i> Stat Balance</h3>
+                    <p class="panel-desc">Team averages vs. competitive meta standards</p>
+                    <div class="radar-chart-container">
+                        <canvas id="statsRadarChart" width="300" height="300"></canvas>
+                    </div>
+                    <div class="stats-legend" id="statsLegend"></div>
+                </div>
+                
+                <!-- AI Coach Tab -->
+                <div class="analysis-panel" id="panel-coach">
+                    <h3><i class="fas fa-robot"></i> AI Coach Suggestions</h3>
+                    <div class="coach-suggestions" id="coachSuggestions"></div>
+                    <button class="btn btn-primary btn-coach" onclick="openChatWithTeam()">
+                        <i class="fas fa-comments"></i> Ask Rotom for More Help
+                    </button>
+                </div>
             </div>
         </div>
+
 
         <!-- Pokemon Selector -->
         <div class="selector-section">
@@ -448,6 +495,144 @@
         height: 100%;
         background: var(--pokemon-yellow);
     }
+    
+    /* Analysis Tabs */
+    .analysis-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .analysis-tab {
+        padding: 0.6rem 1rem;
+        background: var(--bg-darker);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.85rem;
+    }
+    
+    .analysis-tab:hover {
+        background: var(--bg-card);
+        color: var(--text-primary);
+    }
+    
+    .analysis-tab.active {
+        background: var(--pokemon-yellow);
+        color: #1a1a2e;
+        border-color: var(--pokemon-yellow);
+        font-weight: 600;
+    }
+    
+    .analysis-panel {
+        display: none;
+    }
+    
+    .analysis-panel.active {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .panel-desc {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Offensive Coverage Grid */
+    .offensive-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 0.5rem;
+    }
+    
+    .offensive-item {
+        padding: 0.5rem;
+        border-radius: var(--radius-sm);
+        text-align: center;
+        border: 2px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+    
+    .offensive-item.can-hit {
+        border-color: #4ade80;
+        background: rgba(74, 222, 128, 0.15);
+    }
+    
+    .offensive-item.cant-hit {
+        border-color: rgba(248, 113, 113, 0.3);
+        background: rgba(248, 113, 113, 0.05);
+        opacity: 0.7;
+    }
+    
+    .offensive-item i {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.75rem;
+    }
+    
+    .offensive-item.can-hit i { color: #4ade80; }
+    .offensive-item.cant-hit i { color: #f87171; }
+    
+    /* Radar Chart */
+    .radar-chart-container {
+        max-width: 350px;
+        margin: 0 auto 1rem;
+        padding: 1rem;
+        background: var(--bg-darker);
+        border-radius: var(--radius-lg);
+    }
+    
+    .stats-legend {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    
+    .legend-dot.team { background: rgba(255, 203, 5, 0.8); }
+    .legend-dot.meta { background: rgba(96, 165, 250, 0.8); }
+    
+    /* AI Coach */
+    .coach-suggestions {
+        margin-bottom: 1rem;
+    }
+    
+    .suggestion-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: var(--bg-darker);
+        border-radius: var(--radius-sm);
+        margin-bottom: 0.5rem;
+        border-left: 3px solid var(--pokemon-yellow);
+    }
+    
+    .suggestion-item i {
+        color: var(--pokemon-yellow);
+        margin-top: 2px;
+    }
+    
+    .btn-coach {
+        width: 100%;
+        margin-top: 1rem;
+    }
 
     @media (max-width: 900px) {
         .builder-container {
@@ -458,8 +643,23 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 let currentTeam = [null, null, null, null, null, null];
+let statsRadarChart = null;
+
+// Tab Switching Logic
+document.querySelectorAll('.analysis-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        // Remove active class from all tabs and panels
+        document.querySelectorAll('.analysis-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.analysis-panel').forEach(p => p.classList.remove('active'));
+        
+        // Add active class to clicked tab and corresponding panel
+        tab.classList.add('active');
+        document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
+    });
+});
 
 function dragPokemon(ev) {
     const data = {
@@ -534,7 +734,7 @@ async function updateAnalysis() {
     
     if (members.length > 0) {
         analysis.style.display = 'block';
-        document.getElementById('typeCoverage').innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Analyzing team...</p>';
+        // Show loading state if needed, but usually fast enough
         
         try {
             const response = await fetch('/api/team/analyze', {
@@ -546,14 +746,14 @@ async function updateAnalysis() {
             const data = await response.json();
             
             if (data.error) {
-                document.getElementById('typeCoverage').innerHTML = `<p class="error">${data.error}</p>`;
+                console.error(data.error);
                 return;
             }
             
-            // Build Coverage Grid
-            let coverageHtml = '<div class="coverage-grid">';
+            // 1. Render Defensive Coverage
+            let defHtml = '<div class="coverage-grid">';
             for (const [type, stats] of Object.entries(data.coverage)) {
-                coverageHtml += `
+                defHtml += `
                     <div class="coverage-item ${stats.weak > 0 ? 'weak' : ''} ${stats.resist > 0 ? 'resist' : ''}">
                         <span class="type-badge ${type}">${type}</span>
                         <div class="coverage-stats">
@@ -564,32 +764,122 @@ async function updateAnalysis() {
                     </div>
                 `;
             }
-            coverageHtml += '</div>';
+            defHtml += '</div>';
+            document.getElementById('defensiveCoverage').innerHTML = defHtml;
             
-            // Build Stats Chart
-            let statsHtml = '<div class="team-stats-chart"><h3>Average Stats</h3>';
-            for (const [stat, value] of Object.entries(data.stats_avg)) {
-                const percent = Math.min((value / 255) * 100, 100);
-                statsHtml += `
-                    <div class="stat-row">
-                        <span class="stat-label">${stat.replace('_', ' ').toUpperCase()}</span>
-                        <div class="stat-bar-container">
-                            <div class="stat-bar-fill" style="width: ${percent}%"></div>
-                        </div>
-                        <span class="stat-val">${value}</span>
+            // 2. Render Offensive Coverage
+            let offHtml = '';
+            for (const [type, canHit] of Object.entries(data.offensive_coverage)) {
+                offHtml += `
+                    <div class="offensive-item ${canHit ? 'can-hit' : 'cant-hit'}">
+                        <span class="type-badge ${type}">${type}</span>
+                        <i class="fas ${canHit ? 'fa-check-circle' : 'fa-times-circle'}"></i>
                     </div>
                 `;
             }
-            statsHtml += '</div>';
+            document.getElementById('offensiveCoverage').innerHTML = offHtml;
             
-            document.getElementById('typeCoverage').innerHTML = coverageHtml + statsHtml;
+            // 3. Render Radar Chart
+            renderRadarChart(data.stats_avg, data.meta_standards);
+            
+            // 4. Render AI Coach Suggestions
+            const suggestionsHtml = data.suggestions.map(s => `
+                <div class="suggestion-item">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>${s}</span>
+                </div>
+            `).join('');
+            document.getElementById('coachSuggestions').innerHTML = suggestionsHtml || '<p>No specific suggestions. Great team!</p>';
             
         } catch (error) {
             console.error('Analysis error:', error);
-            document.getElementById('typeCoverage').innerHTML = '<p class="error">Failed to analyze team.</p>';
         }
     } else {
         analysis.style.display = 'none';
+    }
+}
+
+function renderRadarChart(teamStats, metaStats) {
+    const ctx = document.getElementById('statsRadarChart').getContext('2d');
+    const labels = Object.keys(teamStats).map(k => k.replace('_', ' ').toUpperCase());
+    const teamData = Object.values(teamStats);
+    const metaData = Object.values(metaStats); // Ensure order matches keys (hp, attack...)
+    // Note: Python dict order is preserved in recent versions, but safer to map explicitly if needed.
+    // Assuming backend sends ordered dicts or we map keys explicitly.
+    // For safety, let's map by specific key order
+    const orderedKeys = ['hp', 'attack', 'defense', 'sp_attack', 'sp_defense', 'speed'];
+    const orderedLabels = orderedKeys.map(k => k.replace('_', ' ').toUpperCase());
+    const orderedTeam = orderedKeys.map(k => teamStats[k]);
+    const orderedMeta = orderedKeys.map(k => metaStats[k]);
+
+    if (statsRadarChart) {
+        statsRadarChart.destroy();
+    }
+
+    statsRadarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: orderedLabels,
+            datasets: [{
+                label: 'Your Team',
+                data: orderedTeam,
+                fill: true,
+                backgroundColor: 'rgba(255, 203, 5, 0.2)',
+                borderColor: 'rgba(255, 203, 5, 1)',
+                pointBackgroundColor: 'rgb(255, 203, 5)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgb(255, 203, 5)'
+            }, {
+                label: 'Meta Standard',
+                data: orderedMeta,
+                fill: true,
+                backgroundColor: 'rgba(96, 165, 250, 0.2)',
+                borderColor: 'rgba(96, 165, 250, 1)',
+                pointBackgroundColor: 'rgb(54, 162, 235)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgb(54, 162, 235)'
+            }]
+        },
+        options: {
+            elements: {
+                line: { borderWidth: 3 }
+            },
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    pointLabels: {
+                        color: '#ddd',
+                        font: { size: 12 }
+                    },
+                    suggestedMin: 0,
+                    suggestedMax: 150
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: { color: '#fff' }
+                }
+            }
+        }
+    });
+}
+
+function openChatWithTeam() {
+    if (!window.toggleChat) return alert('Chat widget not loaded yet.');
+    
+    window.toggleChat();
+    // Pre-fill message
+    const members = currentTeam.filter(p => p).map(p => p.name).join(', ');
+    const msg = `Can you rate my team? I have: ${members}. What can I improve?`;
+    
+    // Slight hack to insert into chat input if accessible, or just send it
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        chatInput.value = msg;
+        chatInput.focus();
     }
 }
 

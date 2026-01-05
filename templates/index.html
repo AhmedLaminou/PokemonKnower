@@ -23,6 +23,25 @@
 
 <!-- Search Section -->
 <section class="search-section" id="search">
+    <!-- Daily Challenge Section (New) -->
+    <div class="daily-challenge-banner">
+        <div class="daily-content">
+            <div class="daily-info">
+                <span class="daily-tag"><i class="fas fa-fire"></i> Daily Challenge</span>
+                <h2>Who's That Pokémon?</h2>
+                <p>Test your knowledge and keep your streak alive! Can you identify today's mystery Pokémon?</p>
+                <div class="streak-display" id="homepageStreak" style="display: none;">
+                    <span class="streak-count">0</span> Day Streak
+                </div>
+            </div>
+            <div class="daily-action">
+                <a href="{{ url_for('quiz_page') }}" class="btn btn-primary pulse-btn">
+                    <i class="fas fa-play"></i> Play Now
+                </a>
+            </div>
+        </div>
+    </div>
+
     <div class="search-container">
         <div class="search-box">
             <input type="text" class="search-input" id="searchInput" placeholder="Search Pokémon by name...">
@@ -175,6 +194,7 @@
 
 {% block extra_css %}
 <style>
+    /* ... existing styles ... */
     .hero-actions {
         display: flex;
         gap: 1rem;
@@ -182,6 +202,79 @@
         flex-wrap: wrap;
     }
     
+    /* Daily Challenge Banner */
+    .daily-challenge-banner {
+        max-width: 1200px;
+        margin: -2rem auto 2rem;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        position: relative;
+        z-index: 10;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        border-left: 5px solid var(--pokemon-yellow);
+    }
+    
+    .daily-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+    
+    .daily-info h2 {
+        font-size: 1.5rem;
+        margin: 0.5rem 0;
+        color: #fff;
+    }
+    
+    .daily-tag {
+        background: rgba(255, 203, 5, 0.2);
+        color: var(--pokemon-yellow);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .streak-display {
+        margin-top: 0.5rem;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+    
+    .streak-count {
+        color: var(--pokemon-yellow);
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+    
+    .pulse-btn {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(255, 203, 5, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(255, 203, 5, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 203, 5, 0); }
+    }
+    
+    @media (max-width: 768px) {
+        .daily-challenge-banner {
+            margin: 1rem;
+            text-align: center;
+        }
+        .daily-content {
+            justify-content: center;
+            text-align: center;
+        }
+    }
+    
+    /* ... existing styles ... */
     .upload-hint {
         font-size: 0.75rem;
         color: var(--text-muted);
@@ -257,4 +350,22 @@
         color: var(--pokemon-red);
     }
 </style>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Fetch user streak for homepage banner
+        try {
+            const response = await fetch('/api/user/streak');
+            if (response.ok) {
+                const data = await response.json();
+                const streakEl = document.getElementById('homepageStreak');
+                if (data.streak > 0) {
+                    streakEl.querySelector('.streak-count').textContent = data.streak;
+                    streakEl.style.display = 'block';
+                }
+            }
+        } catch (e) {
+            console.log('Could not fetch streak (user might be logged out)');
+        }
+    });
+</script>
 {% endblock %}

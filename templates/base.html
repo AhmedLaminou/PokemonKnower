@@ -72,6 +72,12 @@
                         <a href="{{ url_for('compare_page') }}" class="dropdown-item">
                             <i class="fas fa-balance-scale"></i> Compare
                         </a>
+                        <a href="{{ url_for('move_dex') }}" class="dropdown-item">
+                            <i class="fas fa-meteor"></i> Move Dex
+                        </a>
+                        <a href="{{ url_for('ability_dex') }}" class="dropdown-item">
+                            <i class="fas fa-star"></i> Ability Dex
+                        </a>
                     </div>
                 </div>
                 
@@ -83,11 +89,17 @@
                         <i class="fas fa-chevron-down dropdown-arrow"></i>
                     </button>
                     <div class="nav-dropdown-menu">
+                        <a href="{{ url_for('scanner') }}" class="dropdown-item">
+                            <i class="fas fa-qrcode"></i> AR Scanner
+                        </a>
                         <a href="{{ url_for('team_builder') }}" class="dropdown-item">
                             <i class="fas fa-users"></i> Team Builder
                         </a>
                         <a href="{{ url_for('quiz_page') }}" class="dropdown-item">
                             <i class="fas fa-question-circle"></i> Who's That Pokémon?
+                        </a>
+                        <a href="{{ url_for('battle_page') }}" class="dropdown-item">
+                            <i class="fas fa-fist-raised"></i> Battle Simulator
                         </a>
                         <a href="{{ url_for('compare_page') }}" class="dropdown-item">
                             <i class="fas fa-balance-scale"></i> Compare Pokémon

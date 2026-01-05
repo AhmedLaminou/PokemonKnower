@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: pokemon-knower
+    env: python
+    buildCommand: "pip install -r requirements.txt && python migrate_db.py"
+    startCommand: "gunicorn app:app --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pokemon-db
+          property: connectionString
+      - key: PORT
+        value: "10000"
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: 3.11.0
+
+databases:
+  - name: pokemon-db
+    plan: free
+    region: oregon

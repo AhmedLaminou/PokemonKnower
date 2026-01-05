@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Move Dex | Pokémon Knower{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dex-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .dex-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .dex-title {
+        font-size: 2.5rem;
+        color: #fff;
+        margin-bottom: 1rem;
+        background: linear-gradient(45deg, #FFCB05, #ff9800);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .search-box {
+        max-width: 600px;
+        margin: 0 auto;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .search-input {
+        flex: 1;
+        padding: 0.8rem 1.5rem;
+        border-radius: 50px;
+        border: 2px solid var(--border-color);
+        background: var(--bg-card);
+        color: #fff;
+        font-family: inherit;
+    }
+
+    .search-btn {
+        padding: 0 1.5rem;
+        border-radius: 50px;
+        background: var(--pokemon-red);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .search-btn:hover {
+        transform: scale(1.05);
+    }
+
+    /* Table */
+    .dex-table-wrapper {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        overflow-x: auto;
+        border: 1px solid var(--border-color);
+    }
+
+    .dex-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: var(--text-primary);
+        min-width: 800px;
+    }
+    
+    .dex-table th {
+        background: var(--bg-darker);
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--pokemon-yellow);
+        border-bottom: 2px solid var(--border-color);
+    }
+    
+    .dex-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+    }
+    
+    .dex-table tr:hover {
+        background: rgba(255,255,255,0.05);
+    }
+
+    .move-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .move-desc {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        max-width: 300px;
+    }
+
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+    }
+
+    .page-link {
+        padding: 0.5rem 1rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: var(--radius-sm);
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .page-link:hover, .page-link.active {
+        background: var(--pokemon-red);
+        border-color: var(--pokemon-red);
+        color: #fff;
+    }
+    
+    .page-link.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dex-container">
+    <div class="dex-header">
+        <h1 class="dex-title">Attack Move Dex</h1>
+        <form class="search-box" action="{{ url_for('move_dex') }}" method="get">
+            <input type="text" name="search" class="search-input" placeholder="Search moves..." value="{{ search }}">
+            <button type="submit" class="search-btn"><i class="fas fa-search"></i></button>
+        </form>
+    </div>
+
+    <div class="dex-table-wrapper">
+        <table class="dex-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Power</th>
+                    <th>Acc</th>
+                    <th>PP</th>
+                    <th>Effect</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for move in moves.items %}
+                <tr>
+                    <td><div class="move-name">{{ move.name }}</div></td>
+                    <td><span class="type-badge {{ move.type|lower }}">{{ move.type|title }}</span></td>
+                    <td>
+                        <span class="MoveCategory-icon {{ move.category }}">
+                            {% if move.category == 'physical' %}<i class="fas fa-fist-raised"></i>
+                            {% elif move.category == 'special' %}<i class="fas fa-magic"></i>
+                            {% else %}<i class="fas fa-yin-yang"></i>{% endif %}
+                        </span> 
+                        {{ move.category|title }}
+                    </td>
+                    <td>{{ move.power or '-' }}</td>
+                    <td>{{ move.accuracy or '-' }}%</td>
+                    <td>{{ move.pp }}</td>
+                    <td class="move-desc">{{ move.description }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 3rem;">
+                        No moves found. Run the seed script to populate data.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if moves.pages > 1 %}
+    <div class="pagination">
+        <a href="{{ url_for('move_dex', page=moves.prev_num, search=search) }}" class="page-link {% if not moves.has_prev %}disabled{% endif %}">
+            &laquo; Prev
+        </a>
+        
+        {% for page_num in moves.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                <a href="{{ url_for('move_dex', page=page_num, search=search) }}" class="page-link {% if page_num == moves.page %}active{% endif %}">
+                    {{ page_num }}
+                </a>
+            {% else %}
+                <span class="page-link disabled">...</span>
+            {% endif %}
+        {% endfor %}
+        
+        <a href="{{ url_for('move_dex', page=moves.next_num, search=search) }}" class="page-link {% if not moves.has_next %}disabled{% endif %}">
+            Next &raquo;
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

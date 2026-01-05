@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+
+{% block title %}Battle Simulator | Pokémon Knower{% endblock %}
+
+{% block extra_css %}
+<style>
+    .battle-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    /* Arena */
+    .arena {
+        background: linear-gradient(180deg, #87CEEB 0%, #E0F7FA 50%, #4CAF50 50%, #388E3C 100%);
+        border-radius: var(--radius-lg);
+        height: 400px;
+        position: relative;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .platform {
+        position: absolute;
+        width: 250px;
+        height: 80px;
+        background: rgba(0,0,0,0.2);
+        border-radius: 50%;
+        transform: scaleY(0.4);
+    }
+
+    .enemy-platform {
+        top: 100px;
+        right: 50px;
+    }
+
+    .player-platform {
+        bottom: 50px;
+        left: 50px;
+    }
+
+    .pokemon-sprite {
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        object-fit: contain;
+        transition: all 0.3s ease;
+    }
+
+    .enemy-sprite {
+        top: 50px;
+        right: 100px;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .player-sprite {
+        bottom: 80px;
+        left: 100px;
+        /* Flip back image if we had one, but using front sprite so no flip needed usually unless specific style */
+    }
+    
+    .player-sprite.attacking {
+        animation: attack-right 0.5s;
+    }
+    
+    .enemy-sprite.attacking {
+        animation: attack-left 0.5s;
+    }
+    
+    .damaged {
+        animation: shake 0.5s;
+        filter: brightness(2) sepia(1) hue-rotate(-50deg) saturate(5); /* Flash red */
+    }
+
+    /* HUD */
+    .hud {
+        position: absolute;
+        background: rgba(255,255,255,0.9);
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-md);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        min-width: 220px;
+    }
+
+    .enemy-hud {
+        top: 20px;
+        left: 20px;
+    }
+
+    .player-hud {
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .pokemon-name {
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.25rem;
+    }
+
+    .hp-bar-container {
+        height: 10px;
+        background: #ddd;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-bottom: 0.25rem;
+    }
+
+    .hp-bar-fill {
+        height: 100%;
+        background: #4CAF50;
+        width: 100%;
+        transition: width 1s ease, background 0.3s;
+    }
+    
+    .hp-bar-fill.low { background: #ff9800; }
+    .hp-bar-fill.critical { background: #f44336; }
+
+    .hp-text {
+        font-size: 0.8rem;
+        text-align: right;
+        color: #666;
+    }
+
+    /* Controls */
+    .battle-controls {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1rem;
+        height: 200px;
+    }
+
+    .move-panel {
+        background: var(--bg-card);
+        padding: 1.5rem;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color);
+    }
+    
+    .moves-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        height: 100%;
+    }
+
+    .move-btn {
+        background: var(--bg-darker);
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        font-family: 'Outfit', sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .move-btn:hover:not(:disabled) {
+        border-color: var(--pokemon-yellow);
+        transform: translateY(-2px);
+    }
+    
+    .move-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .move-type {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    /* Log */
+    .log-panel {
+        background: #000;
+        color: #fff;
+        padding: 1rem;
+        border-radius: var(--radius-lg);
+        font-family: 'Press Start 2P', monospace; /* Retro font for logs */
+        font-size: 0.8rem;
+        line-height: 1.6;
+        height: 100%;
+        overflow-y: auto;
+        border: 4px solid #333;
+    }
+    
+    .log-entry { margin-bottom: 0.5rem; }
+    .log-entry.new { animation: slideIn 0.3s ease; }
+
+    /* Animations */
+    @keyframes attack-right {
+        0% { transform: translateX(0); }
+        50% { transform: translateX(30px); }
+        100% { transform: translateX(0); }
+    }
+    @keyframes attack-left {
+        0% { transform: translateX(0); }
+        50% { transform: translateX(-30px); }
+        100% { transform: translateX(0); }
+    }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+    }
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    @media (max-width: 768px) {
+        .battle-controls {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+        .moves-grid {
+            height: 200px;
+        }
+        .log-panel {
+            height: 150px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="battle-container">
+    <div class="arena">
+        <!-- Enemy -->
+        <div class="platform enemy-platform"></div>
+        <img id="enemySprite" src="" class="pokemon-sprite enemy-sprite" alt="Enemy">
+        
+        <div class="hud enemy-hud">
+            <div class="pokemon-name">
+                <span id="enemyName">Loading...</span>
+                <span>Lv. 50</span>
+            </div>
+            <div class="hp-bar-container">
+                <div id="enemyHpBar" class="hp-bar-fill" style="width: 100%"></div>
+            </div>
+        </div>
+
+        <!-- Player -->
+        <div class="platform player-platform"></div>
+        <img id="playerSprite" src="" class="pokemon-sprite player-sprite" alt="Player">
+        
+        <div class="hud player-hud">
+            <div class="pokemon-name">
+                <span id="playerName">Loading...</span>
+                <span>Lv. 50</span>
+            </div>
+            <div class="hp-bar-container">
+                <div id="playerHpBar" class="hp-bar-fill" style="width: 100%"></div>
+            </div>
+            <div class="hp-text" id="playerHpText">100/100</div>
+        </div>
+    </div>
+
+    <div class="battle-controls">
+        <div class="move-panel">
+            <div class="moves-grid" id="movesGrid">
+                <!-- Moves injected via JS -->
+                <button class="move-btn" disabled>Loading...</button>
+                <button class="move-btn" disabled>Loading...</button>
+                <button class="move-btn" disabled>Loading...</button>
+                <button class="move-btn" disabled>Loading...</button>
+            </div>
+        </div>
+        <div class="log-panel" id="combatLog">
+            <div class="log-entry">Waiting for battle to start...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Game Over Modal -->
+<div id="gameOverModal" class="modal" style="display: none;">
+    <div class="modal-content" style="text-align: center;">
+        <h2 id="winnerText">You Won!</h2>
+        <p>Return to main menu?</p>
+        <button class="btn btn-primary" onclick="location.reload()">Play Again</button>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Exit</a>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let battleId = null;
+    let isProcessing = false;
+
+    // Get pokemon_id from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialPokemonId = urlParams.get('pokemon_id');
+
+    async function initBattle() {
+        addLog("Initializing battle simulation...");
+        
+        try {
+            const res = await fetch('/api/battle/start', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ pokemon_id: initialPokemonId })
+            });
+
+            if(!res.ok) throw new Error("Failed to start battle");
+            
+            const data = await res.json();
+            battleId = data.battle_id;
+            renderState(data.state);
+            addLog(`Battle started! ${data.state.player.name} vs ${data.state.enemy.name}`);
+            
+        } catch (e) {
+            console.error(e);
+            addLog("Error starting battle.");
+        }
+    }
+
+    function renderState(state) {
+        // Player
+        document.getElementById('playerName').textContent = state.player.name;
+        document.getElementById('playerSprite').src = state.player.image;
+        updateHp('player', state.player.hp, state.player.max_hp);
+        
+        // Enemy
+        document.getElementById('enemyName').textContent = state.enemy.name;
+        document.getElementById('enemySprite').src = state.enemy.image;
+        updateHp('enemy', state.enemy.hp, state.enemy.max_hp);
+        
+        // Moves
+        const movesHTML = state.player.moves.map((move, index) => `
+            <button class="move-btn type-${move.type}" onclick="performMove(${index})" ${state.winner || isProcessing ? 'disabled' : ''}>
+                <span>${move.name}</span>
+                <span class="move-type">${move.type} | ${move.category === 'status' ? 'Status' : 'Pow: ' + move.power}</span>
+            </button>
+        `).join('');
+        document.getElementById('movesGrid').innerHTML = movesHTML;
+        
+        // Logs
+        if (state.logs && state.logs.length > 0) {
+            // Only add new logs if we track them, but for now just appending latest is tricky if we re-render whole state.
+            // Actually API returns last 5 logs.
+            // Better to handle logs incrementally or just append the response logs.
+        }
+        
+        // Winner
+        if (state.winner) {
+            setTimeout(() => {
+                document.getElementById('winnerText').textContent = state.winner === 'player' ? 'You Won!' : 'You Lost...';
+                document.getElementById('gameOverModal').style.display = 'flex';
+            }, 1500);
+        }
+    }
+
+    function updateHp(who, current, max) {
+        const pct = Math.max(0, (current / max) * 100);
+        const bar = document.getElementById(`${who}HpBar`);
+        bar.style.width = `${pct}%`;
+        
+        if (pct < 20) {
+            bar.classList.add('critical');
+            bar.classList.remove('low');
+        } else if (pct < 50) {
+            bar.classList.add('low');
+            bar.classList.remove('critical');
+        } else {
+            bar.classList.remove('low', 'critical');
+        }
+        
+        if (who === 'player') {
+            document.getElementById('playerHpText').textContent = `${current}/${max}`;
+        }
+    }
+
+    async function performMove(moveIndex) {
+        if (isProcessing) return;
+        isProcessing = true;
+        
+        // Disable buttons
+        document.querySelectorAll('.move-btn').forEach(b => b.disabled = true);
+        
+        try {
+            const res = await fetch(`/api/battle/${battleId}/turn`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ move_index: moveIndex })
+            });
+            
+            const state = await res.json();
+            
+            // ANIMATION SEQUENCE
+            // 1. Player attacks
+            addLog(state.logs[0]); // Player used X
+            animateAttack('player');
+            setTimeout(() => {
+                // Enemy flashing red
+                animateDamage('enemy'); 
+                
+                // Add rest of logs with delays
+                let delay = 1000;
+                
+                // If logs contain enemy move
+                const enemyMoveLog = state.logs.find(l => l.includes(state.enemy.name + " used"));
+                
+                // Hacky log display - ideally backend identifies steps better
+                // For now, simple dump logs to chat
+                state.logs.slice(1).forEach((log, i) => {
+                    setTimeout(() => addLog(log), i * 800 + 500);
+                    if (log.includes(state.enemy.name + " used")) {
+                        setTimeout(() => animateAttack('enemy'), i * 800 + 500);
+                    }
+                    if (log.includes("damage!") && !state.logs[i].includes(state.player.name + " used")) {
+                         // Likely enemy hitting player
+                         setTimeout(() => animateDamage('player'), i * 800 + 1000);
+                    }
+                });
+
+                // Update final state after animations
+                setTimeout(() => {
+                    renderState(state);
+                    isProcessing = false;
+                }, state.logs.length * 800 + 1000);
+                
+            }, 500);
+
+        } catch (e) {
+            console.error(e);
+            isProcessing = false;
+        }
+    }
+
+    function addLog(text) {
+        const logPanel = document.getElementById('combatLog');
+        const entry = document.createElement('div');
+        entry.className = 'log-entry new';
+        entry.textContent = `> ${text}`;
+        logPanel.appendChild(entry);
+        logPanel.scrollTop = logPanel.scrollHeight;
+    }
+
+    function animateAttack(who) {
+        document.getElementById(`${who}Sprite`).classList.add('attacking');
+        setTimeout(() => document.getElementById(`${who}Sprite`).classList.remove('attacking'), 500);
+    }
+    
+    function animateDamage(who) {
+        const sprite = document.getElementById(`${who}Sprite`);
+        sprite.classList.add('damaged');
+        setTimeout(() => sprite.classList.remove('damaged'), 500);
+    }
+
+    // Start
+    initBattle();
+</script>
+{% endblock %}

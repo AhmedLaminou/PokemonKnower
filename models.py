@@ -320,3 +320,44 @@ class PokemonType(db.Model):
             'steel': {'color': '#B8B8D0', 'icon': 'fa-shield'},
             'fairy': {'color': '#EE99AC', 'icon': 'fa-star'}
         }
+
+class Move(db.Model):
+    """Pokemon Move Dex"""
+    __tablename__ = 'moves'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    type = db.Column(db.String(50))
+    category = db.Column(db.String(50)) # physical, special, status
+    power = db.Column(db.Integer)
+    accuracy = db.Column(db.Integer)
+    pp = db.Column(db.Integer)
+    effect_chance = db.Column(db.Integer)
+    description = db.Column(db.Text)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'type': self.type,
+            'category': self.category,
+            'power': self.power,
+            'accuracy': self.accuracy,
+            'pp': self.pp,
+            'description': self.description
+        }
+
+class Ability(db.Model):
+    """Pokemon Ability Dex"""
+    __tablename__ = 'abilities'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description
+        }

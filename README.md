@@ -31,6 +31,7 @@ This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Fl
 ## ✨ Features
 
 ### 🔍 **Pokédex Search**
+
 - Advanced search by Pokémon name with real-time filtering
 - Multi-filter support:
   - Filter by type (Electric, Water, Grass, etc.)
@@ -40,14 +41,24 @@ This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Fl
 - Pagination for large result sets
 
 ### 📸 **Image Scanning & Prediction**
+
 - Drag-and-drop image upload interface
 - Intelligent Pokémon identification using trained ML model
 - Fallback prediction system when model unavailable
 - Confidence scores and top 3 alternative predictions
 - Display of complete Pokémon stats
 - Support for: PNG, JPG, JPEG, GIF formats
+- **[NEW] Hybrid AI Recognition**:
+  - Uses local MobileNetV2 for speed
+  - Auto-switches to **GPT-4o Vision** for low-confidence (<85%) matches
+  - Recognizes **all 1000+ Pokémon** (Gen 1-9) with near-perfect accuracy
+- **[NEW] Real-time AR Scanner**:
+  - Live camera feed with sci-fi HUD
+  - Automatic frame capture and analysis
+  - "Shiny" Pokémon detection with visual alerts ✨
 
 ### 💅 **Beautiful Modern UI**
+
 - Dark theme with glass-morphism design
 - Smooth animations and transitions
 - Fully responsive (mobile, tablet, desktop)
@@ -56,6 +67,7 @@ This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Fl
 - Real-time search results
 
 ### 🔐 **User Authentication**
+
 - Magic link email login (passwordless)
 - Google OAuth login
 - User profiles with avatars
@@ -63,6 +75,7 @@ This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Fl
 - Secure session management via Stytch
 
 ### 💰 **Donations & Support**
+
 - Stripe Checkout integration
 - Multiple donation amounts
 - Custom donation messages
@@ -70,12 +83,14 @@ This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Fl
 - Webhook handling for payment status
 
 ### 👑 **Admin Dashboard**
+
 - User management (view, toggle admin)
 - Donation tracking and analytics
 - Revenue statistics
 - Quick action buttons
 
 ### 🚀 **Production Ready**
+
 - Docker containerization with multi-stage builds
 - Docker Compose orchestration
 - Nginx reverse proxy for production
@@ -90,11 +105,13 @@ This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Fl
 ## 🛠️ Tech Stack
 
 ### **Frontend**
+
 - **Jinja2 Templates** - Server-rendered pages
 - **HTML5 / CSS3** - Modern responsive styling
 - **Vanilla JavaScript** - Search, scanner UI, camera modal
 
 ### **Backend**
+
 - **Flask 2.3** - Web framework
 - **Flask-CORS** - Cross-Origin Resource Sharing
 - **Flask-SQLAlchemy** - ORM
@@ -107,10 +124,12 @@ This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Fl
 - **Python 3.11** - Runtime
 
 ### **Authentication & Payments**
+
 - **Stytch** - Magic link + Google OAuth authentication
 - **Stripe** - Donation/payment processing
 
 ### **DevOps & Deployment**
+
 - **Docker** - Containerization
 - **Docker Compose** - Multi-container orchestration
 - **Nginx** - Reverse proxy & static serving
@@ -193,6 +212,7 @@ python app.py
 ## 💻 Development Setup
 
 ### **Prerequisites**
+
 - Python 3.11+
 - Git
 
@@ -210,12 +230,16 @@ source .venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Sync environment variables
+# Copy .env.example to .env and add your API keys (OpenRouter/OpenAI)
+
 # Create/refresh the SQLite DB
 python migrate_db.py
 
 # Run Flask server
 python app.py
 # Server runs on http://localhost:5000
+
 ```
 
 ### **Database**
@@ -227,6 +251,7 @@ python app.py
 ### **Environment Variables**
 
 Create `.env` file (recommended). You can start from `.env.example`:
+
 ```bash
 FLASK_ENV=development
 FLASK_APP=app.py
@@ -241,6 +266,13 @@ PORT=5000
 POKEMON_DATA_DIR=PokemonData
 # Limit how many Pokédex numbers to import (example: 151)
 # MAX_POKEDEX_NUMBER=151
+
+# AI Configuration
+# Required for Hybrid VLM and AR Scanner features
+OPENROUTER_API_KEY=sk-or-v1-...
+# OR
+OPENAI_API_KEY=sk-...
+
 ```
 
 ### **PokemonData image folders (optional)**
@@ -273,9 +305,9 @@ python migrate_db.py
 
 If you prefer not to install the Stripe CLI locally, you can run it via Docker.
 
-1) Make sure your Flask app is running locally at `http://127.0.0.1:5000`.
+1. Make sure your Flask app is running locally at `http://127.0.0.1:5000`.
 
-2) Start Stripe webhook forwarding (Windows + Docker Desktop):
+2. Start Stripe webhook forwarding (Windows + Docker Desktop):
 
 ```bash
 docker run --rm -it stripe/stripe-cli:latest listen --api-key sk_test_xxx --forward-to http://host.docker.internal:5000/donate/webhook
@@ -287,8 +319,8 @@ If you want to reference an environment variable instead:
 - CMD: `--api-key %STRIPE_SECRET_KEY%`
 - Bash: `--api-key $STRIPE_SECRET_KEY`
 
-3) The CLI will print a webhook signing secret like `whsec_...`.
-Set it in your `.env`:
+3. The CLI will print a webhook signing secret like `whsec_...`.
+   Set it in your `.env`:
 
 ```bash
 STRIPE_WEBHOOK_SECRET=whsec_...
@@ -325,13 +357,16 @@ See [DOCKER_README.md](DOCKER_README.md) for comprehensive Docker guide.
 ## 📡 API Documentation
 
 ### **Base URL**
+
 - Development: `http://localhost:5000`
 - Production: `http://your-domain.com`
 
 ### **GET /search**
+
 Search and filter Pokémon
 
 **Parameters:**
+
 - `q` (string) - Pokémon name search
 - `type` (string) - Filter by type
 - `minAttack` (integer) - Minimum attack stat
@@ -340,6 +375,7 @@ Search and filter Pokémon
 - `page` (integer) - Page number
 
 **Response:**
+
 ```json
 {
   "results": [
@@ -362,20 +398,23 @@ Search and filter Pokémon
 ```
 
 ### **POST /predict**
+
 Predict Pokémon from image
 
 **Form Data:**
+
 - `file` (multipart/form-data) - Image file (PNG/JPG/JPEG/GIF)
 
 **Response:**
+
 ```json
 {
   "class": "Pikachu",
   "confidence": 92.5,
   "top_3": [
-    {"class": "Pikachu", "confidence": 92.5},
-    {"class": "Raichu", "confidence": 5.2},
-    {"class": "Pichu", "confidence": 2.3}
+    { "class": "Pikachu", "confidence": 92.5 },
+    { "class": "Raichu", "confidence": 5.2 },
+    { "class": "Pichu", "confidence": 2.3 }
   ],
   "stats": {
     "type": "Electric",
@@ -389,10 +428,16 @@ Predict Pokémon from image
 }
 ```
 
+### **POST /scan [Internal]**
+
+Receives camera frame blob from AR Scanner. Same response format as `/predict`.
+
 ### **GET /pokemon/<name>**
+
 Get specific Pokémon details
 
 **Response:**
+
 ```json
 {
   "name": "Pikachu",
@@ -411,6 +456,7 @@ Get specific Pokémon details
 ## 🧠 How It Works
 
 ### **1. Search Functionality**
+
 ```
 User inputs search query
     ↓
@@ -424,6 +470,7 @@ Jinja templates display beautiful card grid
 ```
 
 ### **2. Image Scanning & Prediction**
+
 ```
 User uploads image
     ↓
@@ -441,7 +488,9 @@ Jinja templates display beautiful result card
 ```
 
 ### **3. Fallback System**
+
 When TensorFlow model can't load:
+
 ```
 Image upload
     ↓
@@ -460,36 +509,37 @@ User gets prediction with beautiful display
 
 ### **Core Files**
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| `app.py` | Flask backend with all routes | - |
-| `models.py` | SQLAlchemy models | - |
-| `migrate_db.py` | CSV -> SQLite migration + image scan | - |
-| `pokemon.csv` | Source data (migration imports all rows by default) | - |
-| `class_indices.json` | Model class mapping | 151 classes |
+| File                 | Purpose                                             | Lines       |
+| -------------------- | --------------------------------------------------- | ----------- |
+| `app.py`             | Flask backend with all routes                       | -           |
+| `models.py`          | SQLAlchemy models                                   | -           |
+| `migrate_db.py`      | CSV -> SQLite migration + image scan                | -           |
+| `pokemon.csv`        | Source data (migration imports all rows by default) | -           |
+| `class_indices.json` | Model class mapping                                 | 151 classes |
 
 ### **Configuration Files**
 
-| File | Purpose |
-|------|---------|
-| `Dockerfile` | Multi-stage Docker build |
-| `docker-compose.yml` | Container orchestration |
-| `nginx.conf` | Reverse proxy configuration |
- | `docker-entrypoint.sh` | Production startup script |
- | `requirements.txt` | Python dependencies |
+| File                   | Purpose                     |
+| ---------------------- | --------------------------- |
+| `Dockerfile`           | Multi-stage Docker build    |
+| `docker-compose.yml`   | Container orchestration     |
+| `nginx.conf`           | Reverse proxy configuration |
+| `docker-entrypoint.sh` | Production startup script   |
+| `requirements.txt`     | Python dependencies         |
 
 ### **Documentation**
 
-| File | Purpose |
-|------|---------|
-| `README.md` | This file - Project overview |
-| `DOCKER_README.md` | Docker deployment guide |
+| File               | Purpose                      |
+| ------------------ | ---------------------------- |
+| `README.md`        | This file - Project overview |
+| `DOCKER_README.md` | Docker deployment guide      |
 
 ---
 
 ## 🚀 Key Components
 
 ### **Flask Backend (app.py)**
+
 - ✅ `/search` endpoint with advanced filtering
 - ✅ `/predict` endpoint with ML model integration
 - ✅ `/pokemon/<name>` endpoint for details
@@ -500,6 +550,7 @@ User gets prediction with beautiful display
 - ✅ Error handling and validation
 
 ### **Jinja Templates**
+
 - ✅ Responsive search with real-time filtering
 - ✅ Beautiful Pokémon card grid with stats
 - ✅ Drag-and-drop image upload
@@ -510,6 +561,7 @@ User gets prediction with beautiful display
 - ✅ Mobile-friendly design
 
 ### **Styling (CSS)**
+
 - ✅ Glass-morphism design
 - ✅ Gradient backgrounds
 - ✅ Smooth animations
@@ -528,10 +580,12 @@ User gets prediction with beautiful display
 Deploy to [Render](https://render.com) with PostgreSQL:
 
 **Step 1: Create PostgreSQL Database**
+
 - Go to Render Dashboard → New → PostgreSQL
 - Note the `Internal Database URL`
 
 **Step 2: Create Web Service**
+
 - Go to Render Dashboard → New → Web Service
 - Connect your GitHub repo
 - Settings:
@@ -540,6 +594,7 @@ Deploy to [Render](https://render.com) with PostgreSQL:
   - **Environment:** Python 3
 
 **Step 3: Set Environment Variables**
+
 ```
 DATABASE_URL=<from your Render PostgreSQL>
 SECRET_KEY=<generate a secure random string>
@@ -558,19 +613,23 @@ STRIPE_WEBHOOK_SECRET=whsec_xxx
 
 **Step 4: Configure Stytch Redirect URLs**
 In Stytch Dashboard, add these URLs:
+
 - `https://your-app.onrender.com/auth/authenticate`
 - `https://your-app.onrender.com/auth/oauth/callback`
 
 ### **2. Docker**
+
 ```bash
 docker-compose up -d
 ```
+
 - ✅ One command deployment
 - ✅ Works everywhere
 - ✅ Auto-restart on crash
 - ✅ Health checks included
 
 ### **3. Traditional Server**
+
 ```bash
 pip install -r requirements.txt
 python migrate_db.py
@@ -578,20 +637,21 @@ python app.py
 ```
 
 ### **4. Other Cloud Platforms**
+
 - Heroku, AWS, Google Cloud, Azure, DigitalOcean, Railway
 
 ---
 
 ## 📊 Performance
 
-| Metric | Value |
-|--------|-------|
-| Frontend Load Time | <2s |
-| Search Response | <100ms |
-| Prediction Response | <500ms |
-| Database Size | All Pokémon from `pokemon.csv` (by default) |
-| Model Size | ~50MB |
-| Image Processing | Real-time |
+| Metric              | Value                                       |
+| ------------------- | ------------------------------------------- |
+| Frontend Load Time  | <2s                                         |
+| Search Response     | <100ms                                      |
+| Prediction Response | <500ms                                      |
+| Database Size       | All Pokémon from `pokemon.csv` (by default) |
+| Model Size          | ~50MB                                       |
+| Image Processing    | Real-time                                   |
 
 ---
 
@@ -610,26 +670,33 @@ python app.py
 ## 🐛 Troubleshooting
 
 ### **Port Already in Use**
+
 ```bash
 # Change port in docker-compose.yml
 docker-compose up
 ```
 
 ### **Model Won't Load**
+
 The app automatically uses fallback prediction mode. Check logs:
+
 ```bash
 docker-compose logs -f
 ```
 
 ### **Uploads Not Persisting**
+
 Ensure volume is mounted in docker-compose.yml:
+
 ```yaml
 volumes:
   - ./static/uploads:/app/static/uploads
 ```
 
 ### **Out of Memory**
+
 Reduce workers in docker-entrypoint.sh:
+
 ```bash
 --workers 2
 ```
@@ -639,6 +706,7 @@ Reduce workers in docker-entrypoint.sh:
 ## 📦 Dependencies
 
 ### **Backend (Python)**
+
 - Flask==2.3.3
 - flask-cors==4.0.0
 - Flask-SQLAlchemy==3.1.1
@@ -648,6 +716,12 @@ Reduce workers in docker-entrypoint.sh:
 - gunicorn==21.2.0
 
 See `requirements.txt` for the complete list.
+
+### **AI & Vision**
+
+- **LangChain** - AI Logic orchestration
+- **LangGraph** - Chatbot state management
+- **GPT-4o-mini** (via OpenRouter) - Vision & Chat Intelligence
 
 ---
 
@@ -668,6 +742,7 @@ See `requirements.txt` for the complete list.
 ## 👤 Author
 
 Created as a full-stack AI/ML project showcasing:
+
 - Deep Learning with TensorFlow
 - Backend development with Flask
 - DevOps with Docker
@@ -678,6 +753,7 @@ Created as a full-stack AI/ML project showcasing:
 ## 📞 Support
 
 For issues, questions, or suggestions:
+
 1. Check existing issues
 2. Create detailed bug reports
 3. Include screenshots/logs
@@ -699,7 +775,7 @@ docker-compose up
 pip install -r requirements.txt
 python migrate_db.py
 python app.py
- 
+
 # Open http://127.0.0.1:5000
 # Upload a Pokémon image to scan!
 ```

@@ -80,81 +80,125 @@
             </div>
         </div>
         
-        <!-- Info Section -->
+        <!-- Tabs & Content -->
         <div class="detail-info-section">
-            <p class="detail-number">#{{ '%03d' % pokemon.number }}</p>
-            <h1 class="detail-name">{{ pokemon.name }}</h1>
-            <p class="detail-category">{{ pokemon.category }} Pokémon</p>
-            
-            <!-- Types -->
-            <div class="detail-types">
-                <span class="type-badge {{ pokemon.main_type|lower }}">
-                    {{ pokemon.main_type }}
-                </span>
-                {% if pokemon.secondary_type %}
-                <span class="type-badge {{ pokemon.secondary_type|lower }}">
-                    {{ pokemon.secondary_type }}
-                </span>
+            <div class="detail-tabs">
+                <button class="detail-tab active" data-tab="info">Info</button>
+                <button class="detail-tab" data-tab="stats">Stats</button>
+                <button class="detail-tab" data-tab="evolution" id="evolutionTabBtn">Evolution</button>
+            </div>
+
+            <!-- Info Tab -->
+            <div class="tab-content active" id="tab-info">
+                <p class="detail-number">#{{ '%03d' % pokemon.number }}</p>
+                <h1 class="detail-name">{{ pokemon.name }}</h1>
+                <p class="detail-category">{{ pokemon.category }} Pokémon</p>
+                
+                <div class="detail-types">
+                    <span class="type-badge {{ pokemon.main_type|lower }}">{{ pokemon.main_type }}</span>
+                    {% if pokemon.secondary_type %}
+                    <span class="type-badge {{ pokemon.secondary_type|lower }}">{{ pokemon.secondary_type }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="physical-stats">
+                    <div class="physical-stat">
+                        <div class="physical-stat-value">{{ pokemon.height }}</div>
+                        <div class="physical-stat-label">Height</div>
+                    </div>
+                    <div class="physical-stat">
+                        <div class="physical-stat-value">{{ pokemon.weight }}</div>
+                        <div class="physical-stat-label">Weight</div>
+                    </div>
+                    <div class="physical-stat">
+                        <div class="physical-stat-value">{{ pokemon.region }}</div>
+                        <div class="physical-stat-label">Region</div>
+                    </div>
+                </div>
+
+                {% if pokemon.pokedex_desc %}
+                <div class="pokedex-entry">
+                    <h3><i class="fas fa-book"></i> Pokédex Entry</h3>
+                    <p>{{ pokemon.pokedex_desc }}</p>
+                </div>
                 {% endif %}
             </div>
-            
-            <!-- Physical Stats -->
-            <div class="physical-stats">
-                <div class="physical-stat">
-                    <div class="physical-stat-value">{{ pokemon.height }}</div>
-                    <div class="physical-stat-label">Height</div>
-                </div>
-                <div class="physical-stat">
-                    <div class="physical-stat-value">{{ pokemon.weight }}</div>
-                    <div class="physical-stat-label">Weight</div>
-                </div>
-                <div class="physical-stat">
-                    <div class="physical-stat-value">{{ pokemon.region }}</div>
-                    <div class="physical-stat-label">Region</div>
-                </div>
-            </div>
-            
-            <!-- Base Stats -->
-            <div class="base-stats">
+
+            <!-- Stats Tab -->
+            <div class="tab-content" id="tab-stats">
                 <h3><i class="fas fa-chart-bar"></i> Base Stats</h3>
-                
-                <div class="stat-row">
-                    <span class="stat-name">HP</span>
-                    <span class="stat-num">{{ pokemon.stamina }}</span>
-                    <div class="stat-bar-bg">
-                        <div class="stat-bar-fill hp" style="width: {{ (pokemon.stamina / 300 * 100)|int }}%"></div>
+                <div class="base-stats">
+                    <div class="stat-row">
+                        <span class="stat-name">HP</span>
+                        <span class="stat-num">{{ pokemon.stamina }}</span>
+                        <div class="stat-bar-bg">
+                            <div class="stat-bar-fill hp" style="width: {{ (pokemon.stamina / 255 * 100)|int }}%"></div>
+                        </div>
+                        <span class="stat-max">255</span>
                     </div>
-                    <span class="stat-max">300</span>
-                </div>
-                
-                <div class="stat-row">
-                    <span class="stat-name">Attack</span>
-                    <span class="stat-num">{{ pokemon.attack }}</span>
-                    <div class="stat-bar-bg">
-                        <div class="stat-bar-fill attack" style="width: {{ (pokemon.attack / 300 * 100)|int }}%"></div>
+                    <div class="stat-row">
+                        <span class="stat-name">Attack</span>
+                        <span class="stat-num">{{ pokemon.attack }}</span>
+                        <div class="stat-bar-bg">
+                            <div class="stat-bar-fill attack" style="width: {{ (pokemon.attack / 255 * 100)|int }}%"></div>
+                        </div>
+                        <span class="stat-max">255</span>
                     </div>
-                    <span class="stat-max">300</span>
-                </div>
-                
-                <div class="stat-row">
-                    <span class="stat-name">Defense</span>
-                    <span class="stat-num">{{ pokemon.defense }}</span>
-                    <div class="stat-bar-bg">
-                        <div class="stat-bar-fill defense" style="width: {{ (pokemon.defense / 300 * 100)|int }}%"></div>
+                    <div class="stat-row">
+                        <span class="stat-name">Defense</span>
+                        <span class="stat-num">{{ pokemon.defense }}</span>
+                        <div class="stat-bar-bg">
+                            <div class="stat-bar-fill defense" style="width: {{ (pokemon.defense / 255 * 100)|int }}%"></div>
+                        </div>
+                        <span class="stat-max">255</span>
                     </div>
-                    <span class="stat-max">300</span>
+                    <div class="stat-row">
+                        <span class="stat-name">Sp. Atk</span>
+                        <span class="stat-num">{{ pokemon.sp_attack }}</span>
+                        <div class="stat-bar-bg">
+                            <div class="stat-bar-fill sp-attack" style="width: {{ (pokemon.sp_attack / 255 * 100)|int }}%"></div>
+                        </div>
+                        <span class="stat-max">255</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-name">Sp. Def</span>
+                        <span class="stat-num">{{ pokemon.sp_defense }}</span>
+                        <div class="stat-bar-bg">
+                            <div class="stat-bar-fill sp-defense" style="width: {{ (pokemon.sp_defense / 255 * 100)|int }}%"></div>
+                        </div>
+                        <span class="stat-max">255</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-name">Speed</span>
+                        <span class="stat-num">{{ pokemon.speed }}</span>
+                        <div class="stat-bar-bg">
+                            <div class="stat-bar-fill speed" style="width: {{ (pokemon.speed / 255 * 100)|int }}%"></div>
+                        </div>
+                        <span class="stat-max">255</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-name">Total</span>
+                        <span class="stat-num">{{ pokemon.bst }}</span>
+                        <div class="stat-bar-bg">
+                            <div class="stat-bar-fill total" style="width: {{ (pokemon.bst / 780 * 100)|int }}%"></div>
+                        </div>
+                        <span class="stat-max">780</span>
+                    </div>
                 </div>
             </div>
-            
-            <!-- Pokédex Entry -->
-            {% if pokemon.pokedex_desc %}
-            <div class="pokedex-entry">
-                <h3><i class="fas fa-book"></i> Pokédex Entry</h3>
-                <p>{{ pokemon.pokedex_desc }}</p>
+
+            <!-- Evolution Tab -->
+            <div class="tab-content" id="tab-evolution">
+                <h3><i class="fas fa-project-diagram"></i> Evolution Chain</h3>
+                <div id="evolution-loading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading evolution data...
+                </div>
+                <div class="mermaid" id="evolution-diagram"></div>
+                <div id="evolution-error" style="display: none; color: var(--pokemon-red);">
+                    Could not load evolution data.
+                </div>
             </div>
-            {% endif %}
         </div>
-    </div>
     
     <!-- Additional Info Cards -->
     <div class="detail-extras">
@@ -192,6 +236,68 @@
 
 {% block extra_css %}
 <style>
+    /* Tab Styles */
+    .detail-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.5rem;
+    }
+    
+    .detail-tab {
+        background: none;
+        border: none;
+        padding: 0.5rem 1rem;
+        font-family: 'Outfit', sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s;
+    }
+    
+    .detail-tab:hover {
+        color: var(--text-primary);
+    }
+    
+    .detail-tab.active {
+        color: var(--pokemon-yellow);
+    }
+    
+    .detail-tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: -0.5rem;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: var(--pokemon-yellow);
+        border-radius: 3px 3px 0 0;
+    }
+    
+    .tab-content {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    /* Mermaid Diagram */
+    .mermaid {
+        text-align: center;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 1rem;
+        border-radius: var(--radius-md);
+        min-height: 200px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
     .detail-extras {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -267,6 +373,7 @@
     .detail-card[data-type="bug"] { border-top: 4px solid var(--type-bug); }
     .detail-card[data-type="ghost"] { border-top: 4px solid var(--type-ghost); }
     .detail-card[data-type="steel"] { border-top: 4px solid var(--type-steel); }
+    
     /* Action Buttons */
     .detail-actions {
         display: flex;
@@ -332,7 +439,77 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 <script>
+mermaid.initialize({ 
+    startOnLoad: false, 
+    theme: 'dark',
+    securityLevel: 'loose',
+    fontFamily: 'Outfit'
+});
+
+// Tab Switching
+document.querySelectorAll('.detail-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        // Deactivate all
+        document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        // Activate click
+        tab.classList.add('active');
+        document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+        
+        // Load evolution if needed
+        if (tab.dataset.tab === 'evolution') {
+            loadEvolutionData();
+        }
+    });
+});
+
+let evolutionLoaded = false;
+async function loadEvolutionData() {
+    if (evolutionLoaded) return;
+    
+    const container = document.getElementById('evolution-diagram');
+    const loading = document.getElementById('evolution-loading');
+    const errorMsg = document.getElementById('evolution-error');
+    
+    try {
+        const response = await fetch(`/api/pokemon/{{ pokemon.id }}/evolution`);
+        if (!response.ok) throw new Error('Failed to load');
+        
+        const data = await response.json();
+        
+        // Build Mermaid Graph
+        let graph = 'graph LR\n';
+        // Add style class
+        graph += 'classDef pokemon fill:#2a2a3e,stroke:#FFCB05,stroke-width:2px,color:#fff,rx:10,ry:10;\n';
+        
+        data.connections.forEach(conn => {
+            // Clean names for IDs
+            const sourceId = conn.source.replace(/\s+/g, '');
+            const targetId = conn.target.replace(/\s+/g, '');
+            
+            graph += `${sourceId}[${conn.source}]:::pokemon -->|${conn.label}| ${targetId}[${conn.target}]:::pokemon\n`;
+        });
+        
+        loading.style.display = 'none';
+        
+        if (data.connections.length === 0) {
+            container.innerHTML = 'No evolution data available.';
+        } else {
+            const { svg } = await mermaid.render('mermaid-svg', graph);
+            container.innerHTML = svg;
+            evolutionLoaded = true;
+        }
+        
+    } catch (e) {
+        console.error(e);
+        loading.style.display = 'none';
+        errorMsg.style.display = 'block';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Check if Pokemon is favorited
     checkFavoriteStatus();
@@ -392,6 +569,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
 
 async function toggleFavorite() {
     const btn = document.getElementById('favoriteBtn');
@@ -457,7 +635,7 @@ function downloadCard() {
     // Load and draw Pokemon image
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload = () => {
+    img.onload = async () => {
         // Draw Image container (Glassmorphism look)
         ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
         ctx.fillRect(50, 130, 300, 300);

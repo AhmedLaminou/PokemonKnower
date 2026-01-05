@@ -10,7 +10,9 @@ import cv2
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory, session
 from flask_cors import CORS
-from models import db, Pokemon, PokemonImage, PokemonType, User, Donation, Favorite, Team, TeamMember, QuizScore
+from models import db, Pokemon, PokemonImage, PokemonType, User, Donation, Favorite, Team, TeamMember, QuizScore, Move, Ability
+from battle_engine import BattleEngine
+from ai_engine import PokemonIdentifier
 
 load_dotenv()
 load_dotenv('.env.example', override=False)
@@ -35,6 +37,100 @@ CLASS_INDICES_PATH = 'class_indices.json'
 UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
+# Cache for evolution chains to avoid repeated external API calls
+evolution_cache = {}
+
+def get_evolution_chain_from_pokeapi(pokemon_id):
+    """Fetch and parse evolution chain from PokeAPI"""
+    try:
+        import requests
+        # 1. Get species data to find evolution chain URL
+        species_res = requests.get(f'https://pokeapi.co/api/v2/pokemon-species/{pokemon_id}')
+        if not species_res.ok:
+            return None
+            
+        species_data = species_res.json()
+        evolution_chain_url = species_data['evolution_chain']['url']
+        
+        # Check cache
+        if evolution_chain_url in evolution_cache:
+            return evolution_cache[evolution_chain_url]
+            
+        # 2. Get evolution chain data
+        evo_res = requests.get(evolution_chain_url)
+        if not evo_res.ok:
+            return None
+            
+        evo_data = evo_res.json()
+        chain = evo_data['chain']
+        
+        # 3. Parse into a flat list of connections for Mermaid
+        # Structure: start -> end [label]
+        connections = []
+        
+        def traverse_chain(node):
+            current_name = node['species']['name'].capitalize()
+            # Try to get ID from URL to match with local DB if needed, or just use name
+            # url format: .../pokemon-species/1/
+            current_id = int(node['species']['url'].split('/')[-2])
+            
+            for evolution in node['evolves_to']:
+                target_name = evolution['species']['name'].capitalize()
+                target_id = int(evolution['species']['url'].split('/')[-2])
+                
+                # Determine evolution method details
+                details = evolution['evolution_details'][0] if evolution['evolution_details'] else {}
+                trigger = details.get('trigger', {}).get('name', '')
+                
+                method_label = ""
+                if trigger == 'level-up' and details.get('min_level'):
+                    method_label = f"Lvl {details['min_level']}"
+                elif trigger == 'use-item' and details.get('item'):
+                    method_label = details['item']['name'].replace('-', ' ').title()
+                elif trigger == 'trade':
+                    method_label = "Trade"
+                elif details.get('happiness'):
+                    method_label = "High Friendship"
+                else:
+                    method_label = trigger.replace('-', ' ').title()
+                    
+                connections.append({
+                    'source': current_name,
+                    'source_id': current_id,
+                    'target': target_name,
+                    'target_id': target_id,
+                    'label': method_label
+                })
+                
+                traverse_chain(evolution)
+                
+        traverse_chain(chain)
+        
+        result = {'connections': connections}
+        evolution_cache[evolution_chain_url] = result
+        return result
+        
+    except Exception as e:
+        print(f"Error fetching evolution: {e}")
+        return None
+
+@app.route('/api/pokemon/<int:pokemon_id>/evolution')
+def get_pokemon_evolution(pokemon_id):
+    """Get evolution chain for a Pokemon"""
+    local_pokemon = Pokemon.query.get(pokemon_id)
+    # If we have a huge local DB, we could try to infer, but PokeAPI is safer for structure
+    # Use the 'number' from local DB which corresponds to PokeAPI ID usually
+    if not local_pokemon:
+        return jsonify({'error': 'Pokemon not found'}), 404
+        
+    # Use the Pokemon's number (dex ID) for PokeAPI
+    data = get_evolution_chain_from_pokeapi(local_pokemon.number)
+    
+    if data:
+        return jsonify(data)
+    else:
+        return jsonify({'error': 'Evolution data not available'}), 404
+
 def resolve_pokemon_data_dir() -> str:
     configured = (os.environ.get('POKEMON_DATA_DIR') or '').strip()
     if configured and os.path.isdir(configured):
@@ -56,12 +152,16 @@ db.init_app(app)
 from auth import auth_bp, get_current_user
 from donations import donations_bp
 from admin import admin_bp
-from chat import chat_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(donations_bp)
 app.register_blueprint(admin_bp)
-app.register_blueprint(chat_bp)
+
+try:
+    from chat import chat_bp
+    app.register_blueprint(chat_bp)
+except ImportError as e:
+    print(f"Warning: Could not import chat module. Chat features will be disabled. Error: {e}")
 
 # Context processor to make current_user available in all templates
 @app.context_processor
@@ -267,6 +367,11 @@ def api_pokemon_images(pokemon_id):
     images = PokemonImage.query.filter_by(pokemon_id=pokemon_id).order_by(PokemonImage.order).all()
     return jsonify([img.to_dict() for img in images])
 
+@app.route('/scan')
+def scanner():
+    """Real-time AR Scanner page"""
+    return render_template('scanner.html')
+
 @app.route('/search')
 def search():
     """Search Pokémon with filters"""
@@ -348,43 +453,65 @@ def predict():
         model_loaded = ensure_tf_loaded()
         
         if model_loaded and model is not None:
+
             print("Using ML model for prediction...")
             img = preprocess_image(filepath)
-            if img is None:
-                return jsonify({'error': 'Failed to process image'}), 400
             
-            predictions = model.predict(img, verbose=0)
-            predicted_idx = np.argmax(predictions[0])
-            confidence = float(np.max(predictions[0])) * 100
-            pokemon_name = class_labels.get(predicted_idx, 'Unknown')
-            
-            top_3_indices = np.argsort(predictions[0])[-3:][::-1]
-            top_3 = []
-            for idx in top_3_indices:
-                if idx in class_labels:
-                    top_3.append({
-                        'name': class_labels[idx],
-                        'confidence': float(predictions[0][idx]) * 100
-                    })
+            # Local Prediction
+            try:
+                predictions = model.predict(img, verbose=0)
+                predicted_idx = np.argmax(predictions[0])
+                confidence = float(np.max(predictions[0])) * 100
+                pokemon_name = class_labels.get(predicted_idx, 'Unknown')
+                
+                # Top 3 from local
+                top_3_indices = np.argsort(predictions[0])[-3:][::-1]
+                top_3 = []
+                for idx in top_3_indices:
+                    if idx in class_labels:
+                        top_3.append({
+                            'name': class_labels[idx],
+                            'confidence': float(predictions[0][idx]) * 100
+                        })
+            except Exception as e:
+                print(f"Local model error: {e}, forcing VLM fallback.")
+                confidence = 0 # Force fallback
+                
+            is_shiny = False # Default for local model
+
+                
+            # HYBRID DECISION: If confidence is low (< 85%) or Unknown, use VLM
+            if confidence < 85.0 or pokemon_name == 'Unknown':
+                print(f"Low confidence ({confidence:.2f}%), switching to AI Vision...")
+                identifier = PokemonIdentifier()
+                vlm_result = identifier.identify_pokemon(filepath)
+                
+                if vlm_result and vlm_result.get('is_pokemon'):
+                    print(f"VLM ID: {vlm_result['name']} ({vlm_result['confidence']}%)")
+                    pokemon_name = vlm_result['name']
+                    confidence = vlm_result['confidence']
+                    is_shiny = vlm_result.get('is_shiny', False)
+                    # Overwrite top_3 with VLM result as primary
+                    top_3 = [{'name': pokemon_name, 'confidence': confidence}]
+                else:
+                    print("VLM could not identify or not a Pokemon.")
+                    is_shiny = False
         else:
-            print("Using fallback prediction mode...")
-            import hashlib
-            with open(filepath, 'rb') as f:
-                file_hash = int(hashlib.md5(f.read()).hexdigest(), 16)
+            # Model not loaded, go straight to VLM
+            print("Local model not loaded, using AI Vision...")
+            identifier = PokemonIdentifier()
+            vlm_result = identifier.identify_pokemon(filepath)
             
-            pokemon_list = list(class_labels.values())
-            selected_idx = file_hash % len(pokemon_list)
-            pokemon_name = pokemon_list[selected_idx]
-            confidence = 65.0 + (file_hash % 25)
-            
-            alt_idx1 = (selected_idx + 1) % len(pokemon_list)
-            alt_idx2 = (selected_idx + 2) % len(pokemon_list)
-            
-            top_3 = [
-                {'name': pokemon_name, 'confidence': confidence},
-                {'name': pokemon_list[alt_idx1], 'confidence': max(30, 80 - confidence)},
-                {'name': pokemon_list[alt_idx2], 'confidence': max(20, 70 - confidence)}
-            ]
+            if vlm_result and vlm_result.get('is_pokemon'):
+                pokemon_name = vlm_result['name']
+                confidence = vlm_result['confidence']
+                is_shiny = vlm_result.get('is_shiny', False)
+                top_3 = [{'name': pokemon_name, 'confidence': confidence}]
+            else:
+                pokemon_name = 'Unknown'
+                confidence = 0.0
+                is_shiny = False
+                top_3 = []
         
         # Get Pokémon data from database
         pokemon = get_pokemon_by_name(pokemon_name)
@@ -393,6 +520,7 @@ def predict():
         return jsonify({
             'name': pokemon_name,
             'confidence': round(confidence, 2),
+            'is_shiny': is_shiny,
             'top_3': top_3,
             'pokemon': pokemon_data
         })
@@ -773,14 +901,41 @@ def api_team_analysis_saved(team_id):
     return analyze_pokemon_list(members)
 
 def analyze_pokemon_list(pokemon_list):
-    """Helper to analyze a list of Pokemon objects"""
+    """Helper to analyze a list of Pokemon objects with advanced metrics"""
     types = ['normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground', 
              'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy']
+    
+    # Type effectiveness chart for offensive coverage (attacker type -> defender type -> multiplier)
+    type_chart = {
+        'normal': {'rock': 0.5, 'ghost': 0, 'steel': 0.5},
+        'fire': {'fire': 0.5, 'water': 0.5, 'grass': 2, 'ice': 2, 'bug': 2, 'rock': 0.5, 'dragon': 0.5, 'steel': 2},
+        'water': {'fire': 2, 'water': 0.5, 'grass': 0.5, 'ground': 2, 'rock': 2, 'dragon': 0.5},
+        'electric': {'water': 2, 'electric': 0.5, 'grass': 0.5, 'ground': 0, 'flying': 2, 'dragon': 0.5},
+        'grass': {'fire': 0.5, 'water': 2, 'grass': 0.5, 'poison': 0.5, 'ground': 2, 'flying': 0.5, 'bug': 0.5, 'rock': 2, 'dragon': 0.5, 'steel': 0.5},
+        'ice': {'fire': 0.5, 'water': 0.5, 'grass': 2, 'ice': 0.5, 'ground': 2, 'flying': 2, 'dragon': 2, 'steel': 0.5},
+        'fighting': {'normal': 2, 'ice': 2, 'poison': 0.5, 'flying': 0.5, 'psychic': 0.5, 'bug': 0.5, 'rock': 2, 'ghost': 0, 'dark': 2, 'steel': 2, 'fairy': 0.5},
+        'poison': {'grass': 2, 'poison': 0.5, 'ground': 0.5, 'rock': 0.5, 'ghost': 0.5, 'steel': 0, 'fairy': 2},
+        'ground': {'fire': 2, 'electric': 2, 'grass': 0.5, 'poison': 2, 'flying': 0, 'bug': 0.5, 'rock': 2, 'steel': 2},
+        'flying': {'electric': 0.5, 'grass': 2, 'fighting': 2, 'bug': 2, 'rock': 0.5, 'steel': 0.5},
+        'psychic': {'fighting': 2, 'poison': 2, 'psychic': 0.5, 'dark': 0, 'steel': 0.5},
+        'bug': {'fire': 0.5, 'grass': 2, 'fighting': 0.5, 'poison': 0.5, 'flying': 0.5, 'psychic': 2, 'ghost': 0.5, 'dark': 2, 'steel': 0.5, 'fairy': 0.5},
+        'rock': {'fire': 2, 'ice': 2, 'fighting': 0.5, 'ground': 0.5, 'flying': 2, 'bug': 2, 'steel': 0.5},
+        'ghost': {'normal': 0, 'psychic': 2, 'ghost': 2, 'dark': 0.5},
+        'dragon': {'dragon': 2, 'steel': 0.5, 'fairy': 0},
+        'dark': {'fighting': 0.5, 'psychic': 2, 'ghost': 2, 'dark': 0.5, 'fairy': 0.5},
+        'steel': {'fire': 0.5, 'water': 0.5, 'electric': 0.5, 'ice': 2, 'rock': 2, 'steel': 0.5, 'fairy': 2},
+        'fairy': {'fire': 0.5, 'fighting': 2, 'poison': 0.5, 'dragon': 2, 'dark': 2, 'steel': 0.5}
+    }
+    
+    # Meta standard stats (approx competitive averages)
+    meta_standards = {'hp': 80, 'attack': 90, 'defense': 80, 'sp_attack': 85, 'sp_defense': 80, 'speed': 85}
              
-    coverage = {t: {'weak': 0, 'resist': 0, 'immune': 0} for t in types}
+    defensive_coverage = {t: {'weak': 0, 'resist': 0, 'immune': 0} for t in types}
+    offensive_coverage = {t: False for t in types}  # Can we hit this type super-effectively?
     
     stats_total = {'hp': 0, 'attack': 0, 'defense': 0, 'sp_attack': 0, 'sp_defense': 0, 'speed': 0}
     member_count = len(pokemon_list)
+    team_types = set()
     
     if member_count == 0:
         return jsonify({'error': 'Team is empty'}), 400
@@ -796,30 +951,70 @@ def analyze_pokemon_list(pokemon_list):
         stats_total['sp_defense'] += p.sp_defense
         stats_total['speed'] += p.speed
         
-        # Coverage (using against_types JSON)
+        # Collect team types for offensive coverage
+        if p.main_type:
+            team_types.add(p.main_type.lower())
+        if p.secondary_type:
+            team_types.add(p.secondary_type.lower())
+        
+        # Defensive Coverage (using against_types JSON)
         if p.against_types:
             try:
-                # Assuming against_types is stored as JSON: {"fire": 2.0, "water": 0.5, ...}
                 matchups = json.loads(p.against_types)
                 for t, multiplier in matchups.items():
                     t_lower = t.lower()
-                    if t_lower in coverage:
+                    if t_lower in defensive_coverage:
                         if multiplier > 1:
-                            coverage[t_lower]['weak'] += 1
+                            defensive_coverage[t_lower]['weak'] += 1
                         elif multiplier < 1 and multiplier > 0:
-                            coverage[t_lower]['resist'] += 1
+                            defensive_coverage[t_lower]['resist'] += 1
                         elif multiplier == 0:
-                            coverage[t_lower]['immune'] += 1
+                            defensive_coverage[t_lower]['immune'] += 1
             except:
-                pass # JSON parse error
+                pass
+    
+    # Calculate Offensive Coverage (what types can team hit super-effectively)
+    for attacker_type in team_types:
+        if attacker_type in type_chart:
+            for defender_type, multiplier in type_chart[attacker_type].items():
+                if multiplier >= 2:
+                    offensive_coverage[defender_type] = True
                 
     # Calculate averages
     stats_avg = {k: round(v / member_count) for k, v in stats_total.items()}
     
+    # Find weaknesses (types with 2+ team members weak to them)
+    critical_weaknesses = [t for t, data in defensive_coverage.items() if data['weak'] >= 2]
+    
+    # Find offensive gaps (types we can't hit super-effectively)
+    offensive_gaps = [t for t, can_hit in offensive_coverage.items() if not can_hit]
+    
+    # Generate AI coach suggestions
+    suggestions = []
+    if critical_weaknesses:
+        weak_types = ', '.join([t.capitalize() for t in critical_weaknesses[:3]])
+        suggestions.append(f"Your team is weak to {weak_types} types. Consider adding Pokémon that resist these.")
+    
+    if len(offensive_gaps) > 6:
+        gap_types = ', '.join([t.capitalize() for t in offensive_gaps[:3]])
+        suggestions.append(f"Your team lacks offensive coverage against {gap_types}. Add diverse typings!")
+    
+    if stats_avg.get('speed', 0) < meta_standards['speed'] - 20:
+        suggestions.append("Your team's Speed is below average. Consider faster Pokémon for priority control.")
+    
+    if not suggestions:
+        suggestions.append("Great team balance! Your type coverage and stats look solid.")
+    
     return jsonify({
-        'coverage': coverage,
+        'coverage': defensive_coverage,
+        'offensive_coverage': offensive_coverage,
         'stats_avg': stats_avg,
-        'member_count': member_count
+        'meta_standards': meta_standards,
+        'member_count': member_count,
+        'team_types': list(team_types),
+        'critical_weaknesses': critical_weaknesses,
+        'offensive_gaps': offensive_gaps,
+        'suggestions': suggestions
     })
 @app.route('/compare')
 def compare_page():
@@ -877,6 +1072,32 @@ def gallery():
                           types=PokemonType.get_type_data(),
                           current_type=pokemon_type,
                           current_gen=generation)
+
+# ==================== MOVE & ABILITY DEX ====================
+
+@app.route('/moves')
+def move_dex():
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    
+    query = Move.query
+    if search:
+        query = query.filter(Move.name.ilike(f'%{search}%'))
+        
+    moves = query.order_by(Move.name).paginate(page=page, per_page=20)
+    return render_template('move_dex.html', moves=moves, search=search)
+
+@app.route('/abilities')
+def ability_dex():
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    
+    query = Ability.query
+    if search:
+        query = query.filter(Ability.name.ilike(f'%{search}%'))
+        
+    abilities = query.order_by(Ability.name).paginate(page=page, per_page=20)
+    return render_template('ability_dex.html', abilities=abilities, search=search)
 
 # ==================== DOWNLOAD CARD ====================
 
@@ -944,6 +1165,62 @@ def not_found(e):
 @app.errorhandler(500)
 def server_error(e):
     return render_template('500.html'), 500
+
+# ==================== BATTLE SIMULATOR ====================
+
+# In-memory battle session storage
+battle_sessions = {}
+
+@app.route('/battle')
+def battle_page():
+    return render_template('battle.html')
+
+@app.route('/api/battle/start', methods=['POST'])
+def start_battle():
+    import uuid
+    data = request.json or {}
+    pokemon_id = data.get('pokemon_id')
+    
+    # Get Player Pokemon
+    if pokemon_id:
+        player_poke = Pokemon.query.get(pokemon_id)
+    else:
+        # Random if not specified
+        player_poke = Pokemon.query.order_by(db.func.random()).first()
+        
+    if not player_poke:
+        return jsonify({'error': 'Pokemon not found'}), 404
+        
+    # Get Enemy Pokemon (Random)
+    enemy_poke = Pokemon.query.order_by(db.func.random()).first()
+    
+    # Init Engine
+    engine = BattleEngine(player_poke, enemy_poke)
+    
+    battle_id = str(uuid.uuid4())
+    battle_sessions[battle_id] = engine
+    
+    return jsonify({
+        'battle_id': battle_id,
+        'state': engine.get_state()
+    })
+
+@app.route('/api/battle/<battle_id>/turn', methods=['POST'])
+def battle_turn(battle_id):
+    if battle_id not in battle_sessions:
+        return jsonify({'error': 'Battle not found'}), 404
+        
+    engine = battle_sessions[battle_id]
+    data = request.json
+    move_index = data.get('move_index', 0)
+    
+    state = engine.execute_turn(move_index)
+    
+    # Cleanup if over (can fail immediately if deleted, maybe keep for a timeout or rely on restart)
+    if state['winner']:
+        pass 
+    
+    return jsonify(state)
 
 # Create database tables on first run (only when running directly, not with Gunicorn)
 if __name__ == '__main__':
