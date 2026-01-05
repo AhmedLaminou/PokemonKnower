@@ -10,10 +10,11 @@ echo "🚀 Starting Pokemon Knower..."
 mkdir -p static/uploads
 
 # Check if required files exist
-if [ ! -f "pokemon.csv" ]; then
-    echo "❌ Error: pokemon.csv not found!"
+if [ ! -f "Data/pokémon_with_stats/All_Pokemon.csv" ]; then
+    echo "❌ Error: Data/pokémon_with_stats/All_Pokemon.csv not found!"
     exit 1
 fi
+
 
 if [ ! -f "class_indices.json" ]; then
     echo "❌ Error: class_indices.json not found!"
