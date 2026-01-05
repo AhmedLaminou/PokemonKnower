@@ -1,7 +1,7 @@
 # Environment
 .env
-.env.example
 *.env
+
 .venv/
 venv/
 ENV/
