@@ -66,6 +66,8 @@ def get_type_matchups(type_name: str):
 
 # --- Graph Definition ---
 
+# --- Graph Definition ---
+
 class AgentState(TypedDict):
     messages: Annotated[List[HumanMessage | AIMessage | SystemMessage], operator.add]
 
@@ -77,9 +79,7 @@ def get_model():
     
     if os.environ.get('OPENROUTER_API_KEY'):
         base_url = "https://openrouter.ai/api/v1"
-        model_name = "openai/gpt-3.5-turbo" # OpenRouter specific model string needed? usually yes.
-        # Fallback to a generally available one or let user configure.
-        # Let's try standard GPT-4o-mini or similar if available, else standard.
+        # Force gpt-4o-mini for robust output
         model_name = "openai/gpt-4o-mini"
         
     llm = ChatOpenAI(
@@ -90,32 +90,44 @@ def get_model():
     )
     return llm
 
-# Initialize the graph
-tools = [lookup_pokemon]
-tool_node = ToolNode(tools)
-model = get_model().bind_tools(tools)
+# Global cache for compiled graph
+_compiled_app_graph = None
 
-def call_model(state: AgentState):
-    messages = state['messages']
-    response = model.invoke(messages)
-    return {"messages": [response]}
+def get_app_graph():
+    """Lazily initialize and compile the graph"""
+    global _compiled_app_graph
+    if _compiled_app_graph is not None:
+        return _compiled_app_graph
 
-def should_continue(state: AgentState):
-    messages = state['messages']
-    last_message = messages[-1]
-    if last_message.tool_calls:
-        return "tools"
-    return END
+    # Define tools and model binding inside to avoid import-time errors
+    tools = [lookup_pokemon]
+    tool_node = ToolNode(tools)
+    
+    def call_model(state: AgentState):
+        # Initialize model here so it fails only when used
+        llm = get_model().bind_tools(tools)
+        messages = state['messages']
+        response = llm.invoke(messages)
+        return {"messages": [response]}
 
-workflow = StateGraph(AgentState)
-workflow.add_node("agent", call_model)
-workflow.add_node("tools", tool_node)
+    def should_continue(state: AgentState):
+        messages = state['messages']
+        last_message = messages[-1]
+        if last_message.tool_calls:
+            return "tools"
+        return END
 
-workflow.set_entry_point("agent")
-workflow.add_conditional_edges("agent", should_continue)
-workflow.add_edge("tools", "agent")
+    workflow = StateGraph(AgentState)
+    workflow.add_node("agent", call_model)
+    workflow.add_node("tools", tool_node)
 
-app_graph = workflow.compile()
+    workflow.set_entry_point("agent")
+    workflow.add_conditional_edges("agent", should_continue)
+    workflow.add_edge("tools", "agent")
+
+    _compiled_app_graph = workflow.compile()
+    return _compiled_app_graph
+
 
 # --- Routes ---
 
@@ -149,8 +161,10 @@ def chat_message():
     # Note: Flask needs app context for DB tools to work
     from app import app
     with app.app_context():
-        final_state = app_graph.invoke({"messages": messages})
+        graph = get_app_graph()
+        final_state = graph.invoke({"messages": messages})
         
     final_response = final_state['messages'][-1].content
+
     
     return jsonify({'response': final_response})
