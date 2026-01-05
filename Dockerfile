@@ -26,9 +26,13 @@ COPY auth.py .
 COPY admin.py .
 COPY donations.py .
 COPY migrate_db.py .
-COPY pokemon.csv .
+COPY ai_engine.py .
+COPY chat.py .
+COPY battle_engine.py .
+COPY Data/ ./Data/
 COPY class_indices.json .
 COPY pokemon_classifier_model_V3.h5 .
+
 
 # Copy templates and static files
 COPY templates/ ./templates/
