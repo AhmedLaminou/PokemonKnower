@@ -6,7 +6,9 @@ from functools import wraps
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
 from models import db, User, Donation, Pokemon, Favorite, Team, QuizScore, PokemonImage
 
+import os
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+
 
 
 def admin_required(f):
@@ -83,6 +85,16 @@ def dashboard():
     
     # Admin users count
     admin_count = User.query.filter_by(role='admin').count()
+
+    # System Health Checks
+    system_health = {
+        'database': 'Online', # If we reached here, DB is working
+        'ai_engine': 'Online' if os.environ.get('OPENROUTER_API_KEY') or os.environ.get('OPENAI_API_KEY') else 'Offline',
+        'stripe_env': os.environ.get('STRIPE_ENV', 'test'),
+        'stytch_env': os.environ.get('STYTCH_ENV', 'test'),
+        'debug_mode': 'Enabled' if os.environ.get('FLASK_DEBUG') == '1' else 'Disabled'
+    }
+
     
     return render_template('admin/dashboard.html',
         total_users=total_users,
@@ -102,8 +114,12 @@ def dashboard():
         avg_quiz_score=avg_quiz_score,
         recent_donations=recent_donations,
         recent_users=recent_users,
-        admin_count=admin_count
+        recent_donations=recent_donations,
+        recent_users=recent_users,
+        admin_count=admin_count,
+        system_health=system_health
     )
+
 
 
 @admin_bp.route('/users')

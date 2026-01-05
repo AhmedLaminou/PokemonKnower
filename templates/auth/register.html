@@ -6,45 +6,51 @@
 <div class="auth-container">
     <div class="auth-card">
         <div class="auth-header">
+            <div class="auth-logo">
+                <div class="logo-pokeball">
+                    <div class="pokeball-top"></div>
+                    <div class="pokeball-center"></div>
+                    <div class="pokeball-bottom"></div>
+                </div>
+            </div>
             <h1>Join the Journey</h1>
             <p>Create your account to track your Pokémon discovery</p>
         </div>
         
         {% if error %}
-        <div style="background: rgba(220, 10, 45, 0.2); border: 1px solid var(--pokedex-red); color: #ffcccc; padding: 10px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+        <div class="auth-error">
             <i class="fas fa-exclamation-circle"></i> {{ error }}
         </div>
         {% endif %}
         
         <form method="POST" class="auth-form">
             <div class="form-group">
-                <input type="text" name="name" placeholder="Trainer Name" required class="glass-input">
-                <i class="fas fa-user input-icon"></i>
+                <label for="name"><i class="fas fa-user"></i> Trainer Name</label>
+                <input type="text" id="name" name="name" placeholder="Ash Ketchum" required>
             </div>
             
             <div class="form-group">
-                <input type="email" name="email" placeholder="Email Address" required class="glass-input">
-                <i class="fas fa-envelope input-icon"></i>
+                <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
+                <input type="email" id="email" name="email" placeholder="trainer@pokemon.com" required>
             </div>
             
             <div class="form-group">
-                <input type="password" name="password" placeholder="Password" required class="glass-input">
-                <i class="fas fa-lock input-icon"></i>
+                <label for="password"><i class="fas fa-lock"></i> Password</label>
+                <input type="password" id="password" name="password" placeholder="Choose a strong password" required>
             </div>
             
-            <button type="submit" class="auth-btn pulse-on-hover">
-                Start Adventure <i class="fas fa-arrow-right" style="position: static; transform: none; margin-left: 8px;"></i>
+            <button type="submit" class="btn btn-primary btn-block">
+                Start Adventure <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
             </button>
-            
-            <div class="divider">
-                <span>OR</span>
-            </div>
-            
-            <a href="{{ url_for('auth.google_login') }}" class="google-btn">
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="20">
-                <span>Join with Google</span>
-            </a>
         </form>
+
+        <div class="auth-divider">
+            <span>or continue with</span>
+        </div>
+        
+        <a href="{{ url_for('auth.google_login') }}" class="btn btn-google btn-block">
+            <i class="fab fa-google"></i> Join with Google
+        </a>
         
         <div class="auth-footer">
             <p>Already a trainer? <a href="{{ url_for('auth.login') }}">Login here</a></p>
@@ -52,3 +58,174 @@
     </div>
 </div>
 {% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .auth-card {
+        background: rgba(30, 30, 46, 0.95);
+        border-radius: 20px;
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .auth-logo {
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-logo .logo-pokeball {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto;
+    }
+
+    .auth-header h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+
+    .auth-header p {
+        color: var(--text-muted);
+    }
+
+    .auth-error {
+        background: rgba(220, 10, 45, 0.2);
+        border: 1px solid var(--pokemon-red);
+        color: #ff6b6b;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .auth-error i {
+        margin-right: 0.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .form-group label i {
+        margin-right: 0.5rem;
+        color: var(--pokemon-red);
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border-radius: 10px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.3);
+        color: white; /* Ensure text is visible on dark theme */
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: var(--pokemon-red);
+        box-shadow: 0 0 0 3px rgba(220, 10, 45, 0.2);
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.875rem 1.5rem;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        text-decoration: none;
+    }
+
+    .btn-block {
+        width: 100%;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--pokemon-red), #ff4757);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(220, 10, 45, 0.4);
+    }
+
+    .btn-google {
+        background: white;
+        color: #333;
+    }
+
+    .btn-google:hover {
+        background: #f5f5f5;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-google i {
+        color: #4285f4;
+    }
+
+    .auth-divider {
+        display: flex;
+        align-items: center;
+        margin: 1.5rem 0;
+    }
+
+    .auth-divider::before,
+    .auth-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .auth-divider span {
+        padding: 0 1rem;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    .auth-footer {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .auth-footer p {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+

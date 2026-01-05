@@ -24,9 +24,10 @@ fi
 # Start Flask with Gunicorn for production
 echo "📦 Starting Flask with Gunicorn..."
 
-# Initialize database tables before starting workers
-echo "🗃️ Initializing database..."
-python -c "from app import app, db; app.app_context().push(); db.create_all(); print('✅ Database initialized')"
+# Initialize database tables and migrate data
+echo "🗃️ Initializing and migrating database..."
+python migrate_db.py
+
 
 exec gunicorn \
     --bind 0.0.0.0:5000 \
