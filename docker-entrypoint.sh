@@ -31,12 +31,11 @@ python migrate_db.py
 
 exec gunicorn \
     --bind 0.0.0.0:5000 \
-    --workers 4 \
-    --threads 2 \
+    --workers 1 \
+    --threads 4 \
     --worker-class gthread \
-    --timeout 60 \
+    --timeout 120 \
     --access-logfile - \
     --error-logfile - \
     --log-level info \
-    --preload \
     app:app
