@@ -114,8 +114,6 @@ def dashboard():
         avg_quiz_score=avg_quiz_score,
         recent_donations=recent_donations,
         recent_users=recent_users,
-        recent_donations=recent_donations,
-        recent_users=recent_users,
         admin_count=admin_count,
         system_health=system_health
     )
