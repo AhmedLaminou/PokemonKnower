@@ -1,0 +1,454 @@
+{% extends "base.html" %}
+
+{% block title %}PokéTales | Pokémon Stories & Lore{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/netflix.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Stories Hero -->
+<section class="stories-hero">
+    <div class="stories-hero-bg"></div>
+    <div class="stories-hero-content">
+        <h1 class="stories-title">
+            <i class="fas fa-book-open"></i> PokéTales
+        </h1>
+        <p class="stories-subtitle">Discover the legendary stories, epic battles, and heartwarming moments from the Pokémon universe</p>
+    </div>
+</section>
+
+<!-- Featured Story -->
+<section class="featured-story-section">
+    <div class="featured-story-card">
+        <div class="featured-story-image" style="background-image: url('https://static1.cbrimages.com/wordpress/wp-content/uploads/2019/09/Ash-and-Pikachu-reunite-in-Pokémon-I-Choose-You.jpg');"></div>
+        <div class="featured-story-content">
+            <span class="story-tag featured"><i class="fas fa-star"></i> Featured Story</span>
+            <h2>The Day We Met</h2>
+            <p>A rebellious Pikachu and an eager young trainer from Pallet Town begin a legendary journey that would change the Pokémon world forever. When Ash Ketchum overslept and missed his chance to get a starter Pokémon from Professor Oak, he ended up with the most stubborn Pikachu imaginable...</p>
+            <div class="story-meta">
+                <span><i class="fas fa-clock"></i> 8 min read</span>
+                <span><i class="fas fa-heart"></i> 12.4k likes</span>
+                <span><i class="fas fa-eye"></i> 45.2k views</span>
+            </div>
+            <a href="#" class="btn-carousel btn-carousel-primary">
+                <i class="fas fa-play"></i> Read Story
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Story Categories -->
+<section class="story-categories-section">
+    <div class="story-category-grid">
+        <a href="#origin-stories" class="story-category-card">
+            <i class="fas fa-dragon"></i>
+            <h3>Origin Stories</h3>
+            <p>How legendary Pokémon came to be</p>
+        </a>
+        <a href="#epic-battles" class="story-category-card">
+            <i class="fas fa-bolt"></i>
+            <h3>Epic Battles</h3>
+            <p>The greatest battles ever fought</p>
+        </a>
+        <a href="#trainer-journeys" class="story-category-card">
+            <i class="fas fa-route"></i>
+            <h3>Trainer Journeys</h3>
+            <p>Adventures across all regions</p>
+        </a>
+        <a href="#myths-legends" class="story-category-card">
+            <i class="fas fa-scroll"></i>
+            <h3>Myths & Legends</h3>
+            <p>Ancient tales and prophecies</p>
+        </a>
+    </div>
+</section>
+
+<!-- Story Grid -->
+<section class="stories-grid-section">
+    <h2 class="section-title"><i class="fas fa-fire"></i> Popular Stories</h2>
+    <div class="stories-grid">
+        <!-- Story Card 1 -->
+        <div class="story-card">
+            <div class="story-card-image" style="background-image: url('https://images.pokemontcg.io/sv6/202_hires.png');"></div>
+            <div class="story-card-content">
+                <span class="story-tag legendary"><i class="fas fa-crown"></i> Legendary</span>
+                <h3>The Creation of Mewtwo</h3>
+                <p>Deep in a secret laboratory, scientists attempted to play god. The result was the most powerful Pokémon ever created...</p>
+                <div class="story-meta">
+                    <span><i class="fas fa-clock"></i> 12 min</span>
+                    <span><i class="fas fa-heart"></i> 8.2k</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Story Card 2 -->
+        <div class="story-card">
+            <div class="story-card-image" style="background-image: url('https://images.pokemontcg.io/swsh12pt5/160_hires.png');"></div>
+            <div class="story-card-content">
+                <span class="story-tag"><i class="fas fa-bolt"></i> Battle</span>
+                <h3>Ash vs. Leon: The Championship</h3>
+                <p>After years of training across every region, Ash Ketchum finally faces the undefeated World Champion...</p>
+                <div class="story-meta">
+                    <span><i class="fas fa-clock"></i> 15 min</span>
+                    <span><i class="fas fa-heart"></i> 15.7k</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Story Card 3 -->
+        <div class="story-card">
+            <div class="story-card-image" style="background-image: url('https://images.pokemontcg.io/swsh9/198_hires.png');"></div>
+            <div class="story-card-content">
+                <span class="story-tag"><i class="fas fa-heart"></i> Heartwarming</span>
+                <h3>Lucario and the Aura Guardian</h3>
+                <p>A tale of loyalty, sacrifice, and the unbreakable bond between a knight and his partner Pokémon...</p>
+                <div class="story-meta">
+                    <span><i class="fas fa-clock"></i> 10 min</span>
+                    <span><i class="fas fa-heart"></i> 9.3k</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Story Card 4 -->
+        <div class="story-card">
+            <div class="story-card-image" style="background-image: url('https://images.pokemontcg.io/sv3pt5/198_hires.png');"></div>
+            <div class="story-card-content">
+                <span class="story-tag"><i class="fas fa-scroll"></i> Myth</span>
+                <h3>The Lake Guardians</h3>
+                <p>Uxie, Mesprit, and Azelf – the beings that gave humanity knowledge, emotion, and willpower...</p>
+                <div class="story-meta">
+                    <span><i class="fas fa-clock"></i> 7 min</span>
+                    <span><i class="fas fa-heart"></i> 5.1k</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Coming Soon: AI-Generated Stories -->
+<section class="ai-stories-section">
+    <div class="ai-stories-card">
+        <div class="ai-stories-icon">
+            <i class="fas fa-robot"></i>
+        </div>
+        <h2>AI-Powered Story Generation</h2>
+        <p>Coming soon: Generate your own custom Pokémon stories using AI! Choose your favorite Pokémon, set the scene, and let our AI craft an epic tale just for you.</p>
+        <div class="ai-stories-badge">
+            <i class="fas fa-sparkles"></i> Powered by n8n + GPT-4
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Stories Page Styles */
+.stories-hero {
+    position: relative;
+    height: 40vh;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+}
+
+.stories-hero-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+.stories-hero-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="2"/></svg>') repeat;
+    background-size: 100px;
+    animation: float 30s linear infinite;
+}
+
+.stories-hero-content {
+    position: relative;
+    z-index: 10;
+}
+
+.stories-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #9b59b6 0%, #e91e63 50%, #9b59b6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+}
+
+.stories-title i {
+    -webkit-text-fill-color: #9b59b6;
+}
+
+.stories-subtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Featured Story */
+.featured-story-section {
+    padding: 3rem 4rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.featured-story-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.featured-story-image {
+    min-height: 400px;
+    background-size: cover;
+    background-position: center;
+}
+
+.featured-story-content {
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.featured-story-content h2 {
+    font-size: 2.5rem;
+    margin: 1rem 0;
+}
+
+.featured-story-content p {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+}
+
+.story-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: rgba(155, 89, 182, 0.9);
+    color: white;
+}
+
+.story-tag.featured {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #1a1a2e;
+}
+
+.story-tag.legendary {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #1a1a2e;
+}
+
+.story-meta {
+    display: flex;
+    gap: 1.5rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Story Categories */
+.story-categories-section {
+    padding: 2rem 4rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.story-category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.story-category-card {
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-darker) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.story-category-card:hover {
+    transform: translateY(-5px);
+    border-color: #9b59b6;
+    box-shadow: 0 10px 40px rgba(155, 89, 182, 0.2);
+}
+
+.story-category-card i {
+    font-size: 2.5rem;
+    color: #9b59b6;
+    margin-bottom: 1rem;
+}
+
+.story-category-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.story-category-card p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* Stories Grid */
+.stories-grid-section {
+    padding: 3rem 4rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-title i {
+    color: var(--pokemon-yellow);
+}
+
+.stories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.story-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.story-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.story-card-image {
+    height: 180px;
+    background-size: cover;
+    background-position: center;
+}
+
+.story-card-content {
+    padding: 1.5rem;
+}
+
+.story-card-content h3 {
+    margin: 0.75rem 0;
+    font-size: 1.1rem;
+}
+
+.story-card-content p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* AI Stories Section */
+.ai-stories-section {
+    padding: 3rem 4rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.ai-stories-card {
+    background: linear-gradient(135deg, rgba(155, 89, 182, 0.1) 0%, rgba(233, 30, 99, 0.1) 100%);
+    border: 1px dashed rgba(155, 89, 182, 0.5);
+    border-radius: var(--radius-lg);
+    padding: 3rem;
+    text-align: center;
+}
+
+.ai-stories-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #9b59b6 0%, #e91e63 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+}
+
+.ai-stories-card h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.ai-stories-card p {
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto 1.5rem;
+}
+
+.ai-stories-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.5rem;
+    background: rgba(155, 89, 182, 0.2);
+    border-radius: 20px;
+    color: #9b59b6;
+    font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stories-title {
+        font-size: 2rem;
+    }
+    
+    .featured-story-card {
+        grid-template-columns: 1fr;
+    }
+    
+    .featured-story-image {
+        min-height: 200px;
+    }
+    
+    .featured-story-section,
+    .story-categories-section,
+    .stories-grid-section,
+    .ai-stories-section {
+        padding: 2rem 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/netflix.js') }}"></script>
+{% endblock %}

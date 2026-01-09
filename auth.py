@@ -8,6 +8,7 @@ from functools import wraps
 from datetime import datetime
 from flask import Blueprint, request, redirect, url_for, session, jsonify, render_template, current_app
 import stytch
+import asyncio
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -16,6 +17,8 @@ STYTCH_PROJECT_ID = os.environ.get('STYTCH_PROJECT_ID', '')
 STYTCH_SECRET = os.environ.get('STYTCH_SECRET', '')
 STYTCH_ENV = os.environ.get('STYTCH_ENV', 'test')  # 'test' or 'live'
 
+import asyncio
+
 # Initialize Stytch client
 stytch_client = None
 
@@ -23,6 +26,13 @@ def get_stytch_client():
     """Lazy initialization of Stytch client"""
     global stytch_client
     if stytch_client is None and STYTCH_PROJECT_ID and STYTCH_SECRET:
+        # Ensure there is an event loop for aiohttp (used by Stytch)
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
         # Stytch v9.x uses environment parameter as string: 'test' or 'live'
         stytch_client = stytch.Client(
             project_id=STYTCH_PROJECT_ID,

@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}Trainer Profile | {{ user.name or 'Trainer' }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/netflix.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-cover"></div>
+        <div class="profile-info-wrap">
+            <div class="profile-avatar-container">
+                {% if user.avatar_url %}
+                <img src="{{ user.avatar_url }}" alt="Avatar" class="profile-avatar">
+                {% else %}
+                <div class="profile-avatar-placeholder">
+                    <i class="fas fa-user"></i>
+                </div>
+                {% endif %}
+                <span class="level-badge">Lvl {{ user.level }}</span>
+            </div>
+            
+            <div class="profile-details">
+                <h1 class="profile-name">{{ user.name or user.email.split('@')[0] }}</h1>
+                <p class="profile-title">Pokémon Trainer • Joined {{ user.created_at.strftime('%B %Y') }}</p>
+                
+                <div class="level-progress-container">
+                    <div class="level-info">
+                        <span>XP: {{ user.exp }} / {{ user.next_level_exp }}</span>
+                        <span>{{ ((user.exp / user.next_level_exp) * 100)|round|int }}% to Level {{ user.level + 1 }}</span>
+                    </div>
+                    <div class="xp-bar">
+                        <div class="xp-fill" style="width: {{ (user.exp / user.next_level_exp) * 100 }}%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="profile-stats-card">
+                <div class="stat-item">
+                    <span class="stat-value">{{ user.current_streak }}</span>
+                    <span class="stat-label">Day Streak</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ user.earned_badges|length }}</span>
+                    <span class="stat-label">Badges</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ favorites_count }}</span>
+                    <span class="stat-label">Collected</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Grid -->
+    <div class="profile-grid">
+        <!-- Badges Section -->
+        <section class="badges-section">
+            <h2 class="section-title"><i class="fas fa-medal"></i> Badges Earned</h2>
+            {% if user.earned_badges %}
+            <div class="badges-grid">
+                {% for ub in user.earned_badges %}
+                <div class="badge-card" title="{{ ub.badge.description }}">
+                    <div class="badge-icon">
+                        <i class="fas {{ ub.badge.icon }}"></i>
+                    </div>
+                    <div class="badge-info">
+                        <h3>{{ ub.badge.name }}</h3>
+                        <p>Earned {{ ub.earned_at.strftime('%Y-%m-%d') }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-award"></i>
+                <p>No badges earned yet. Complete quizzes and scan Pokémon to earn them!</p>
+            </div>
+            {% endif %}
+        </section>
+        
+        <!-- Recent Teams -->
+        <section class="teams-section">
+            <h2 class="section-title"><i class="fas fa-users"></i> Recent Teams</h2>
+            {% if teams %}
+            <div class="teams-list">
+                {% for team in teams %}
+                <a href="{{ url_for('team_builder') }}?team={{ team.id }}" class="team-mini-card">
+                    <div class="team-mini-header">
+                        <h3>{{ team.name }}</h3>
+                        <span class="team-date">{{ team.updated_at.strftime('%d %b') }}</span>
+                    </div>
+                    <div class="team-mini-icons">
+                        {% for member in team.members[:6] %}
+                            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{{ member.pokemon.number }}.png" alt="Pkmn">
+                        {% endfor %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>No teams built yet. <a href="{{ url_for('team_builder') }}">Build a Team</a></p>
+            </div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Header */
+.profile-header {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+}
+
+.profile-cover {
+    height: 150px;
+    background: linear-gradient(135deg, var(--pokemon-red) 0%, var(--pokemon-blue) 100%);
+    opacity: 0.8;
+}
+
+.profile-info-wrap {
+    padding: 0 2rem 2rem;
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    align-items: flex-end;
+    margin-top: -50px;
+}
+
+.profile-avatar-container {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.profile-avatar, .profile-avatar-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid var(--bg-card);
+    background: var(--bg-darker);
+    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: var(--text-muted);
+}
+
+.level-badge {
+    position: absolute;
+    bottom: 5px;
+    right: 0;
+    background: var(--pokemon-yellow);
+    color: #1a1a2e;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    border: 2px solid var(--bg-card);
+}
+
+.profile-details {
+    flex: 1;
+    padding-top: 3.5rem; /* space for avatar overlap */
+}
+
+.profile-name {
+    font-size: 2rem;
+    margin-bottom: 0.25rem;
+}
+
+.profile-title {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.level-progress-container {
+    max-width: 400px;
+}
+
+.level-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.xp-bar {
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.xp-fill {
+    height: 100%;
+    background: var(--gradient-pokemon);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.profile-stats-card {
+    display: flex;
+    gap: 2rem;
+    padding-bottom: 0.5rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--pokemon-yellow);
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Grid */
+.profile-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-title i {
+    color: var(--pokemon-yellow);
+}
+
+/* Badges */
+.badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.badge-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    text-align: center;
+    transition: var(--transition-normal);
+}
+
+.badge-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--pokemon-yellow);
+    box-shadow: 0 5px 15px rgba(255, 203, 5, 0.1);
+}
+
+.badge-icon {
+    font-size: 2rem;
+    color: var(--pokemon-yellow);
+    margin-bottom: 1rem;
+    background: rgba(255, 203, 5, 0.1);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+}
+
+.badge-info h3 {
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.badge-info p {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Teams */
+.teams-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.team-mini-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    display: block;
+    transition: var(--transition-normal);
+}
+
+.team-mini-card:hover {
+    background: var(--bg-card-hover);
+    border-color: rgba(255,255,255,0.2);
+}
+
+.team-mini-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.team-mini-header h3 {
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.team-date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.team-mini-icons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.team-mini-icons img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--border-color);
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-info-wrap {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-top: -60px;
+    }
+    
+    .profile-details {
+        padding-top: 0;
+        width: 100%;
+    }
+    
+    .level-progress-container {
+        margin: 0 auto;
+    }
+    
+    .profile-stats-card {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .profile-stats-card {
+        padding-bottom: 0;
+    }
+}
+</style>
+{% endblock %}

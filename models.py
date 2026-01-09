@@ -22,12 +22,34 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationship to donations
+    # Gamification Stats
+    level = db.Column(db.Integer, default=1)
+    exp = db.Column(db.Integer, default=0)
+    current_streak = db.Column(db.Integer, default=0)
+    last_streak_update = db.Column(db.DateTime, nullable=True)
+    
+    # Relationship to donations and badges
     donations = db.relationship('Donation', backref='user', lazy=True)
+    earned_badges = db.relationship('UserBadge', backref='user', lazy=True)
     
     @property
     def is_admin(self):
         return self.role == 'admin'
+    
+    @property
+    def next_level_exp(self):
+        """Calculate XP needed for next level: 100 * level^1.5"""
+        return int(100 * (self.level ** 1.5))
+    
+    def add_exp(self, amount):
+        """Add XP and handle level ups"""
+        self.exp += amount
+        leveled_up = False
+        while self.exp >= self.next_level_exp:
+            self.exp -= self.next_level_exp
+            self.level += 1
+            leveled_up = True
+        return leveled_up
     
     def to_dict(self):
         return {
@@ -36,7 +58,52 @@ class User(db.Model):
             'name': self.name,
             'avatar_url': self.avatar_url,
             'role': self.role,
+            'level': self.level,
+            'exp': self.exp,
+            'next_level_exp': self.next_level_exp,
+            'current_streak': self.current_streak,
             'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+class Badge(db.Model):
+    """Achievement Badges"""
+    __tablename__ = 'badges'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(255), nullable=False)
+    icon = db.Column(db.String(50), default='fa-medal') # FontAwesome class
+    category = db.Column(db.String(50)) # 'quiz', 'collection', 'battle', 'streak'
+    requirement_type = db.Column(db.String(50)) # 'total_score', 'pokedex_count', 'days_streak'
+    requirement_value = db.Column(db.Integer, nullable=False)
+    xp_reward = db.Column(db.Integer, default=100)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'icon': self.icon,
+            'category': self.category,
+            'xp_reward': self.xp_reward
+        }
+
+class UserBadge(db.Model):
+    """Link between User and Badge"""
+    __tablename__ = 'user_badges'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    badge_id = db.Column(db.Integer, db.ForeignKey('badges.id'), nullable=False)
+    earned_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    badge = db.relationship('Badge')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'badge': self.badge.to_dict(),
+            'earned_at': self.earned_at.isoformat()
         }
 
 

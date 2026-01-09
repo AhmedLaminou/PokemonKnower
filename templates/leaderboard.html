@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboard | Top Trainers{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/netflix.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="leaderboard-container">
+    <div class="leaderboard-header">
+        <h1><i class="fas fa-trophy"></i> Top Trainers</h1>
+        <p>The very best, like no one ever was</p>
+    </div>
+    
+    <div class="leaderboard-card">
+        <table class="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Trainer</th>
+                    <th>Level</th>
+                    <th class="text-right">XP</th>
+                    <th class="text-right">Badges</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr class="{% if current_user.is_authenticated and user.id == current_user.id %}current-user-row{% endif %}">
+                    <td>
+                        <span class="rank-badge rank-{{ loop.index }}">
+                            {% if loop.index == 1 %}
+                            <i class="fas fa-crown"></i>
+                            {% else %}
+                            {{ loop.index }}
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="trainer-info">
+                            {% if user.avatar_url %}
+                            <img src="{{ user.avatar_url }}" alt="Avatar" class="trainer-avatar">
+                            {% else %}
+                            <div class="trainer-avatar-placeholder">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            {% endif %}
+                            <span class="trainer-name">{{ user.name or user.email.split('@')[0] }}</span>
+                        </div>
+                    </td>
+                    <td><span class="level-tag">Lvl {{ user.level }}</span></td>
+                    <td class="text-right">{{ user.exp }}</td>
+                    <td class="text-right">
+                        {% set badge_count = user.earned_badges|length %}
+                        <span class="badge-count" title="{{ badge_count }} Badges">
+                            {{ badge_count }} <i class="fas fa-medal"></i>
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.leaderboard-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3rem 1rem;
+}
+
+.leaderboard-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.leaderboard-header h1 {
+    font-size: 2.5rem;
+    color: var(--pokemon-yellow);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.leaderboard-header p {
+    color: var(--text-secondary);
+}
+
+.leaderboard-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.leaderboard-table th {
+    background: rgba(0,0,0,0.2);
+    padding: 1.5rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+.leaderboard-table td {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.leaderboard-table tr:last-child td {
+    border-bottom: none;
+}
+
+.leaderboard-table tr:hover {
+    background: rgba(255,255,255,0.02);
+}
+
+.current-user-row {
+    background: rgba(255, 203, 5, 0.1) !important;
+    border-left: 4px solid var(--pokemon-yellow);
+}
+
+.rank-badge {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 700;
+    background: rgba(255,255,255,0.1);
+}
+
+.rank-1 { background: linear-gradient(135deg, #FFD700, #FDB931); color: #000; box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+.rank-2 { background: linear-gradient(135deg, #E0E0E0, #BDBDBD); color: #000; }
+.rank-3 { background: linear-gradient(135deg, #CD7F32, #A0522D); color: #000; }
+
+.trainer-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.trainer-avatar, .trainer-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--bg-darker);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.trainer-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.level-tag {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    background: rgba(255, 203, 5, 0.2);
+    color: var(--pokemon-yellow);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.badge-count {
+    color: var(--text-secondary);
+}
+
+.badge-count i {
+    color: var(--pokemon-yellow);
+    margin-left: 4px;
+}
+
+.text-right {
+    text-align: right;
+}
+
+@media (max-width: 600px) {
+    .leaderboard-table th:nth-child(4), 
+    .leaderboard-table td:nth-child(4) {
+        display: none; /* Hide badge count on mobile */
+    }
+    
+    .trainer-info {
+        gap: 0.5rem;
+    }
+    
+    .trainer-avatar, .trainer-avatar-placeholder {
+        width: 32px;
+        height: 32px;
+    }
+}
+</style>
+{% endblock %}

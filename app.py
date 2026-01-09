@@ -168,6 +168,26 @@ except ImportError as e:
 def inject_user():
     return dict(current_user=get_current_user())
 
+@app.route('/profile')
+def profile():
+    """User profile page with gamification stats"""
+    user = get_current_user()
+    if not user:
+        return redirect(url_for('auth.login', next=request.url))
+        
+    teams = Team.query.filter_by(user_id=user.id).order_by(Team.updated_at.desc()).limit(5).all()
+    favorites_count = Favorite.query.filter_by(user_id=user.id).count()
+    
+    
+    return render_template('profile.html', user=user, teams=teams, favorites_count=favorites_count)
+
+@app.route('/leaderboard')
+def leaderboard_page():
+    """Global XP leaderboard page"""
+    # Get top 50 users by XP
+    users = User.query.order_by(User.exp.desc()).limit(50).all()
+    return render_template('leaderboard.html', users=users)
+
 # Global variables
 target_size = (224, 224)
 model = None
@@ -273,7 +293,55 @@ def utility_processor():
 
 @app.route('/')
 def index():
-    """Home page with search and scanner"""
+    """Netflix-style home page with hero carousel and browse rows"""
+    from sqlalchemy.sql.expression import func
+    
+    # Get user streak for display
+    user = get_current_user()
+    user_streak = 0
+    if user:
+        from datetime import datetime, timedelta
+        recent_scores = QuizScore.query.filter_by(user_id=user.id).order_by(QuizScore.created_at.desc()).limit(30).all()
+        if recent_scores:
+            streak = 0
+            today = datetime.utcnow().date()
+            for score in recent_scores:
+                score_date = score.created_at.date()
+                if score_date == today - timedelta(days=streak):
+                    streak += 1
+                else:
+                    break
+            user_streak = streak
+    
+    # Trending: Random selection of popular Pokemon (could be based on views/favorites later)
+    trending_pokemon = Pokemon.query.order_by(func.random()).limit(12).all()
+    
+    # Legendary Pokemon (high stats, typically = legendary-like)
+    legendary_pokemon = Pokemon.query.filter(
+        (Pokemon.attack >= 120) | (Pokemon.special_attack >= 120)
+    ).order_by(Pokemon.attack.desc()).limit(12).all()
+    
+    # Electric Types
+    electric_pokemon = Pokemon.query.filter(
+        (Pokemon.main_type.ilike('electric')) | (Pokemon.secondary_type.ilike('electric'))
+    ).order_by(func.random()).limit(12).all()
+    
+    # Fire Types
+    fire_pokemon = Pokemon.query.filter(
+        (Pokemon.main_type.ilike('fire')) | (Pokemon.secondary_type.ilike('fire'))
+    ).order_by(func.random()).limit(12).all()
+    
+    return render_template('home.html',
+                         user_streak=user_streak,
+                         trending_pokemon=trending_pokemon,
+                         legendary_pokemon=legendary_pokemon,
+                         electric_pokemon=electric_pokemon,
+                         fire_pokemon=fire_pokemon)
+
+
+@app.route('/home-classic')
+def index_classic():
+    """Classic home page with search and scanner (legacy)"""
     return render_template('index.html')
 
 @app.route('/about')
@@ -517,13 +585,45 @@ def predict():
         pokemon = get_pokemon_by_name(pokemon_name)
         pokemon_data = pokemon.to_dict() if pokemon else None
         
+        # Gamification: Award XP for successful scan
+        xp_data = {}
+        user = get_current_user()
+        if user and confidence > 70:
+            xp_amount = 50
+            # Bonus for finding shiny
+            if is_shiny:
+                xp_amount += 100
+                
+            xp_result = award_xp(user, xp_amount, " Pokémon Scan")
+            new_badges = check_achievements(user)
+            
+            xp_data = {
+                'xp_earned': xp_amount,
+                'leveled_up': xp_result['leveled_up'],
+                'new_level': xp_result['new_level'],
+                'new_badges': new_badges
+            }
+        
         return jsonify({
             'name': pokemon_name,
             'confidence': round(confidence, 2),
             'is_shiny': is_shiny,
             'top_3': top_3,
-            'pokemon': pokemon_data
+            'pokemon': pokemon_data,
+            'gamification': xp_data
         })
+
+@app.route('/api/leaderboard/xp')
+def api_xp_leaderboard():
+    """Get global XP leaderboard"""
+    users = User.query.order_by(User.exp.desc()).limit(20).all()
+    return jsonify([{
+        'name': u.name or u.email.split('@')[0],
+        'avatar_url': u.avatar_url,
+        'level': u.level,
+        'exp': u.exp,
+        'badges_count': len(u.earned_badges)
+    } for u in users])
     
     except Exception as e:
         print(f"Prediction error: {e}")
@@ -593,9 +693,22 @@ def api_add_favorite(pokemon_id):
     
     favorite = Favorite(user_id=user.id, pokemon_id=pokemon_id)
     db.session.add(favorite)
+    
+    # Gamification: Award XP
+    xp_result = award_xp(user, 10, "Added Favorite")
+    new_badges = check_achievements(user)
+    
     db.session.commit()
     
-    return jsonify({'success': True, 'favorite': favorite.to_dict()})
+    response = {
+        'success': True, 
+        'favorite': favorite.to_dict(),
+        'xp_earned': 10,
+        'leveled_up': xp_result['leveled_up'],
+        'new_badges': new_badges
+    }
+    
+    return jsonify(response)
 
 @app.route('/api/favorites/<int:pokemon_id>', methods=['DELETE'])
 def api_remove_favorite(pokemon_id):
@@ -784,19 +897,45 @@ def api_quiz_question():
 
 @app.route('/api/quiz/submit', methods=['POST'])
 def api_quiz_submit():
-    """Submit quiz score"""
+    """Submit quiz score and award XP"""
     user = get_current_user()
     data = request.get_json()
     
+    start_score = data.get('score', 0)
+    total = data.get('total', 10)
+    
     score = QuizScore(
         user_id=user.id if user else None,
-        score=data.get('score', 0),
-        total_questions=data.get('total', 10)
+        score=start_score,
+        total_questions=total
     )
     db.session.add(score)
-    db.session.commit()
     
-    return jsonify({'success': True, 'score': score.to_dict()})
+    response = {'success': True, 'score': score.to_dict()}
+    
+    # Award XP and check badges if logged in
+    if user:
+        # Base XP = score * 10
+        xp_amount = start_score * 10
+        xp_result = award_xp(user, xp_amount, "Quiz Completion")
+        
+        # Check for new badges
+        new_badges = check_achievements(user)
+        
+        response.update({
+            'xp_earned': xp_amount,
+            'leveled_up': xp_result['leveled_up'],
+            'new_level': xp_result['new_level'],
+            'new_badges': new_badges
+        })
+        
+        # Update streak if perfect score
+        if start_score == total:
+             # Logic handled in streak calculation usually, but could grant bonus here
+             pass
+    
+    db.session.commit()
+    return jsonify(response)
 
 @app.route('/api/quiz/leaderboard')
 def api_quiz_leaderboard():
@@ -1222,9 +1361,339 @@ def battle_turn(battle_id):
     
     return jsonify(state)
 
+# ==================== STORIES / POKETALES ====================
+
+@app.route('/stories')
+def stories_page():
+    """PokéTales - Stories and lore page"""
+    return render_template('stories.html')
+
+# ==================== n8n WEBHOOK ENDPOINTS ====================
+# These endpoints allow n8n workflows to interact with the application
+
+@app.route('/api/n8n/featured-pokemon', methods=['GET', 'POST'])
+def n8n_featured_pokemon():
+    """n8n endpoint: Get or set featured Pokemon for carousel"""
+    from sqlalchemy.sql.expression import func
+    
+    if request.method == 'GET':
+        # Return a random high-stat Pokemon suitable for featuring
+        featured = Pokemon.query.filter(
+            (Pokemon.attack >= 100) | (Pokemon.special_attack >= 100)
+        ).order_by(func.random()).first()
+        
+        if featured:
+            return jsonify({
+                'status': 'success',
+                'pokemon': featured.to_dict(),
+                'image_url': f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{featured.number}.png"
+            })
+        return jsonify({'status': 'error', 'message': 'No Pokemon found'}), 404
+    
+    elif request.method == 'POST':
+        # n8n can push a specific featured Pokemon
+        data = request.get_json()
+        # Store in session or cache (could expand to DB table)
+        return jsonify({
+            'status': 'success',
+            'message': 'Featured Pokemon updated',
+            'pokemon_id': data.get('pokemon_id')
+        })
+
+@app.route('/api/n8n/daily-digest', methods=['POST'])
+def n8n_daily_digest():
+    """n8n endpoint: Receive data for daily digest email generation"""
+    data = request.get_json()
+    
+    # This would trigger email sending via n8n workflow
+    # For now, we return data that n8n can use
+    from sqlalchemy.sql.expression import func
+    
+    # Get stats for digest
+    total_pokemon = Pokemon.query.count()
+    trending = Pokemon.query.order_by(func.random()).limit(5).all()
+    
+    return jsonify({
+        'status': 'success',
+        'digest_data': {
+            'total_pokemon': total_pokemon,
+            'trending_pokemon': [p.to_dict() for p in trending],
+            'quiz_of_the_day': Pokemon.query.order_by(func.random()).first().to_dict() if Pokemon.query.first() else None
+        }
+    })
+
+@app.route('/api/n8n/generate-story', methods=['POST'])
+def n8n_generate_story():
+    """n8n endpoint: Trigger AI story generation for a Pokemon"""
+    data = request.get_json()
+    pokemon_name = data.get('pokemon_name')
+    story_type = data.get('story_type', 'origin')  # origin, battle, journey
+    
+    pokemon = get_pokemon_by_name(pokemon_name) if pokemon_name else None
+    
+    if not pokemon:
+        from sqlalchemy.sql.expression import func
+        pokemon = Pokemon.query.order_by(func.random()).first()
+    
+    if not pokemon:
+        return jsonify({'status': 'error', 'message': 'No Pokemon found'}), 404
+    
+    # Return data for n8n to use with AI (GPT-4, Claude, etc.)
+    prompt_data = {
+        'pokemon': pokemon.to_dict(),
+        'story_type': story_type,
+        'prompt_template': f"""Write an engaging {story_type} story about {pokemon.name}. 
+        This is a {pokemon.main_type}{(' and ' + pokemon.secondary_type) if pokemon.secondary_type else ''} type Pokémon.
+        Stats: HP {pokemon.hp}, Attack {pokemon.attack}, Defense {pokemon.defense}.
+        Make it exciting, dramatic, and suitable for Pokémon fans of all ages.
+        Keep it under 500 words."""
+    }
+    
+    return jsonify({
+        'status': 'success',
+        'prompt_data': prompt_data
+    })
+
+@app.route('/api/n8n/user-engagement', methods=['POST'])
+def n8n_user_engagement():
+    """n8n endpoint: Get user engagement data for re-engagement campaigns"""
+    # Get users who haven't logged in recently (for n8n to send emails)
+    from datetime import datetime, timedelta
+    
+    inactive_threshold = datetime.utcnow() - timedelta(days=7)
+    
+    inactive_users = User.query.filter(
+        User.last_login < inactive_threshold
+    ).limit(50).all()
+    
+    return jsonify({
+        'status': 'success',
+        'inactive_users': [{
+            'id': u.id,
+            'email': u.email,
+            'name': u.name,
+            'last_login': u.last_login.isoformat() if u.last_login else None
+        } for u in inactive_users]
+    })
+
+@app.route('/api/n8n/webhook/story-created', methods=['POST'])
+def n8n_story_webhook():
+    """n8n webhook: Receive generated story from AI workflow"""
+    data = request.get_json()
+    
+    # Here you could save the story to a database
+    # For now, we just acknowledge receipt
+    story = {
+        'title': data.get('title'),
+        'content': data.get('content'),
+        'pokemon_name': data.get('pokemon_name'),
+        'created_at': data.get('created_at')
+    }
+    
+    # TODO: Save to Story model when implemented
+    
+    return jsonify({
+        'status': 'success',
+        'message': 'Story received',
+        'story_preview': story.get('content', '')[:200] + '...'
+    })
+
+# ==================== VOICE API ====================
+
+@app.route('/api/voice/command', methods=['POST'])
+def voice_command():
+    """Process voice command from the Voice Pokédex"""
+    data = request.get_json()
+    command = data.get('command', '').lower().strip()
+    
+    if not command:
+        return jsonify({'error': 'No command provided'}), 400
+    
+    # Parse intent
+    response = {
+        'understood': True,
+        'action': None,
+        'data': None,
+        'speech': None
+    }
+    
+    # "Tell me about [pokemon]"
+    import re
+    tell_me_match = re.search(r'(?:tell me about|what is|who is|describe|find)\s+(.+)', command)
+    if tell_me_match:
+        pokemon_name = tell_me_match.group(1).strip()
+        pokemon = get_pokemon_by_name(pokemon_name)
+        
+        if pokemon:
+            response['action'] = 'show_pokemon'
+            response['data'] = pokemon.to_dict()
+            response['speech'] = f"{pokemon.name} is a {pokemon.main_type}{' and ' + pokemon.secondary_type if pokemon.secondary_type else ''} type Pokémon. It has {pokemon.hp} HP, {pokemon.attack} attack, and {pokemon.defense} defense."
+        else:
+            response['understood'] = False
+            response['speech'] = f"Sorry, I couldn't find a Pokémon called {pokemon_name}"
+    
+    # "Search for [query]"
+    elif 'search' in command:
+        search_match = re.search(r'search\s+(?:for\s+)?(.+)', command)
+        if search_match:
+            query = search_match.group(1).strip()
+            response['action'] = 'search'
+            response['data'] = {'query': query}
+            response['speech'] = f"Searching for {query}"
+    
+    # Navigation commands
+    elif any(word in command for word in ['go to', 'open', 'show']):
+        nav_match = re.search(r'(?:go to|open|show)\s+(pokedex|scanner|quiz|gallery|home|favorites|stories)', command)
+        if nav_match:
+            page = nav_match.group(1)
+            routes = {
+                'home': '/',
+                'pokedex': '/pokedex',
+                'scanner': '/scan',
+                'quiz': '/quiz',
+                'gallery': '/gallery',
+                'favorites': '/favorites',
+                'stories': '/stories'
+            }
+            response['action'] = 'navigate'
+            response['data'] = {'url': routes.get(page, '/')}
+            response['speech'] = f"Opening {page}"
+    
+    else:
+        # Try as Pokemon name directly
+        pokemon = get_pokemon_by_name(command)
+        if pokemon:
+            response['action'] = 'show_pokemon'
+            response['data'] = pokemon.to_dict()
+            response['speech'] = f"{pokemon.name} is a {pokemon.main_type} type Pokémon with {pokemon.hp} HP."
+        else:
+            response['understood'] = False
+            response['speech'] = "I didn't understand that. Try saying 'Tell me about Pikachu' or 'Open Pokedex'"
+    
+    return jsonify(response)
+
+    return jsonify(response)
+
+# ==================== GAMIFICATION LOGIC ====================
+
+def award_xp(user, amount, reason="Activity"):
+    """Award XP to user and check for level up"""
+    if not user:
+        return {'leveled_up': False}
+        
+    leveled_up = user.add_exp(amount)
+    db.session.commit()
+    
+    return {
+        'leveled_up': leveled_up,
+        'new_level': user.level,
+        'xp_earned': amount,
+        'reason': reason
+    }
+
+def check_achievements(user):
+    """Check and award badges based on user stats"""
+    if not user:
+        return []
+        
+    new_badges = []
+    
+    # Define Achievement Logic
+    # 1. Quiz Master: Total Score
+    total_score = db.session.query(db.func.sum(QuizScore.score)).filter_by(user_id=user.id).scalar() or 0
+    if total_score >= 1000:
+        award_badge(user, 'Quiz Master', new_badges)
+    elif total_score >= 100:
+        award_badge(user, 'Novice Trainer', new_badges)
+        
+    # 2. Collector: Favorites Count
+    fav_count = Favorite.query.filter_by(user_id=user.id).count()
+    if fav_count >= 50:
+        award_badge(user, 'Elite Collector', new_badges)
+    elif fav_count >= 10:
+        award_badge(user, 'Collector', new_badges)
+        
+    # 3. Dedicated: Streak
+    if user.current_streak >= 7:
+        award_badge(user, 'Week Warrior', new_badges)
+    if user.current_streak >= 30:
+        award_badge(user, 'Monthly Master', new_badges)
+        
+    return new_badges
+
+def award_badge(user, badge_name, new_list):
+    """Helper to grant a badge if not already owned"""
+    badge = Badge.query.filter_by(name=badge_name).first()
+    if not badge:
+        return
+        
+    # Check if already has it
+    if UserBadge.query.filter_by(user_id=user.id, badge_id=badge.id).first():
+        return
+        
+    # Grant badge
+    user_badge = UserBadge(user_id=user.id, badge_id=badge.id)
+    db.session.add(user_badge)
+    
+    # Grant XP reward
+    user.add_exp(badge.xp_reward)
+    
+    db.session.commit()
+    
+    new_list.append({
+        'badge': badge.to_dict(),
+        'xp_bonus': badge.xp_reward
+    })
+
+def seed_badges():
+    """Create default badges if they don't exist"""
+    badges = [
+        {'name': 'Novice Trainer', 'description': 'Score 100+ points in quizzes', 'icon': 'fa-egg', 'category': 'quiz', 'requirement_value': 100, 'xp_reward': 200},
+        {'name': 'Quiz Master', 'description': 'Score 1000+ points in quizzes', 'icon': 'fa-brain', 'category': 'quiz', 'requirement_value': 1000, 'xp_reward': 1000},
+        {'name': 'Collector', 'description': 'Favorite 10 Pokémon', 'icon': 'fa-star', 'category': 'collection', 'requirement_value': 10, 'xp_reward': 150},
+        {'name': 'Elite Collector', 'description': 'Favorite 50 Pokémon', 'icon': 'fa-crown', 'category': 'collection', 'requirement_value': 50, 'xp_reward': 800},
+        {'name': 'Week Warrior', 'description': 'Maintain a 7-day streak', 'icon': 'fa-fire', 'category': 'streak', 'requirement_value': 7, 'xp_reward': 500},
+        {'name': 'Monthly Master', 'description': 'Maintain a 30-day streak', 'icon': 'fa-calendar-check', 'category': 'streak', 'requirement_value': 30, 'xp_reward': 2500},
+    ]
+    
+    for b_data in badges:
+        if not Badge.query.filter_by(name=b_data['name']).first():
+            badge = Badge(**b_data)
+            db.session.add(badge)
+    
+    db.session.commit()
+    print("Badges seeded.")
+
+
+@app.route('/api/user/gamification')
+def api_user_gamification():
+    """Get user level, xp, badges"""
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Login required'}), 401
+    
+    badges = [ub.to_dict() for ub in user.earned_badges]
+    
+    # Calculate progress to next level
+    current_level_xp_start = 0 # Simplified, can be better
+    # Or just return raw values and let frontend calculate %
+    
+    return jsonify({
+        'level': user.level,
+        'exp': user.exp,
+        'next_level_exp': user.next_level_exp,
+        'badges': badges,
+        'streak': user.current_streak
+    })
+
 # Create database tables on first run (only when running directly, not with Gunicorn)
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        try:
+            seed_badges()
+        except Exception as e:
+            print(f"Error seeding badges: {e}")
+            
     print("Starting Pokémon Knower...")
     app.run(debug=True, port=5000)

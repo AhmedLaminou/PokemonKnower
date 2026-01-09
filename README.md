@@ -2,7 +2,7 @@
 
 A Flask web application that identifies Pokémon from images using deep learning and also works as a modern Pokédex.
 
-This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Flask-SQLAlchemy**, with **Stytch** for authentication and **Stripe** for donations.
+This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Flask-SQLAlchemy**, with **Stytch** for authentication and **Stripe** for supports.
 
 [![Flask](https://img.shields.io/badge/Flask-2.3-green?logo=flask)](https://flask.palletsprojects.com)
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-2.12-orange?logo=tensorflow)](https://tensorflow.org)
@@ -30,7 +30,41 @@ This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Fl
 
 ## ✨ Features
 
-### 🔍 **Pokédex Search**
+### � **Netflix-Style Home Interface**
+
+- **Hero Carousel**: Dynamic featured Pokémon and story highlights with autoplay and progress indicators.
+- **Browse Rows**: Horizontal scrolling categories for Trending, Legendary, and Type-specific Pokémon.
+- **Glassmorphism Design**: Modern, premium aesthetic with translucent cards and vibrant gradients.
+- **Quick Action Grid**: Instant access to AR Scanner, Quiz, Team Builder, and Battle Simulator.
+
+### 🎙️ **Voice AI Pokédex**
+
+- **Hands-Free Interaction**: Integrated microphone with real-time speech recognition.
+- **Voice Commands**: Search Pokémon, navigate pages, and more using natural language ("Tell me about Pikachu", "Open Quiz").
+- **Speech Synthesis**: The Pokédex talks back to you with detailed Pokémon information.
+- **Voice Waveform**: Beautiful visual feedback during listening.
+
+### 📚 **PokéTales (Stories & Lore)**
+
+- **Curated Pokémon Stories**: Discover epic battles, origin tales, and regional lore.
+- **AI Story Generation**: Integration points for generating custom Pokémon stories using GPT-4.
+- **Lore-Rich Content**: Deep dive into the myths and legends of the Pokémon universe.
+
+### 🏆 **Gamification & Trainer Progression**
+
+- **XP & Level System**: Earn experience points for almost every action (scanning, quizzing, favoriting).
+- **Badge System**: Unlock unique achievement badges (Quiz Master, Elite Collector, Week Warrior).
+- **Trainer Profile**: Personalized dashboard for tracking level, XP progress, and earned badges.
+- **Global Leaderboard**: Compete with trainers worldwide for the top rank.
+
+### 🤖 **n8n Workflow Automation**
+
+- **Automated Workflows**: Back-end webhooks ready for complex automation.
+- **Daily Content**: Automatic updates for "Pokémon of the Day" and daily digests.
+- **AI Integration**: AI-powered story generation and user engagement automation.
+- **Admin Tools**: External notification system via Discord/Slack for system events.
+
+### �🔍 **Pokédex Search**
 
 - Advanced search by Pokémon name with real-time filtering
 - Multi-filter support:
@@ -44,18 +78,10 @@ This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Fl
 
 - Drag-and-drop image upload interface
 - Intelligent Pokémon identification using trained ML model
-- Fallback prediction system when model unavailable
-- Confidence scores and top 3 alternative predictions
-- Display of complete Pokémon stats
-- Support for: PNG, JPG, JPEG, GIF formats
-- **[NEW] Hybrid AI Recognition**:
+- Hybrid AI Recognition:
   - Uses local MobileNetV2 for speed
-  - Auto-switches to **GPT-4o Vision** for low-confidence (<85%) matches
-  - Recognizes **all 1000+ Pokémon** (Gen 1-9) with near-perfect accuracy
-- **[NEW] Real-time AR Scanner**:
-  - Live camera feed with sci-fi HUD
-  - Automatic frame capture and analysis
-  - "Shiny" Pokémon detection with visual alerts ✨
+  - Auto-switches to **GPT-4o Vision** for low-confidence matches
+- **Real-time AR Scanner**: Live camera feed with sci-fi HUD and "Shiny" detection ✨
 
 ### 💅 **Beautiful Modern UI**
 
@@ -66,21 +92,17 @@ This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Fl
 - Interactive stat visualizations
 - Real-time search results
 
-### 🔐 **User Authentication**
+### 🔐 **User Authentication & Social**
 
-- Magic link email login (passwordless)
-- Google OAuth login
-- User profiles with avatars
-- Admin role system
-- Secure session management via Stytch
+- Magic link email login (Stytch)
+- Google OAuth support
+- User profiles with avatars and levels
+- Admin system health monitoring
 
 ### 💰 **Donations & Support**
 
-- Stripe Checkout integration
-- Multiple donation amounts
-- Custom donation messages
-- Donation history tracking
-- Webhook handling for payment status
+- Stripe Checkout integration for supporting the platform
+- Personal messages and donor rewards
 
 ### 👑 **Admin Dashboard**
 
@@ -89,52 +111,37 @@ This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Fl
 - Revenue statistics
 - Quick action buttons
 
-### 🚀 **Production Ready**
+### 🚀 **Production Ready & Optimized**
 
-- Docker containerization with multi-stage builds
-- Docker Compose orchestration
-- Nginx reverse proxy for production
-- Gunicorn WSGI server
-- Health checks and auto-restart
-- Volume persistence for uploads
-- CORS enabled for cross-origin requests
-- **Render deployment ready** with PostgreSQL support
-
----
+- Docker & Docker Compose orchestration
+- Render deployment ready (PostgreSQL + Flask)
+- Gunicorn WSGI for performance
+- Nginx reverse proxy support---
 
 ## 🛠️ Tech Stack
 
 ### **Frontend**
 
 - **Jinja2 Templates** - Server-rendered pages
-- **HTML5 / CSS3** - Modern responsive styling
-- **Vanilla JavaScript** - Search, scanner UI, camera modal
+- **HTML5 / CSS3** - Modern responsive styling (with **Glassmorphism**)
+- **Vanilla JavaScript** - Core logic, AR scanner, and camera feed
+- **Web Speech API** - Powering Voice AI Recognition & Synthesis
+- **Font Awesome 6** - Premium iconography
 
 ### **Backend**
 
 - **Flask 2.3** - Web framework
-- **Flask-CORS** - Cross-Origin Resource Sharing
 - **Flask-SQLAlchemy** - ORM
-- **SQLite** - Local database (dev)
-- **PostgreSQL** - Production database (via `DATABASE_URL`)
-- **TensorFlow 2.12** - Deep learning framework
-- **Keras** - Neural network API
-- **OpenCV** - Image processing
-- **NumPy** - Numerical computing
-- **Python 3.11** - Runtime
+- **TensorFlow 2.12** - Deep learning (Pokémon Identification)
+- **OpenCV** - Image processing for scanner
+- **n8n Integration** - Workflow automation & AI orchestration
 
-### **Authentication & Payments**
+### **Database & Ops**
 
-- **Stytch** - Magic link + Google OAuth authentication
-- **Stripe** - Donation/payment processing
-
-### **DevOps & Deployment**
-
-- **Docker** - Containerization
-- **Docker Compose** - Multi-container orchestration
-- **Nginx** - Reverse proxy & static serving
-- **Gunicorn** - WSGI application server
-- **Render** - Recommended hosting platform
+- **SQLite** - Local development
+- **PostgreSQL** - Production (Render)
+- **Docker / Docker Compose** - Containerization
+- **Gunicorn** - Production WSGI server
 
 ---
 
@@ -142,44 +149,35 @@ This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Fl
 
 ```
 PokemonKnower/
-├── 📄 app.py                              # Flask app (main server)
+├── 📄 app.py                              # Flask app (main server with 50+ routes)
+├── 🧱 models.py                           # DB Models (User, Badge, Team, Pkmn, Move)
 ├── 📋 requirements.txt                    # Python dependencies
-├── 🗄️ pokemon.db                          # SQLite database (generated)
-├── 🧱 models.py                           # SQLAlchemy models
-├── 🔁 migrate_db.py                       # CSV -> SQLite migration + image scan
+├── � N8N_INTEGRATION.md                  # Automation & AI Workflow Guide
 │
-├── 🐳 Docker Setup (optional)
-│   ├── Dockerfile                         # Multi-stage Docker build
-│   ├── docker-compose.yml                 # Container orchestration
-│   ├── docker-entrypoint.sh               # Production startup script
-│   ├── nginx.conf                         # Reverse proxy config
-│   ├── .dockerignore                      # Build optimization
-│   └── .env.example                       # Environment template
-│
-├── 🔧 Web UI
+├── 🎨 UI & Design
 │   ├── templates/                         # Jinja templates
+│   │   ├── home.html                      # New Netflix-style homepage
+│   │   ├── stories.html                   # PokéTales story hub
+│   │   ├── profile.html                   # Trainer profile & levels
+│   │   └── leaderboard.html               # Global XP rankings
+│   │
 │   └── static/                            # Static assets
-│       ├── css/                           # main.css
-│       ├── js/                            # main.js
-│       ├── images/                        # optional images + site assets
-│       └── uploads/                       # temporary user uploads
+│       ├── css/
+│       │   ├── main.css                   # Core styles
+│       │   └── netflix.css                # Premium UI layer
+│       └── js/
+│           ├── main.js                    # Core logic
+│           └── netflix.js                 # Carousel & Voice AI logic
 │
-├── 🖼️ Optional dataset images
-│   └── PokemonData/<PokemonName>/*        # ex: PokemonData/Abra/...
+├── 🧠 Intelligence & Assets
+│   ├── ai_engine.py                       # VLM & Hybrid AI logic
+│   ├── N8N_INTEGRATION.md                 # Automation documentation
+│   ├── pokemon_classifier_model_V3.h5    # Neural network weights
+│   └── class_indices.json                 # Label mapping
 │
-├── 🧠 ML Models
-│   ├── pokemon_classifier_model_V1.h5    # Version 1 model
-│   ├── pokemon_classifier_model_V2.h5    # Version 2 model
-│   ├── pokemon_classifier_model_V3.h5    # Version 3 model (active)
-│   ├── class_indices.json                 # Model class mapping (151 Pokemon)
-│   └── pokemon.csv                        # Source dataset (migration imports all rows by default)
-│
-├── 📖 Training Notebook
-│   └── updatedPokémonClassifier.ipynb    # Jupyter notebook with model training
-│
-└── 📚 Documentation
-    ├── README.md                          # This file
-    └── DOCKER_README.md                   # Docker deployment guide
+├── 🐳 Deployment
+│   ├── Dockerfile                         # Multi-stage production build
+│   └── docker-compose.yml                 # Orchestration
 ```
 
 ---
@@ -725,19 +723,23 @@ See `requirements.txt` for the complete list.
 
 ---
 
-## 📈 Future Enhancements
-
-- [ ] Database integration (PostgreSQL)
-- [ ] User authentication & saved searches
-- [ ] Batch image processing
-- [ ] Advanced analytics dashboard
-- [ ] Multi-language support
-- [ ] API key system
-- [ ] Caching layer (Redis)
-- [ ] CI/CD pipeline (GitHub Actions)
-- [ ] Kubernetes deployment manifests
+| File                 | Purpose                      |
+| -------------------- | ---------------------------- |
+| `README.md`          | This file - Project overview |
+| `N8N_INTEGRATION.md` | Workflow & Automation Guide  |
+| `DOCKER_README.md`   | Docker deployment guide      |
 
 ---
+
+## 📈 Future Enhancements
+
+- [ ] Battle Arena Multiplayer (WebSocket)
+- [ ] User-generated PokéTales with voting
+- [ ] Advanced analytics dashboard for Admins
+- [ ] Multi-language localization
+- [ ] Mobile App (React Native) integration
+- [ ] Batch image processing for gallery uploads
+- [ ] AR collectible cards trading system
 
 ## 👤 Author
 

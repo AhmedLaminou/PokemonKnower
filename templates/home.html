@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}Pokémon Knower | The Ultimate AI-Powered Pokédex Experience{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/netflix.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Netflix-Style Hero Carousel -->
+<section class="hero-carousel" id="heroCarousel">
+    <div class="carousel-track">
+        <!-- Slide 1: Featured Legendary -->
+        <div class="carousel-slide active">
+            <div class="slide-bg" style="background-image: url('https://images.pokemontcg.io/sv6/202_hires.png');"></div>
+            <div class="slide-gradient"></div>
+            <div class="slide-gradient-bottom"></div>
+            <div class="slide-content">
+                <span class="slide-tag legendary"><i class="fas fa-crown"></i> Legendary of the Week</span>
+                <h1 class="slide-title">
+                    <span class="pokemon-name">Mewtwo</span>
+                </h1>
+                <p class="slide-description">
+                    The most powerful Psychic-type Pokémon ever created. Born from a genetic experiment, 
+                    Mewtwo possesses unparalleled psychic abilities and a restless soul seeking its purpose.
+                </p>
+                <div class="slide-stats">
+                    <span class="stat-chip"><i class="fas fa-heart"></i> 106 HP</span>
+                    <span class="stat-chip"><i class="fas fa-fist-raised"></i> 110 ATK</span>
+                    <span class="stat-chip"><i class="fas fa-shield-alt"></i> 90 DEF</span>
+                    <span class="stat-chip"><i class="fas fa-bolt"></i> 130 SP.ATK</span>
+                </div>
+                <div class="slide-actions">
+                    <a href="{{ url_for('pokemon_detail', identifier='Mewtwo') }}" class="btn-carousel btn-carousel-primary">
+                        <i class="fas fa-info-circle"></i> View Details
+                    </a>
+                    <a href="{{ url_for('scanner') }}" class="btn-carousel btn-carousel-secondary">
+                        <i class="fas fa-camera"></i> Scan a Pokémon
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 2: Story Moment -->
+        <div class="carousel-slide">
+            <div class="slide-bg" style="background-image: url('https://static1.cbrimages.com/wordpress/wp-content/uploads/2019/09/Ash-and-Pikachu-reunite-in-Pokémon-I-Choose-You.jpg');"></div>
+            <div class="slide-gradient"></div>
+            <div class="slide-gradient-bottom"></div>
+            <div class="slide-content">
+                <span class="slide-tag story"><i class="fas fa-book-open"></i> Iconic Story</span>
+                <h1 class="slide-title">
+                    <span class="pokemon-name">The Day We Met</span>
+                </h1>
+                <p class="slide-description">
+                    A rebellious Pikachu and an eager young trainer from Pallet Town begin a legendary journey 
+                    that would change the Pokémon world forever. This is how it all started...
+                </p>
+                <div class="slide-stats">
+                    <span class="stat-chip"><i class="fas fa-star"></i> Season 1, Episode 1</span>
+                    <span class="stat-chip"><i class="fas fa-clock"></i> 22 min</span>
+                </div>
+                <div class="slide-actions">
+                    <a href="{{ url_for('stories_page') }}" class="btn-carousel btn-carousel-primary">
+                        <i class="fas fa-play"></i> Read Story
+                    </a>
+                    <a href="{{ url_for('pokemon_detail', identifier='Pikachu') }}" class="btn-carousel btn-carousel-secondary">
+                        <i class="fas fa-bolt"></i> About Pikachu
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 3: Quiz Challenge -->
+        <div class="carousel-slide">
+            <div class="slide-bg" style="background-image: url('https://images.pokemontcg.io/swsh9/198_hires.png');"></div>
+            <div class="slide-gradient"></div>
+            <div class="slide-gradient-bottom"></div>
+            <div class="slide-content">
+                <span class="slide-tag"><i class="fas fa-fire"></i> Daily Challenge</span>
+                <h1 class="slide-title">
+                    <span class="pokemon-name">Who's That Pokémon?</span>
+                </h1>
+                <p class="slide-description">
+                    Test your Pokémon knowledge! Can you identify the mystery Pokémon? 
+                    Complete daily challenges to build your streak and earn trainer badges.
+                </p>
+                <div class="slide-stats">
+                    <span class="stat-chip"><i class="fas fa-fire-alt"></i> {{ user_streak or 0 }} Day Streak</span>
+                    <span class="stat-chip"><i class="fas fa-trophy"></i> Daily Rewards</span>
+                </div>
+                <div class="slide-actions">
+                    <a href="{{ url_for('quiz_page') }}" class="btn-carousel btn-carousel-primary">
+                        <i class="fas fa-play"></i> Play Now
+                    </a>
+                    <a href="{{ url_for('pokedex') }}" class="btn-carousel btn-carousel-secondary">
+                        <i class="fas fa-book"></i> Study Pokédex
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 4: AI Scanner -->
+        <div class="carousel-slide">
+            <div class="slide-bg" style="background-image: url('https://images.pokemontcg.io/sv3pt5/198_hires.png');"></div>
+            <div class="slide-gradient"></div>
+            <div class="slide-gradient-bottom"></div>
+            <div class="slide-content">
+                <span class="slide-tag"><i class="fas fa-magic"></i> AI Powered</span>
+                <h1 class="slide-title">
+                    <span class="pokemon-name">Instant Pokémon ID</span>
+                </h1>
+                <p class="slide-description">
+                    Upload any image and our advanced AI will identify the Pokémon instantly. 
+                    Using hybrid ML + Vision AI for near-perfect accuracy across all generations.
+                </p>
+                <div class="slide-stats">
+                    <span class="stat-chip"><i class="fas fa-brain"></i> Deep Learning</span>
+                    <span class="stat-chip"><i class="fas fa-eye"></i> 1000+ Pokémon</span>
+                    <span class="stat-chip"><i class="fas fa-check-circle"></i> 98% Accuracy</span>
+                </div>
+                <div class="slide-actions">
+                    <a href="{{ url_for('scanner') }}" class="btn-carousel btn-carousel-primary">
+                        <i class="fas fa-camera"></i> Try Scanner
+                    </a>
+                    <a href="{{ url_for('about') }}" class="btn-carousel btn-carousel-secondary">
+                        <i class="fas fa-info"></i> How It Works
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Carousel Navigation -->
+    <button class="carousel-arrow prev"><i class="fas fa-chevron-left"></i></button>
+    <button class="carousel-arrow next"><i class="fas fa-chevron-right"></i></button>
+    
+    <!-- Carousel Dots -->
+    <div class="carousel-dots">
+        <span class="carousel-dot active" data-index="0"></span>
+        <span class="carousel-dot" data-index="1"></span>
+        <span class="carousel-dot" data-index="2"></span>
+        <span class="carousel-dot" data-index="3"></span>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="carousel-progress"></div>
+</section>
+
+<!-- Category Browse Section -->
+<section class="browse-section">
+    <!-- Trending Now -->
+    <div class="browse-row">
+        <div class="row-header">
+            <h2 class="row-title"><i class="fas fa-fire"></i> Trending Now</h2>
+            <a href="{{ url_for('pokedex') }}" class="row-link">View All <i class="fas fa-chevron-right"></i></a>
+        </div>
+        <div class="browse-scroll" id="trendingScroll">
+            {% for pokemon in trending_pokemon %}
+            <a href="{{ url_for('pokemon_detail', identifier=pokemon.name) }}" class="browse-card">
+                <img class="browse-card-image" src="{{ pokemon.image_url or 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' ~ pokemon.pokedex_number ~ '.png' }}" alt="{{ pokemon.name }}">
+                <div class="browse-card-overlay"></div>
+                <div class="browse-card-info">
+                    <div class="browse-card-name">{{ pokemon.name }}</div>
+                    <div class="browse-card-type">{{ pokemon.type1 }}{% if pokemon.type2 %} / {{ pokemon.type2 }}{% endif %}</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Legendary Pokémon -->
+    <div class="browse-row">
+        <div class="row-header">
+            <h2 class="row-title"><i class="fas fa-crown"></i> Legendary Pokémon</h2>
+            <a href="{{ url_for('pokedex') }}?legendary=true" class="row-link">View All <i class="fas fa-chevron-right"></i></a>
+        </div>
+        <div class="browse-scroll" id="legendaryScroll">
+            {% for pokemon in legendary_pokemon %}
+            <a href="{{ url_for('pokemon_detail', identifier=pokemon.name) }}" class="browse-card">
+                <img class="browse-card-image" src="{{ pokemon.image_url or 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' ~ pokemon.pokedex_number ~ '.png' }}" alt="{{ pokemon.name }}">
+                <div class="browse-card-overlay"></div>
+                <div class="browse-card-info">
+                    <div class="browse-card-name">{{ pokemon.name }}</div>
+                    <div class="browse-card-type">{{ pokemon.type1 }}{% if pokemon.type2 %} / {{ pokemon.type2 }}{% endif %}</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Electric Types -->
+    <div class="browse-row">
+        <div class="row-header">
+            <h2 class="row-title"><i class="fas fa-bolt"></i> Electric Types</h2>
+            <a href="{{ url_for('search') }}?type=electric" class="row-link">View All <i class="fas fa-chevron-right"></i></a>
+        </div>
+        <div class="browse-scroll" id="electricScroll">
+            {% for pokemon in electric_pokemon %}
+            <a href="{{ url_for('pokemon_detail', identifier=pokemon.name) }}" class="browse-card">
+                <img class="browse-card-image" src="{{ pokemon.image_url or 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' ~ pokemon.pokedex_number ~ '.png' }}" alt="{{ pokemon.name }}">
+                <div class="browse-card-overlay"></div>
+                <div class="browse-card-info">
+                    <div class="browse-card-name">{{ pokemon.name }}</div>
+                    <div class="browse-card-type">{{ pokemon.type1 }}{% if pokemon.type2 %} / {{ pokemon.type2 }}{% endif %}</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Fire Types -->
+    <div class="browse-row">
+        <div class="row-header">
+            <h2 class="row-title"><i class="fas fa-fire-alt"></i> Fire Types</h2>
+            <a href="{{ url_for('search') }}?type=fire" class="row-link">View All <i class="fas fa-chevron-right"></i></a>
+        </div>
+        <div class="browse-scroll" id="fireScroll">
+            {% for pokemon in fire_pokemon %}
+            <a href="{{ url_for('pokemon_detail', identifier=pokemon.name) }}" class="browse-card">
+                <img class="browse-card-image" src="{{ pokemon.image_url or 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' ~ pokemon.pokedex_number ~ '.png' }}" alt="{{ pokemon.name }}">
+                <div class="browse-card-overlay"></div>
+                <div class="browse-card-info">
+                    <div class="browse-card-name">{{ pokemon.name }}</div>
+                    <div class="browse-card-type">{{ pokemon.type1 }}{% if pokemon.type2 %} / {{ pokemon.type2 }}{% endif %}</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Quick Actions Section -->
+<section class="quick-actions-section">
+    <div class="quick-actions-grid">
+        <a href="{{ url_for('scanner') }}" class="quick-action-card">
+            <div class="quick-action-icon"><i class="fas fa-camera"></i></div>
+            <h3>AI Scanner</h3>
+            <p>Identify any Pokémon instantly</p>
+        </a>
+        <a href="{{ url_for('quiz_page') }}" class="quick-action-card">
+            <div class="quick-action-icon"><i class="fas fa-question-circle"></i></div>
+            <h3>Daily Quiz</h3>
+            <p>Test your Pokémon knowledge</p>
+        </a>
+        <a href="{{ url_for('team_builder') }}" class="quick-action-card">
+            <div class="quick-action-icon"><i class="fas fa-users"></i></div>
+            <h3>Team Builder</h3>
+            <p>Build your dream team</p>
+        </a>
+        <a href="{{ url_for('battle_page') }}" class="quick-action-card">
+            <div class="quick-action-icon"><i class="fas fa-swords"></i></div>
+            <h3>Battle Arena</h3>
+            <p>Simulate epic battles</p>
+        </a>
+    </div>
+</section>
+
+<!-- Voice AI Pokédex Button -->
+<button class="voice-btn" id="voiceBtn" title="Voice Pokédex - Say 'Tell me about Pikachu'">
+    <i class="fas fa-microphone"></i>
+</button>
+
+<!-- Voice Feedback Modal -->
+<div class="voice-feedback" id="voiceFeedback">
+    <div class="voice-feedback-header">
+        <i class="fas fa-microphone"></i>
+        <span class="voice-feedback-title">Voice Pokédex</span>
+    </div>
+    <div class="voice-transcript" id="voiceTranscript">Say something like "Tell me about Pikachu"...</div>
+    <div class="voice-waveform">
+        <div class="voice-waveform-bar"></div>
+        <div class="voice-waveform-bar"></div>
+        <div class="voice-waveform-bar"></div>
+        <div class="voice-waveform-bar"></div>
+        <div class="voice-waveform-bar"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Quick Actions Section */
+.quick-actions-section {
+    padding: 3rem 4rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.quick-action-card {
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-darker) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.quick-action-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--pokemon-yellow);
+    box-shadow: 0 10px 40px rgba(255, 203, 5, 0.15);
+}
+
+.quick-action-icon {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    background: var(--gradient-pokemon);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: white;
+}
+
+.quick-action-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.quick-action-card p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+    .quick-actions-section {
+        padding: 2rem 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/netflix.js') }}"></script>
+{% endblock %}
