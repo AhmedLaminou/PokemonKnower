@@ -10,7 +10,7 @@ import cv2
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory, session
 from flask_cors import CORS
-from models import db, Pokemon, PokemonImage, PokemonType, User, Donation, Favorite, Team, TeamMember, QuizScore, Move, Ability
+from models import db, Pokemon, PokemonImage, PokemonType, User, Donation, Favorite, Team, TeamMember, QuizScore, Move, Ability, Badge, UserBadge
 from battle_engine import BattleEngine
 from ai_engine import PokemonIdentifier
 
@@ -318,7 +318,7 @@ def index():
     
     # Legendary Pokemon (high stats, typically = legendary-like)
     legendary_pokemon = Pokemon.query.filter(
-        (Pokemon.attack >= 120) | (Pokemon.special_attack >= 120)
+        (Pokemon.attack >= 120) | (Pokemon.sp_attack >= 120)
     ).order_by(Pokemon.attack.desc()).limit(12).all()
     
     # Electric Types
@@ -470,7 +470,7 @@ def search():
         filters.append(Pokemon.defense >= min_defense)
     
     if min_stamina:
-        filters.append(Pokemon.stamina >= min_stamina)
+        filters.append(Pokemon.hp >= min_stamina)
     
     # Execute query
     base_query = Pokemon.query
