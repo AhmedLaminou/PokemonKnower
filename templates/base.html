@@ -17,6 +17,7 @@
     
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/netflix.css') }}">
     
     {% block extra_css %}{% endblock %}
 </head>
@@ -227,6 +228,27 @@
 
     <!-- Scripts -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/netflix.js') }}"></script>
+    
+    <!-- Voice AI Components (Global) -->
+    <button class="voice-btn" id="voiceBtn" title="Voice Pokédex - Say 'Tell me about Pikachu'">
+        <i class="fas fa-microphone"></i>
+    </button>
+
+    <div class="voice-feedback" id="voiceFeedback">
+        <div class="voice-feedback-header">
+            <i class="fas fa-microphone"></i>
+            <span class="voice-feedback-title">Voice Pokédex</span>
+        </div>
+        <div class="voice-transcript" id="voiceTranscript">Say something like "Tell me about Pikachu"...</div>
+        <div class="voice-waveform">
+            <div class="voice-waveform-bar"></div>
+            <div class="voice-waveform-bar"></div>
+            <div class="voice-waveform-bar"></div>
+            <div class="voice-waveform-bar"></div>
+            <div class="voice-waveform-bar"></div>
+        </div>
+    </div>
     
     {% include 'components/chat_widget.html' %}
     

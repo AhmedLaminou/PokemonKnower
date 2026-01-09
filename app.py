@@ -12,7 +12,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 from flask_cors import CORS
 from models import db, Pokemon, PokemonImage, PokemonType, User, Donation, Favorite, Team, TeamMember, QuizScore, Move, Ability, Badge, UserBadge
 from battle_engine import BattleEngine
-from ai_engine import PokemonIdentifier
+from ai_engine import PokemonIdentifier, PokemonStoryteller
 
 load_dotenv()
 load_dotenv('.env.example', override=False)
@@ -1492,11 +1492,24 @@ def n8n_story_webhook():
     
     # TODO: Save to Story model when implemented
     
+
     return jsonify({
         'status': 'success',
         'message': 'Story received',
         'story_preview': story.get('content', '')[:200] + '...'
     })
+
+@app.route('/api/stories/generate', methods=['POST'])
+def generate_ai_story():
+    """Generate a new Pokémon story using AI"""
+    data = request.get_json()
+    pokemon_name = data.get('pokemon', 'Pikachu')
+    genre = data.get('genre', 'Adventure')
+    
+    storyteller = PokemonStoryteller()
+    story = storyteller.generate_story(pokemon_name, genre)
+    
+    return jsonify(story)
 
 # ==================== VOICE API ====================
 

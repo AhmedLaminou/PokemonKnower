@@ -157,11 +157,11 @@
         <div class="browse-scroll" id="trendingScroll">
             {% for pokemon in trending_pokemon %}
             <a href="{{ url_for('pokemon_detail', identifier=pokemon.name) }}" class="browse-card">
-                <img class="browse-card-image" src="{{ pokemon.image_url or 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' ~ pokemon.pokedex_number ~ '.png' }}" alt="{{ pokemon.name }}">
+                <img class="browse-card-image" src="{{ pokemon.pic_url or 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' ~ pokemon.number ~ '.png' }}" alt="{{ pokemon.name }}">
                 <div class="browse-card-overlay"></div>
                 <div class="browse-card-info">
                     <div class="browse-card-name">{{ pokemon.name }}</div>
-                    <div class="browse-card-type">{{ pokemon.type1 }}{% if pokemon.type2 %} / {{ pokemon.type2 }}{% endif %}</div>
+                    <div class="browse-card-type">{{ pokemon.main_type }}{% if pokemon.secondary_type %} / {{ pokemon.secondary_type }}{% endif %}</div>
                 </div>
             </a>
             {% endfor %}
@@ -177,11 +177,11 @@
         <div class="browse-scroll" id="legendaryScroll">
             {% for pokemon in legendary_pokemon %}
             <a href="{{ url_for('pokemon_detail', identifier=pokemon.name) }}" class="browse-card">
-                <img class="browse-card-image" src="{{ pokemon.image_url or 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' ~ pokemon.pokedex_number ~ '.png' }}" alt="{{ pokemon.name }}">
+                <img class="browse-card-image" src="{{ pokemon.pic_url or 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' ~ pokemon.number ~ '.png' }}" alt="{{ pokemon.name }}">
                 <div class="browse-card-overlay"></div>
                 <div class="browse-card-info">
                     <div class="browse-card-name">{{ pokemon.name }}</div>
-                    <div class="browse-card-type">{{ pokemon.type1 }}{% if pokemon.type2 %} / {{ pokemon.type2 }}{% endif %}</div>
+                    <div class="browse-card-type">{{ pokemon.main_type }}{% if pokemon.secondary_type %} / {{ pokemon.secondary_type }}{% endif %}</div>
                 </div>
             </a>
             {% endfor %}
@@ -197,11 +197,11 @@
         <div class="browse-scroll" id="electricScroll">
             {% for pokemon in electric_pokemon %}
             <a href="{{ url_for('pokemon_detail', identifier=pokemon.name) }}" class="browse-card">
-                <img class="browse-card-image" src="{{ pokemon.image_url or 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' ~ pokemon.pokedex_number ~ '.png' }}" alt="{{ pokemon.name }}">
+                <img class="browse-card-image" src="{{ pokemon.pic_url or 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' ~ pokemon.number ~ '.png' }}" alt="{{ pokemon.name }}">
                 <div class="browse-card-overlay"></div>
                 <div class="browse-card-info">
                     <div class="browse-card-name">{{ pokemon.name }}</div>
-                    <div class="browse-card-type">{{ pokemon.type1 }}{% if pokemon.type2 %} / {{ pokemon.type2 }}{% endif %}</div>
+                    <div class="browse-card-type">{{ pokemon.main_type }}{% if pokemon.secondary_type %} / {{ pokemon.secondary_type }}{% endif %}</div>
                 </div>
             </a>
             {% endfor %}
@@ -217,11 +217,11 @@
         <div class="browse-scroll" id="fireScroll">
             {% for pokemon in fire_pokemon %}
             <a href="{{ url_for('pokemon_detail', identifier=pokemon.name) }}" class="browse-card">
-                <img class="browse-card-image" src="{{ pokemon.image_url or 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' ~ pokemon.pokedex_number ~ '.png' }}" alt="{{ pokemon.name }}">
+                <img class="browse-card-image" src="{{ pokemon.pic_url or 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' ~ pokemon.number ~ '.png' }}" alt="{{ pokemon.name }}">
                 <div class="browse-card-overlay"></div>
                 <div class="browse-card-info">
                     <div class="browse-card-name">{{ pokemon.name }}</div>
-                    <div class="browse-card-type">{{ pokemon.type1 }}{% if pokemon.type2 %} / {{ pokemon.type2 }}{% endif %}</div>
+                    <div class="browse-card-type">{{ pokemon.main_type }}{% if pokemon.secondary_type %} / {{ pokemon.secondary_type }}{% endif %}</div>
                 </div>
             </a>
             {% endfor %}
@@ -255,26 +255,7 @@
     </div>
 </section>
 
-<!-- Voice AI Pokédex Button -->
-<button class="voice-btn" id="voiceBtn" title="Voice Pokédex - Say 'Tell me about Pikachu'">
-    <i class="fas fa-microphone"></i>
-</button>
 
-<!-- Voice Feedback Modal -->
-<div class="voice-feedback" id="voiceFeedback">
-    <div class="voice-feedback-header">
-        <i class="fas fa-microphone"></i>
-        <span class="voice-feedback-title">Voice Pokédex</span>
-    </div>
-    <div class="voice-transcript" id="voiceTranscript">Say something like "Tell me about Pikachu"...</div>
-    <div class="voice-waveform">
-        <div class="voice-waveform-bar"></div>
-        <div class="voice-waveform-bar"></div>
-        <div class="voice-waveform-bar"></div>
-        <div class="voice-waveform-bar"></div>
-        <div class="voice-waveform-bar"></div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_css %}

@@ -87,3 +87,75 @@ class PokemonIdentifier:
         except Exception as e:
             print(f"VLM Error: {e}")
             return None
+
+class PokemonStoryteller:
+    def __init__(self):
+        self.api_key = os.environ.get('OPENROUTER_API_KEY') or os.environ.get('OPENAI_API_KEY')
+        base_url = "https://openrouter.ai/api/v1" if os.environ.get('OPENROUTER_API_KEY') else None
+        
+        # Use a text-optimized model
+        model_name = "google/gemini-flash-1.5" if os.environ.get('OPENROUTER_API_KEY') else "gpt-4o-mini"
+        if os.environ.get('OPENROUTER_API_KEY'):
+             # Prefer a cheaper but capable model for stories, or user defined
+             model_name = "openai/gpt-4o-mini" # Consistently reliable
+
+        if self.api_key:
+            self.llm = ChatOpenAI(
+                model=model_name,
+                api_key=self.api_key,
+                base_url=base_url,
+                temperature=0.7, # Higher creativity for stories
+                max_tokens=1000
+            )
+        else:
+            self.llm = None
+
+    def generate_story(self, pokemon_name, genre="Adventure", theme="Friendship"):
+        """
+        Generate a creative Pokémon story.
+        """
+        if not self.llm:
+            return {
+                "title": "API Key Missing",
+                "content": "Please configure your OpenAI or OpenRouter API key to generate stories."
+            }
+
+        try:
+            prompt = f"""
+            Write a short, engaging Pokémon story about {pokemon_name}.
+            
+            Genre: {genre}
+            Theme: {theme}
+            Target Audience: Pokémon fans (All ages)
+            Length: Approximately 300-500 words.
+            
+            Return the result in valid JSON format ONLY:
+            {{
+                "title": "A catchy title for the story",
+                "content": "The full story content here...",
+                "summary": "A 1-sentence summary"
+            }}
+            
+            Do not include markdown formatting. Just the raw JSON.
+            """
+            
+            response = self.llm.invoke([HumanMessage(content=prompt)])
+            content = response.content.replace('```json', '').replace('```', '').strip()
+            
+            try:
+                data = json.loads(content)
+                return data
+            except json.JSONDecodeError:
+                # Fallback if specific JSON fails, just return raw content as story
+                return {
+                    "title": f"A Tale of {pokemon_name}",
+                    "content": content,
+                    "summary": "An AI generated story."
+                }
+                
+        except Exception as e:
+            print(f"Story Gen Error: {e}")
+            return {
+                "title": "Error generating story",
+                "content": "Something went wrong with the AI story engine. Please try again."
+            }

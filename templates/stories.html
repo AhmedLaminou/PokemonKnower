@@ -126,16 +126,52 @@
     </div>
 </section>
 
-<!-- Coming Soon: AI-Generated Stories -->
-<section class="ai-stories-section">
+<!-- AI-Generated Stories -->
+<section class="ai-stories-section" id="aiGenerator">
     <div class="ai-stories-card">
-        <div class="ai-stories-icon">
-            <i class="fas fa-robot"></i>
+        <div class="ai-stories-header">
+            <div class="ai-stories-icon">
+                <i class="fas fa-magic"></i>
+            </div>
+            <h2>AI-Powered Story Generator</h2>
+            <p>Create your own unique Pokémon legend instantly. Powered by Advanced AI.</p>
         </div>
-        <h2>AI-Powered Story Generation</h2>
-        <p>Coming soon: Generate your own custom Pokémon stories using AI! Choose your favorite Pokémon, set the scene, and let our AI craft an epic tale just for you.</p>
-        <div class="ai-stories-badge">
-            <i class="fas fa-sparkles"></i> Powered by n8n + GPT-4
+        
+        <div class="story-generator-form">
+            <div class="form-group">
+                <input type="text" id="storyPokemon" placeholder="Enter Pokémon Name (e.g. Charizard)" class="story-input">
+            </div>
+            <div class="form-group">
+                <select id="storyGenre" class="story-select">
+                    <option value="Adventure">Adventure</option>
+                    <option value="Mystery">Mystery</option>
+                    <option value="Horror">Horror</option>
+                    <option value="Battle">Battle Report</option>
+                    <option value="Heartwarming">Heartwarming</option>
+                </select>
+            </div>
+            <button id="generateStoryBtn" class="btn-carousel btn-carousel-primary">
+                <i class="fas fa-sparkles"></i> Generate Story
+            </button>
+        </div>
+
+        <!-- Loading State -->
+        <div id="storyLoading" class="story-loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Crafting your legend... this may take a moment.</p>
+        </div>
+
+        <!-- Result Container -->
+        <div id="storyResult" class="story-result" style="display: none;">
+            <div class="story-result-content">
+                <h3 id="resultTitle">Title goes here</h3>
+                <div class="story-tag featured" id="resultGenre">Genre</div>
+                <p id="resultSummary" class="story-summary">Summary...</p>
+                <div class="story-divider"></div>
+                <div id="resultBody" class="story-body">
+                    <!-- Story content -->
+                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -375,55 +411,92 @@
     overflow: hidden;
 }
 
-/* AI Stories Section */
-.ai-stories-section {
-    padding: 3rem 4rem;
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
+/* Generator Styles */
 .ai-stories-card {
-    background: linear-gradient(135deg, rgba(155, 89, 182, 0.1) 0%, rgba(233, 30, 99, 0.1) 100%);
-    border: 1px dashed rgba(155, 89, 182, 0.5);
+    background: linear-gradient(135deg, rgba(30,30,46,0.95), rgba(20,20,35,0.98));
+    border: 1px solid rgba(155, 89, 182, 0.3);
     border-radius: var(--radius-lg);
     padding: 3rem;
     text-align: center;
+    box-shadow: 0 0 50px rgba(155, 89, 182, 0.1);
 }
 
-.ai-stories-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 1.5rem;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #9b59b6 0%, #e91e63 100%);
+.story-generator-form {
     display: flex;
-    align-items: center;
+    gap: 1rem;
     justify-content: center;
-    font-size: 2rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.story-input, .story-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    min-width: 250px;
 }
 
-.ai-stories-card h2 {
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
+.story-input:focus, .story-select:focus {
+    outline: none;
+    border-color: #9b59b6;
+    background: rgba(255, 255, 255, 0.1);
 }
 
-.ai-stories-card p {
-    color: var(--text-secondary);
-    max-width: 600px;
-    margin: 0 auto 1.5rem;
-}
-
-.ai-stories-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1.5rem;
-    background: rgba(155, 89, 182, 0.2);
-    border-radius: 20px;
+.story-loading {
+    margin: 2rem 0;
     color: #9b59b6;
-    font-size: 0.9rem;
 }
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(155, 89, 182, 0.3);
+    border-top-color: #9b59b6;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.story-result {
+    text-align: left;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 2rem;
+    border-radius: 12px;
+    margin-top: 2rem;
+    border-left: 4px solid #9b59b6;
+    animation: fadeIn 0.5s ease;
+}
+
+.story-result h3 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #fff;
+}
+
+.story-summary {
+    font-style: italic;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+.story-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 1.5rem 0;
+}
+
+.story-body {
+    line-height: 1.8;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -451,4 +524,56 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/netflix.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const generateBtn = document.getElementById('generateStoryBtn');
+    const loading = document.getElementById('storyLoading');
+    const result = document.getElementById('storyResult');
+    
+    generateBtn.addEventListener('click', async () => {
+        const pokemon = document.getElementById('storyPokemon').value;
+        const genre = document.getElementById('storyGenre').value;
+        
+        if (!pokemon) {
+            alert('Please enter a Pokémon name!');
+            return;
+        }
+        
+        // UI State
+        loading.style.display = 'block';
+        result.style.display = 'none';
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+        
+        try {
+            const response = await fetch('/api/stories/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pokemon, genre })
+            });
+            
+            const data = await response.json();
+            
+            // Render Result
+            document.getElementById('resultTitle').textContent = data.title;
+            document.getElementById('resultGenre').textContent = genre;
+            document.getElementById('resultSummary').textContent = data.summary || 'A tale generated by AI.';
+            document.getElementById('resultBody').textContent = data.content;
+            
+            result.style.display = 'block';
+            
+            // Scroll to result
+            result.scrollIntoView({ behavior: 'smooth' });
+            
+        } catch (error) {
+            alert('Failed to generate story. Please try again.');
+            console.error(error);
+        } finally {
+            loading.style.display = 'none';
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fas fa-sparkles"></i> Generate Story';
+        }
+    });
+});
+</script>
 {% endblock %}
