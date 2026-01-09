@@ -146,6 +146,107 @@
     <div class="carousel-progress"></div>
 </section>
 
+<!-- Search Section -->
+<section class="search-section" id="search">
+    <div class="container text-center">
+        <div class="search-container">
+            <h2 class="section-title">Find Your Pokémon</h2>
+            <form action="{{ url_for('search') }}" method="get" class="search-form">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" name="q" class="form-control" placeholder="Search by name, number, or type..." required>
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </div>
+                <div class="search-tags">
+                    <span class="tag-label">Popular:</span>
+                    <a href="{{ url_for('search', q='Legendary') }}" class="search-tag">Legendary</a>
+                    <a href="{{ url_for('search', q='Dragon') }}" class="search-tag">Dragon</a>
+                    <a href="{{ url_for('search', q='Starter') }}" class="search-tag">Starters</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <style>
+    .search-section {
+        padding: 3rem 0;
+        background: radial-gradient(circle at center, var(--bg-card) 0%, var(--bg-dark) 100%);
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .search-container {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    
+    .search-form .input-group {
+        background: var(--bg-darker);
+        border: 2px solid var(--border-color);
+        border-radius: 50px;
+        padding: 0.5rem;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+    }
+    
+    .search-form .input-group:focus-within {
+        border-color: var(--pokemon-yellow);
+        box-shadow: 0 0 20px rgba(255, 203, 5, 0.2);
+    }
+    
+    .search-form .input-group-text {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        padding-left: 1.5rem;
+        font-size: 1.2rem;
+    }
+    
+    .search-form .form-control {
+        background: transparent;
+        border: none;
+        color: #fff;
+        height: 50px;
+        font-size: 1.1rem;
+        flex: 1;
+        padding-left: 1rem;
+    }
+    
+    .search-form .form-control:focus {
+        outline: none;
+        box-shadow: none;
+    }
+    
+    .search-form .btn-primary {
+        border-radius: 40px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+    }
+    
+    .search-tags {
+        margin-top: 1rem;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+    
+    .search-tag {
+        color: var(--text-secondary);
+        background: var(--bg-darker);
+        padding: 0.2rem 0.8rem;
+        border-radius: 20px;
+        margin: 0 0.3rem;
+        text-decoration: none;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s;
+    }
+    
+    .search-tag:hover {
+        border-color: var(--pokemon-yellow);
+        color: var(--pokemon-yellow);
+    }
+    </style>
+</section>
+
 <!-- Category Browse Section -->
 <section class="browse-section">
     <!-- Trending Now -->

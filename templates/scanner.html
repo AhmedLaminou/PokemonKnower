@@ -287,20 +287,78 @@
     .image-preview {
         display: none;
         width: 100%;
-        height: 100%;
+        max-width: 600px;
+        height: 400px; /* Fixed height matching drop zone */
         position: relative;
         border-radius: var(--radius-lg);
         overflow: hidden;
+        margin: 0 auto;
+        border: 1px solid var(--border-color);
+        background: #000;
     }
 
     .image-preview img {
         width: 100%;
         height: 100%;
         object-fit: contain;
-        background: #000;
     }
     
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Upload Result Section */
+    .upload-result {
+        margin-top: 2rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        text-align: center;
+        display: none;
+        animation: slideUp 0.5s ease;
+    }
+
+    .upload-result.active {
+        display: block;
+    }
+
+    .upload-result h2 {
+        color: var(--pokemon-yellow);
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .upload-result .confidence {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    .upload-result .stats-grid {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin: 1.5rem 0;
+    }
+
+    .stat-box {
+        text-align: center;
+    }
+
+    .stat-box .label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .stat-box .value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #fff;
+    }
+
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 {% endblock %}
 
@@ -380,9 +438,33 @@
             </div>
             <div class="image-preview" id="imagePreview">
                 <img src="" alt="Preview">
-                <button class="btn btn-primary mt-3" onclick="location.reload()" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);">
+                <button class="btn btn-primary mt-3" onclick="resetUpload()" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;">
                     <i class="fas fa-redo"></i> Scan Another
                 </button>
+            </div>
+
+            <!-- Dedicated Result Section for Upload Mode -->
+            <div class="upload-result" id="uploadResult">
+                <h2 id="upName">--</h2>
+                <span class="confidence" id="upConfidence">--% Confidence</span>
+                <span class="badge bg-warning text-dark mb-3" id="upShiny" style="display: none;"><i class="fas fa-star"></i> SHINY</span>
+                
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="value" id="upAtk">-</div>
+                        <div class="label">Attack</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="value" id="upDef">-</div>
+                        <div class="label">Defense</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="value" id="upSpd">-</div>
+                        <div class="label">Speed</div>
+                    </div>
+                </div>
+                
+                <a href="#" id="upDetailLink" class="btn btn-outline-light rounded-pill px-4">View Full Entry</a>
             </div>
         </div>
 
@@ -475,11 +557,12 @@
         const formData = new FormData();
         formData.append('file', file);
         
-        // Show loading state in result card
+        // Show loading state
         document.getElementById('pokemonName').textContent = "Analyzing...";
-        document.getElementById('pokemonConfidence').textContent = "--%";
-        document.getElementById('pokemonStats').style.opacity = '0.5';
-        resultCard.classList.add('show');
+        // For upload mode, we use the new dedicated section
+        const upResult = document.getElementById('uploadResult');
+        document.getElementById('upName').textContent = "Analyzing...";
+        upResult.classList.add('active');
 
         try {
             const response = await fetch('/predict', {
@@ -573,10 +656,11 @@
     }
 
     function showResult(data) {
+        // Camera Mode HUD Update
         document.getElementById('pokemonName').textContent = data.name.toUpperCase();
         document.getElementById('pokemonConfidence').textContent = Math.round(data.confidence) + '%';
         
-        // Shiny Handler
+        // Shiny Handler (Camera)
         const shinyBadge = document.getElementById('shinyBadge');
         if (data.is_shiny) {
             shinyBadge.style.display = 'inline-block';
@@ -597,12 +681,35 @@
             document.getElementById('detailLink').href = `/pokemon/${data.pokemon.number}`;
         }
         
-        resultCard.classList.add('show');
-        
-        // Hide card after 5 seconds IF scanning (don't hide on manual upload)
-        if (isScanning) {
-            setTimeout(() => resultCard.classList.remove('show'), 5000);
+        // Upload Mode Result Update
+        if (document.getElementById('uploadMode').classList.contains('active')) {
+             document.getElementById('upName').textContent = data.name.toUpperCase();
+             document.getElementById('upConfidence').textContent = Math.round(data.confidence) + '% Confidence';
+             
+             if (data.is_shiny) document.getElementById('upShiny').style.display = 'inline-block';
+             else document.getElementById('upShiny').style.display = 'none';
+             
+             if (data.pokemon) {
+                document.getElementById('upAtk').textContent = data.pokemon.attack;
+                document.getElementById('upDef').textContent = data.pokemon.defense;
+                document.getElementById('upSpd').textContent = data.pokemon.speed;
+                document.getElementById('upDetailLink').href = `/pokemon/${data.pokemon.number}`;
+             }
+             document.getElementById('uploadResult').classList.add('active');
+        } else {
+            // Only show camera card if in camera mode
+            resultCard.classList.add('show');
+            if (isScanning) {
+                setTimeout(() => resultCard.classList.remove('show'), 5000);
+            }
         }
+    }
+    
+    function resetUpload() {
+        document.getElementById('fileInput').value = '';
+        document.getElementById('dropZone').style.display = 'flex';
+        document.getElementById('imagePreview').style.display = 'none';
+        document.getElementById('uploadResult').classList.remove('active');
     }
 
     // Event Listeners

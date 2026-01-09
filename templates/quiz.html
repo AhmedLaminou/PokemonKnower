@@ -22,69 +22,106 @@
                     <span>Daily Streak: <strong id="streakCount">0</strong> days</span>
                 </div>
 
-                <div class="quiz-options">
-                    <label>Number of Questions:</label>
-                    <select id="questionCount">
-                        <option value="5">5 Questions</option>
-                        <option value="10" selected>10 Questions</option>
-                        <option value="20">20 Questions</option>
-                    </select>
+                <!-- Quiz Mode Selection -->
+            <div class="quiz-options">
+                <label>Select Game Mode:</label>
+                <div class="mode-h-selector">
+                    <button class="mode-btn active" onclick="setMode('classic')">
+                        <i class="fas fa-image"></i> Classic Silhouette
+                    </button>
+                    <button class="mode-btn {% if not current_user %}disabled{% endif %}" onclick="setMode('ai')" {% if not current_user %}title="Login required"{% endif %}>
+                        <i class="fas fa-brain"></i> AI Trivia Challenge
+                        {% if not current_user %}<span class="lock-icon"><i class="fas fa-lock"></i></span>{% endif %}
+                    </button>
                 </div>
-                <button class="btn btn-primary btn-lg" onclick="startQuiz()">
-                    <i class="fas fa-play"></i> Start Quiz
-                </button>
+                {% if not current_user %}
+                <p class="login-hint"><i class="fas fa-info-circle"></i> <a href="{{ url_for('auth.login') }}">Log in</a> to unlock AI Trivia & Leaderboards!</p>
+                {% endif %}
             </div>
+
+            <div class="quiz-options">
+                <label>Number of Questions:</label>
+                <select id="questionCount">
+                    <option value="5">5 Questions</option>
+                    <option value="10" selected>10 Questions</option>
+                    <option value="20">20 Questions</option>
+                </select>
+            </div>
+            <button class="btn btn-primary btn-lg" onclick="startQuiz()">
+                <i class="fas fa-play"></i> Start Quiz
+            </button>
+        </div>
+    </div>
+
+    <!-- Question Screen -->
+    <div class="quiz-screen" id="questionScreen" style="display: none;">
+        <div class="quiz-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <span id="progressText">1 / 10</span>
         </div>
 
-        <!-- Question Screen -->
-        <div class="quiz-screen" id="questionScreen" style="display: none;">
-            <div class="quiz-progress">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <span id="progressText">1 / 10</span>
-            </div>
-
-            <div class="quiz-card question-card">
+        <div class="quiz-card question-card">
+            <!-- Classic Silhouette Content -->
+            <div id="classicContent">
                 <div class="pokemon-silhouette" id="silhouetteContainer">
                     <img id="pokemonImage" src="" alt="Who's That Pokémon?">
                 </div>
                 <h2>Who's That Pokémon?</h2>
-                <div class="answer-options" id="answerOptions"></div>
+            </div>
+            
+            <!-- AI Trivia Content -->
+            <div id="aiContent" style="display: none;">
+                <div class="trivia-icon"><i class="fas fa-robot"></i></div>
+                <h2 id="triviaQuestion">Generating Question...</h2>
+                <p id="triviaDifficulty" class="trivia-badge">AI Generated</p>
             </div>
 
-            <div class="quiz-score-display">
-                <span>Score: <strong id="currentScore">0</strong></span>
+            <div class="answer-options" id="answerOptions"></div>
+            
+            <div id="aiExplanation" class="ai-explanation" style="display: none;">
+                <strong><i class="fas fa-lightbulb"></i> Insight:</strong> <span id="explanationText"></span>
             </div>
         </div>
 
-        <!-- Result Screen -->
-        <div class="quiz-screen" id="resultScreen" style="display: none;">
-            <div class="quiz-card result-card">
-                <div class="result-icon" id="resultIcon">
-                    <i class="fas fa-trophy"></i>
-                </div>
-                <h2 id="resultTitle">Quiz Complete!</h2>
-                <div class="result-score">
-                    <span class="score-number" id="finalScore">0</span>
-                    <span class="score-total">/ <span id="totalQuestions">10</span></span>
-                </div>
-                <p id="resultMessage"></p>
-                <div class="result-actions">
-                    <button class="btn btn-primary" onclick="startQuiz()">
-                        <i class="fas fa-redo"></i> Play Again
-                    </button>
-                    <a href="{{ url_for('pokedex') }}" class="btn btn-secondary">
-                        <i class="fas fa-book-open"></i> Browse Pokédex
-                    </a>
-                </div>
+        <div class="quiz-score-display">
+            <span>Score: <strong id="currentScore">0</strong></span>
+        </div>
+    </div>
+
+    <!-- Result Screen (Same as before) -->
+    <div class="quiz-screen" id="resultScreen" style="display: none;">
+        <div class="quiz-card result-card">
+            <div class="result-icon" id="resultIcon">
+                <i class="fas fa-trophy"></i>
+            </div>
+            <h2 id="resultTitle">Quiz Complete!</h2>
+            <div class="result-score">
+                <span class="score-number" id="finalScore">0</span>
+                <span class="score-total">/ <span id="totalQuestions">10</span></span>
+            </div>
+            <p id="resultMessage"></p>
+            
+            <!-- Gamification XP Animation -->
+            <div id="xpGain" class="xp-gain" style="display: none;">
+                +<span id="xpAmount">0</span> XP
             </div>
 
-            <!-- Leaderboard -->
-            <div class="leaderboard-section">
-                <h3><i class="fas fa-medal"></i> Top Scores</h3>
-                <div class="leaderboard" id="leaderboard"></div>
+            <div class="result-actions">
+                <button class="btn btn-primary" onclick="resetQuiz()">
+                    <i class="fas fa-redo"></i> Play Again
+                </button>
+                <a href="{{ url_for('leaderboard_page') }}" class="btn btn-secondary">
+                    <i class="fas fa-trophy"></i> Leaderboard
+                </a>
             </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="leaderboard-section">
+            <h3><i class="fas fa-medal"></i> Top Scores</h3>
+            <div class="leaderboard" id="leaderboard"></div>
         </div>
     </div>
 </div>
@@ -372,7 +409,105 @@
             grid-template-columns: 1fr;
         }
     }
+    
+    .mode-h-selector {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .mode-btn {
+        flex: 1;
+        padding: 1.5rem;
+        background: var(--bg-darker);
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        position: relative;
+    }
+    
+    .mode-btn i { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    
+    .mode-btn.active {
+        border-color: var(--pokemon-yellow);
+        background: rgba(255, 203, 5, 0.1);
+        color: var(--pokemon-yellow);
+    }
+    
+    .mode-btn.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .lock-icon {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: var(--text-muted);
+    }
+    
+    .login-hint {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+    }
+    
+    .login-hint a { color: var(--pokemon-yellow); text-decoration: none; }
+    
+    .trivia-icon {
+        font-size: 3rem;
+        color: #9b59b6;
+        margin-bottom: 1rem;
+    }
+    
+    .trivia-badge {
+        display: inline-block;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 0.2rem 0.6rem;
+        background: rgba(155, 89, 182, 0.2);
+        color: #9b59b6;
+        border-radius: 4px;
+        margin-top: 0.5rem;
+    }
+    
+    .ai-explanation {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        border-left: 3px solid #9b59b6;
+        text-align: left;
+        font-size: 0.95rem;
+        animation: fadeIn 0.5s ease;
+    }
+
+    .xp-gain {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #ffd700;
+        margin-bottom: 1rem;
+        animation: fadeInUp 0.5s ease;
+    }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Responsive fixes */
+    @media (max-width: 600px) {
+        .mode-h-selector { flex-direction: column; }
+    }
 </style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 {% endblock %}
 
 {% block extra_js %}
@@ -380,91 +515,160 @@
 let currentQuestion = 0;
 let score = 0;
 let totalQuestions = 10;
-let questions = [];
+let questions = []; // Not preloaded for AI, fetched one by one
+let currentMode = 'classic'; // 'classic' or 'ai'
+let currentQuestionData = null; // Store current AI question to verify answer
 
-document.addEventListener('DOMContentLoaded', async () => {
-    // Check for streak
-    try {
-        const response = await fetch('/api/user/streak');
-        const data = await response.json();
-        const streakDisplay = document.getElementById('streakDisplay');
-        const streakCount = document.getElementById('streakCount');
-        
-        if (data.streak > 0) {
-            streakCount.textContent = data.streak;
-            streakDisplay.style.display = 'inline-flex';
-        }
-    } catch (e) {
-        console.error('Streak fetch error:', e);
+// User State (injected from Flask)
+const isLoggedIn = {{ 'true' if current_user else 'false' }};
+
+function setMode(mode) {
+    if (mode === 'ai' && !isLoggedIn) {
+        alert('You must be logged in to play AI Trivia!');
+        return;
     }
-});
+    currentMode = mode;
+    
+    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+    // Simple logic assuming first button is classic, second is AI. 
+    // Ideally use IDs.
+    if (mode === 'classic') document.querySelector('.mode-btn:first-child').classList.add('active');
+    else document.querySelector('.mode-btn:last-child').classList.add('active');
+}
+
+function resetQuiz() {
+    document.getElementById('startScreen').style.display = 'block';
+    document.getElementById('resultScreen').style.display = 'none';
+    document.getElementById('questionScreen').style.display = 'none';
+}
 
 async function startQuiz() {
     totalQuestions = parseInt(document.getElementById('questionCount').value);
     currentQuestion = 0;
     score = 0;
     questions = [];
-
+    
     document.getElementById('startScreen').style.display = 'none';
     document.getElementById('resultScreen').style.display = 'none';
     document.getElementById('questionScreen').style.display = 'block';
-    
     document.getElementById('currentScore').textContent = '0';
+    document.getElementById('xpGain').style.display = 'none';
+    
+    // Setup UI for Mode
+    if (currentMode === 'classic') {
+        document.getElementById('classicContent').style.display = 'block';
+        document.getElementById('aiContent').style.display = 'none';
+    } else {
+        document.getElementById('classicContent').style.display = 'none';
+        document.getElementById('aiContent').style.display = 'block';
+    }
     
     await loadQuestion();
 }
 
 async function loadQuestion() {
+    // Reset UI
+    document.getElementById('answerOptions').innerHTML = '';
+    document.getElementById('aiExplanation').style.display = 'none';
+    document.getElementById('triviaQuestion').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+    
     try {
-        const response = await fetch('/api/quiz/question');
+        let url = currentMode === 'classic' ? '/api/quiz/question' : '/api/quiz/ai_question';
+        const response = await fetch(url);
         const data = await response.json();
         
-        questions.push(data);
+        currentQuestionData = data; // Store for logic
         displayQuestion(data);
     } catch (error) {
         console.error('Error loading question:', error);
+        document.getElementById('triviaQuestion').textContent = "Error loading. Retrying...";
+        setTimeout(loadQuestion, 2000);
     }
 }
 
 function displayQuestion(data) {
+    // Progress
     document.getElementById('progressFill').style.width = `${((currentQuestion) / totalQuestions) * 100}%`;
     document.getElementById('progressText').textContent = `${currentQuestion + 1} / ${totalQuestions}`;
     
-    const silhouette = document.getElementById('silhouetteContainer');
-    silhouette.classList.remove('revealed');
-    
-    const img = document.getElementById('pokemonImage');
-    img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${data.pokemon_number}.png`;
-    
     const optionsContainer = document.getElementById('answerOptions');
-    optionsContainer.innerHTML = data.options.map(opt => 
-        `<button class="answer-btn" onclick="selectAnswer(${opt.id}, ${data.pokemon_id}, '${opt.name}')">${opt.name}</button>`
-    ).join('');
+
+    if (currentMode === 'classic') {
+        // Classic Logic
+        const silhouette = document.getElementById('silhouetteContainer');
+        silhouette.classList.remove('revealed');
+        const img = document.getElementById('pokemonImage');
+        img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${data.pokemon_number}.png`;
+        
+        optionsContainer.innerHTML = data.options.map(opt => 
+            `<button class="answer-btn" onclick="selectAnswerClassic(${opt.id}, ${data.pokemon_id}, '${opt.name}')">${opt.name}</button>`
+        ).join('');
+        
+    } else {
+        // AI Trivia Logic
+        document.getElementById('triviaQuestion').textContent = data.question;
+        
+        optionsContainer.innerHTML = data.options.map(opt => 
+            `<button class="answer-btn" onclick="selectAnswerAI(${opt.id}, ${data.correct_option_id})">${opt.text}</button>`
+        ).join('');
+    }
 }
 
-function selectAnswer(selectedId, correctId, selectedName) {
+// Classic Answer Handler
+function selectAnswerClassic(selectedId, correctId, selectedName) {
     const buttons = document.querySelectorAll('.answer-btn');
     buttons.forEach(btn => {
         btn.disabled = true;
         if (btn.textContent === selectedName) {
             btn.classList.add(selectedId === correctId ? 'correct' : 'wrong');
         }
-        // Show correct answer
-        const correctPokemon = questions[currentQuestion].options.find(o => o.id === correctId);
+        // Show correct
+        const correctPokemon = currentQuestionData.options.find(o => o.id === correctId);
         if (correctPokemon && btn.textContent === correctPokemon.name) {
             btn.classList.add('correct');
         }
     });
     
-    // Reveal Pokemon
     document.getElementById('silhouetteContainer').classList.add('revealed');
+    handleScoring(selectedId === correctId);
+}
+
+// AI Answer Handler
+function selectAnswerAI(selectedId, correctId) {
+    const buttons = document.querySelectorAll('.answer-btn');
+    buttons.forEach(btn => {
+        btn.disabled = true;
+        // Identify button by looking for same onclick ID (simplified)
+        // or just index. 
+        // Better: matching ID in options
+        const btnId = parseInt(btn.getAttribute('onclick').match(/(\d+),/)[1]);
+        
+        if (btnId === selectedId) {
+            btn.classList.add(selectedId === correctId ? 'correct' : 'wrong');
+        }
+        if (btnId === correctId) {
+            btn.classList.add('correct');
+        }
+    });
+
+    if (currentQuestionData.explanation) {
+        document.getElementById('explanationText').textContent = currentQuestionData.explanation;
+        document.getElementById('aiExplanation').style.display = 'block';
+    }
     
-    if (selectedId === correctId) {
+    handleScoring(selectedId === correctId);
+}
+
+function handleScoring(isCorrect) {
+    if (isCorrect) {
         score++;
         document.getElementById('currentScore').textContent = score;
     }
     
     currentQuestion++;
+    
+    // Delay for reading explanation or seeing reveal
+    const delay = currentMode === 'ai' ? 3000 : 1500;
     
     setTimeout(() => {
         if (currentQuestion < totalQuestions) {
@@ -472,7 +676,7 @@ function selectAnswer(selectedId, correctId, selectedName) {
         } else {
             showResults();
         }
-    }, 1500);
+    }, delay);
 }
 
 async function showResults() {
@@ -506,14 +710,24 @@ async function showResults() {
     
     document.getElementById('resultMessage').textContent = message;
     
-    // Submit score
-    try {
-        await fetch('/api/quiz/submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ score, total: totalQuestions })
-        });
-    } catch (e) {}
+    // Submit score & Award XP if logged in
+    if (isLoggedIn) {
+        try {
+            const response = await fetch('/api/quiz/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ score, total: totalQuestions, mode: currentMode })
+            });
+            const data = await response.json();
+            
+            if (data.xp_gained > 0) {
+                document.getElementById('xpAmount').textContent = data.xp_gained;
+                document.getElementById('xpGain').style.display = 'block';
+            }
+        } catch (e) {
+            console.error('Submit error:', e);
+        }
+    }
     
     // Load leaderboard
     loadLeaderboard();
@@ -534,12 +748,29 @@ async function loadLeaderboard() {
             <div class="leaderboard-item">
                 <span class="leaderboard-rank ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}">${i + 1}</span>
                 <span class="leaderboard-name">${s.user_name}</span>
-                <span class="leaderboard-score">${s.percentage}%</span>
+                <span class="leaderboard-score">${s.score} PTS</span>
             </div>
         `).join('');
     } catch (e) {
         console.error('Leaderboard error:', e);
     }
 }
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check for streak (Existing logic)
+    try {
+        const response = await fetch('/api/user/streak');
+        const data = await response.json();
+        const streakDisplay = document.getElementById('streakDisplay');
+        const streakCount = document.getElementById('streakCount');
+        
+        if (data.streak > 0) {
+            streakCount.textContent = data.streak;
+            streakDisplay.style.display = 'inline-flex';
+        }
+    } catch (e) {}
+    
+    loadLeaderboard();
+});
 </script>
 {% endblock %}

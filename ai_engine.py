@@ -159,3 +159,68 @@ class PokemonStoryteller:
                 "title": "Error generating story",
                 "content": "Something went wrong with the AI story engine. Please try again."
             }
+
+class PokemonQuizMaster:
+    def __init__(self):
+        self.api_key = os.environ.get('OPENROUTER_API_KEY') or os.environ.get('OPENAI_API_KEY')
+        base_url = "https://openrouter.ai/api/v1" if os.environ.get('OPENROUTER_API_KEY') else None
+        
+        # Use a consistent model
+        model_name = "openai/gpt-4o-mini"
+        
+        if self.api_key:
+            self.llm = ChatOpenAI(
+                model=model_name,
+                api_key=self.api_key,
+                base_url=base_url,
+                temperature=0.7 
+            )
+        else:
+            self.llm = None
+
+    def generate_question(self, difficulty="medium"):
+        """
+        Generate a random Pokémon trivia question appropriate for the difficulty.
+        """
+        if not self.llm:
+            return None
+
+        try:
+            prompt = f"""
+            Generate a unqiue, random Pokémon multiple-choice trivia question.
+            Difficulty: {difficulty}
+            
+            Topics can include:
+            - Anime lore (e.g., "Who was the first Pokémon Ash caught?")
+            - Game mechanics (e.g., "Which type is immune to Ground moves?")
+            - Pokémon biology/dex entries (e.g., "Which Pokémon is known as the Mouse Pokémon?")
+            
+            Return ONLY valid JSON like this:
+            {{
+                "question": "The question text here?",
+                "options": [
+                    {{"id": 1, "text": "Option A"}},
+                    {{"id": 2, "text": "Option B"}},
+                    {{"id": 3, "text": "Option C"}},
+                    {{"id": 4, "text": "Option D"}}
+                ],
+                "correct_option_id": 2,
+                "explanation": "Brief explanation of why it is correct."
+            }}
+            
+            Ensure the wrong answers are plausible. Do not use Markdown.
+            """
+            
+            response = self.llm.invoke([HumanMessage(content=prompt)])
+            content = response.content.replace('```json', '').replace('```', '').strip()
+            
+            try:
+                data = json.loads(content)
+                return data
+            except json.JSONDecodeError:
+                print(f"Quiz JSON Error: {content}")
+                return None
+                
+        except Exception as e:
+            print(f"Quiz Gen Error: {e}")
+            return None
