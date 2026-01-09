@@ -612,6 +612,13 @@ def predict():
             'pokemon': pokemon_data,
             'gamification': xp_data
         })
+        
+    except Exception as e:
+        print(f"Prediction error: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if filepath and os.path.exists(filepath):
+            os.remove(filepath)
 
 @app.route('/api/leaderboard/xp')
 def api_xp_leaderboard():
@@ -624,13 +631,6 @@ def api_xp_leaderboard():
         'exp': u.exp,
         'badges_count': len(u.earned_badges)
     } for u in users])
-    
-    except Exception as e:
-        print(f"Prediction error: {e}")
-        return jsonify({'error': str(e)}), 500
-    finally:
-        if filepath and os.path.exists(filepath):
-            os.remove(filepath)
 
 @app.route('/api/random')
 def random_pokemon():
@@ -1686,14 +1686,14 @@ def api_user_gamification():
         'streak': user.current_streak
     })
 
-# Create database tables on first run (only when running directly, not with Gunicorn)
-if __name__ == '__main__':
-    with app.app_context():
+# DB Initialization (Idempotent, runs on startup even under Gunicorn)
+with app.app_context():
+    try:
         db.create_all()
-        try:
-            seed_badges()
-        except Exception as e:
-            print(f"Error seeding badges: {e}")
-            
+        seed_badges()
+    except Exception as e:
+        print(f"Startup DB Error: {e}")
+
+if __name__ == '__main__':
     print("Starting Pokémon Knower...")
     app.run(debug=True, port=5000)
