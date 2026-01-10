@@ -7,13 +7,20 @@
     .scanner-container {
         position: relative;
         width: 100%;
-        max-width: 600px;
+        max-width: 800px; /* Increased from 600px */
         margin: 0 auto;
         border-radius: var(--radius-lg);
         overflow: hidden;
-        aspect-ratio: 3/4;
         background: #000;
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        /* Responsive aspect ratio */
+        aspect-ratio: 16/9;
+    }
+
+    @media (max-width: 768px) {
+        .scanner-container {
+            aspect-ratio: 3/4; /* Keep vertical for mobile */
+        }
     }
 
     #videoElement {

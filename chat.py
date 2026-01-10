@@ -129,23 +129,14 @@ def get_app_graph():
     return _compiled_app_graph
 
 
-# --- Routes ---
-
-@chat_bp.route('/message', methods=['POST'])
-def chat_message():
-    data = request.get_json()
-    user_message = data.get('message')
-    history = data.get('history', []) # We might manage history on client or server. 
-    # For simplicity, client sends full history or just last message and we handle limited context.
-    
-    if not user_message:
-        return jsonify({'error': 'No message provided'}), 400
-
+# --- Helper Function for external use ---
+def get_ai_response(user_message, history=[]):
+    """
+    Process a message through the LangGraph agent and return the text response.
+    Can be used by other parts of the app (like Voice AI).
+    """
     # Build state
-    # Ideally we'd persist state, but for a simple widget, we can pass context back and forth 
-    # OR start fresh. Let's assume stateless for the backend for now (history passed in).
-    
-    system_prompt = SystemMessage(content="You are a helpful Pokémon expert assistant named 'Rotom'. You help users identify Pokémon, build teams, and learn about stats. Use the available tools to look up accurate data from the database.")
+    system_prompt = SystemMessage(content="You are a helpful Pokémon expert assistant named 'Rotom'. You help users identify Pokémon, build teams, and learn about stats. Use the available tools to look up accurate data from the database. Keep your answers concise enough to be spoken out loud.")
     
     messages = [system_prompt]
     # Convert history dicts to Messages
@@ -158,13 +149,26 @@ def chat_message():
     messages.append(HumanMessage(content=user_message))
     
     # Invoke graph
-    # Note: Flask needs app context for DB tools to work
-    from app import app
-    with app.app_context():
-        graph = get_app_graph()
-        final_state = graph.invoke({"messages": messages})
+    # Note: Requires app context if called from outside a route
+    graph = get_app_graph()
+    final_state = graph.invoke({"messages": messages})
         
     final_response = final_state['messages'][-1].content
+    return final_response
 
+# --- Routes ---
+
+@chat_bp.route('/message', methods=['POST'])
+def chat_message():
+    data = request.get_json()
+    user_message = data.get('message')
+    history = data.get('history', []) 
     
-    return jsonify({'response': final_response})
+    if not user_message:
+        return jsonify({'error': 'No message provided'}), 400
+
+    from app import app
+    with app.app_context():
+        response_text = get_ai_response(user_message, history)
+    
+    return jsonify({'response': response_text})

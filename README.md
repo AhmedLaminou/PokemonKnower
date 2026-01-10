@@ -28,9 +28,9 @@ This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Fl
 
 ---
 
-## ✨ Features
+## Features
 
-### � **Netflix-Style Home Interface**
+### � ** Home Interface**
 
 - **Hero Carousel**: Dynamic featured Pokémon and story highlights with autoplay and progress indicators.
 - **Browse Rows**: Horizontal scrolling categories for Trending, Legendary, and Type-specific Pokémon.
@@ -81,7 +81,7 @@ This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Fl
 - Hybrid AI Recognition:
   - Uses local MobileNetV2 for speed
   - Auto-switches to **GPT-4o Vision** for low-confidence matches
-- **Real-time AR Scanner**: Live camera feed with sci-fi HUD and "Shiny" detection ✨
+- **Real-time AR Scanner**: Live camera feed with sci-fi HUD and "Shiny" detection
 
 ### 💅 **Beautiful Modern UI**
 
@@ -102,7 +102,6 @@ This version uses **SQLite** (local dev) or **PostgreSQL** (production) via **Fl
 ### 💰 **Donations & Support**
 
 - Stripe Checkout integration for supporting the platform
-- Personal messages and donor rewards
 
 ### 👑 **Admin Dashboard**
 

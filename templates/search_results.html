@@ -45,7 +45,7 @@
             {% for pokemon in results %}
                 <div class="pokemon-card-preview" onclick="window.location.href='{{ url_for('get_pokemon', name=pokemon.name) }}'">
                     <div class="pokemon-preview-image">
-                        <img src="{{ url_for('static', filename='images/pokemon/' ~ pokemon.pokedex_number ~ '.png') }}" 
+                        <img src="{{ url_for('static', filename='images/pokemon/' ~ pokemon.number ~ '.png') }}" 
                              alt="{{ pokemon.name }}"
                              onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/pokeball.png') }}'">
                     </div>

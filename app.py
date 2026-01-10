@@ -482,16 +482,18 @@ def search():
         page=page, per_page=per_page, error_out=False
     )
     
-    return jsonify({
-        'results': [p.to_dict() for p in results.items],
-        'pagination': {
-            'page': results.page,
-            'total_pages': results.pages,
-            'total': results.total,
-            'has_next': results.has_next,
-            'has_prev': results.has_prev
-        }
-    })
+    return render_template('search_results.html', 
+                           results=results.items,
+                           pagination=results,
+                           query=query,
+                           type_filter=pokemon_type,
+                           min_attack=min_attack or 0,
+                           min_defense=min_defense or 0,
+                           min_stamina=min_stamina or 0,
+                           min_weight=0,
+                           max_weight=float('inf'),
+                           min_height=0,
+                           max_height=float('inf'))
 
 @app.route('/api/types')
 def api_types():
@@ -1603,11 +1605,23 @@ def voice_command():
             response['data'] = pokemon.to_dict()
             response['speech'] = f"{pokemon.name} is a {pokemon.main_type} type Pokémon with {pokemon.hp} HP."
         else:
-            response['understood'] = False
-            response['speech'] = "I didn't understand that. Try saying 'Tell me about Pikachu' or 'Open Pokedex'"
+            # Fallback to AI Chatbot (Rotom Brain)
+            try:
+                # Import here to avoid circular dependencies if any
+                from chat import get_ai_response
+                
+                # We interpret this as a question to Rotom
+                ai_speech = get_ai_response(command)
+                
+                response['action'] = 'chat'
+                response['speech'] = ai_speech
+                response['data'] = {'message': ai_speech}
+                
+            except Exception as e:
+                print(f"AI Voice Error: {e}")
+                response['understood'] = False
+                response['speech'] = "I'm having trouble connecting to my brain network right now."
     
-    return jsonify(response)
-
     return jsonify(response)
 
 # ==================== GAMIFICATION LOGIC ====================

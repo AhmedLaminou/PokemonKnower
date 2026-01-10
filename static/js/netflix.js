@@ -266,60 +266,71 @@ class VoicePokedex {
         const lowerCommand = command.toLowerCase().trim();
         this.updateTranscript(`"${command}"`);
         
-        // Command patterns
-        const tellMeAbout = lowerCommand.match(/(?:tell me about|what is|who is|describe|show me|find)\s+(.+)/);
-        const searchFor = lowerCommand.match(/(?:search for|look up|search)\s+(.+)/);
+        // --- 1. Client-Side Instant Actions (Zero Latency) ---
+        
+        // Navigation (Fastest)
         const navigate = lowerCommand.match(/(?:go to|open|show)\s+(pokedex|scanner|quiz|gallery|home|favorites)/);
-        
-        if (tellMeAbout) {
-            const pokemonName = this.cleanPokemonName(tellMeAbout[1]);
-            await this.lookupPokemon(pokemonName);
-        } else if (searchFor) {
-            const query = searchFor[1];
-            this.performSearch(query);
-        } else if (navigate) {
+        if (navigate) {
             this.navigateTo(navigate[1]);
-        } else {
-            // Try direct Pokemon name
-            await this.lookupPokemon(this.cleanPokemonName(lowerCommand));
+            this.hideFeedback();
+            return;
         }
-        
+
+        // Simple Search
+        const searchFor = lowerCommand.match(/(?:search for|look up|search)\s+(.+)/);
+        if (searchFor) {
+            this.performSearch(searchFor[1]);
+            this.hideFeedback();
+            return;
+        }
+
+        // --- 2. Server-Side AI Brain (Rotom) ---
+        // If it's not a simple command, ask the AI Brain!
+        // This includes "Tell me about..." because the AI creates better descriptions than the simple lookup.
+        await this.askRotom(command);
         this.hideFeedback();
     }
     
+    async askRotom(command) {
+        try {
+            this.updateTranscript("Thinking...");
+            // Use the updated backend route which connects to ChatBot
+            const response = await fetch('/api/voice/command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: command })
+            });
+
+            const data = await response.json();
+
+            if (data.speech) {
+                this.speak(data.speech);
+            }
+
+            // Handle server actions
+            if (data.action === 'navigate' && data.data.url) {
+                window.location.href = data.data.url;
+            } else if (data.action === 'show_pokemon' && data.data.name) {
+                window.location.href = `/pokemon/${data.data.name}`;
+            } else if (data.action === 'search' && data.data.query) {
+                 this.performSearch(data.data.query);
+            }
+            
+        } catch (error) {
+            console.error('Rotom Brain Error:', error);
+            this.speak("Sorry, I lost connection to the server.");
+        }
+    }
+
     cleanPokemonName(name) {
         // Remove common filler words
         return name.replace(/\b(a|an|the|pokemon|pokémon)\b/gi, '').trim();
     }
     
-    async lookupPokemon(name) {
-        try {
-            this.speak(`Looking up ${name}`);
-            
-            const response = await fetch(`/api/pokemon/${encodeURIComponent(name)}`);
-            if (response.ok) {
-                const pokemon = await response.json();
-                
-                // Navigate to the Pokemon page
-                window.location.href = `/pokemon/${pokemon.name}`;
-                
-                // Speak the info
-                const info = `${pokemon.name} is a ${pokemon.type1}${pokemon.type2 ? ' and ' + pokemon.type2 : ''} type Pokémon. ` +
-                    `It has ${pokemon.hp} HP, ${pokemon.attack} attack, and ${pokemon.defense} defense.`;
-                this.speak(info);
-            } else {
-                this.speak(`Sorry, I couldn't find a Pokémon called ${name}`);
-            }
-        } catch (error) {
-            console.error('Error looking up Pokemon:', error);
-            this.speak(`Sorry, there was an error looking up ${name}`);
-        }
-    }
-    
+    // (lookupPokemon is deprecated in favor of askRotom, but kept for reference if needed)
+
     performSearch(query) {
         this.speak(`Searching for ${query}`);
-        
-        // Navigate to search or trigger search on current page
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
             searchInput.value = query;
@@ -354,19 +365,30 @@ class VoicePokedex {
         this.synthesis.cancel();
         
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1;
-        utterance.pitch = 1;
-        utterance.volume = 0.8;
+        utterance.rate = 1.0; // Slightly faster for natural feel
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
         
-        // Try to use a nice voice
+        // --- ZERO COST PREMIUM VOICE UPGRADE ---
+        // Look for "Natural" voices (Edge/Windows) or Google voices
         const voices = this.synthesis.getVoices();
-        const preferredVoice = voices.find(v => 
-            v.name.includes('Google') || 
-            v.name.includes('Samantha') || 
-            v.name.includes('Daniel')
-        );
+        
+        // Priority 1: "Natural" voices (Best quality, free)
+        let preferredVoice = voices.find(v => v.name.includes('Natural') && v.lang.startsWith('en'));
+        
+        // Priority 2: Google voices (Good quality)
+        if (!preferredVoice) {
+            preferredVoice = voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'));
+        }
+        
+        // Priority 3: Any English voice
+        if (!preferredVoice) {
+            preferredVoice = voices.find(v => v.lang.startsWith('en'));
+        }
+
         if (preferredVoice) {
             utterance.voice = preferredVoice;
+            // console.log("Using voice:", preferredVoice.name); 
         }
         
         this.synthesis.speak(utterance);
