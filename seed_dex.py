@@ -31,8 +31,9 @@ def seed_dex():
         db.create_all()
         
         # --- SEED MOVES ---
-        target_moves = 100
+        target_moves = 200
         current_moves = Move.query.count()
+        print(f"DEBUG: Found {current_moves} moves in database. Target is {target_moves}.")
         if current_moves < target_moves:
             print(f"Current moves: {current_moves}. Fetching up to {target_moves}...")
             try:
@@ -96,8 +97,9 @@ def seed_dex():
                 print(f"Unexpected error seeding moves: {e}")
 
         # --- SEED ABILITIES ---
-        target_abilities = 100
+        target_abilities = 200
         current_abilities = Ability.query.count()
+        print(f"DEBUG: Found {current_abilities} abilities in database. Target is {target_abilities}.")
         if current_abilities < target_abilities:
             print(f"Current abilities: {current_abilities}. Fetching up to {target_abilities}...")
             try:

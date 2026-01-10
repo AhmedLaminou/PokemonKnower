@@ -215,6 +215,7 @@ def ensure_tf_loaded():
                 tf_loaded = False
                 return False
             
+            print("Keras model loaded. Checking input shape...")
             input_shape = model.input_shape
             if input_shape and len(input_shape) == 4:
                 target_size = (input_shape[1], input_shape[2])
@@ -493,7 +494,8 @@ def search():
                            min_weight=0,
                            max_weight=float('inf'),
                            min_height=0,
-                           max_height=float('inf'))
+                           max_height=float('inf'),
+                           infinity=float('inf'))
 
 @app.route('/api/types')
 def api_types():
@@ -577,11 +579,13 @@ def predict():
                 confidence = vlm_result['confidence']
                 is_shiny = vlm_result.get('is_shiny', False)
                 top_3 = [{'name': pokemon_name, 'confidence': confidence}]
+                top_3 = [{'name': pokemon_name, 'confidence': confidence}]
             else:
-                pokemon_name = 'Unknown'
-                confidence = 0.0
-                is_shiny = False
-                top_3 = []
+                # Both models failed to identify a Pokemon
+                return jsonify({'error': 'Could not identify a Pokémon in this image. Please try again.'}), 400
+        
+        if pokemon_name == 'Unknown':
+             return jsonify({'error': 'Could not identify a Pokémon in this image. Please try again.'}), 400
         
         # Get Pokémon data from database
         pokemon = get_pokemon_by_name(pokemon_name)
