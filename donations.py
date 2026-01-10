@@ -96,6 +96,8 @@ def create_checkout_session():
         return jsonify({'url': checkout_session.url})
     
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 

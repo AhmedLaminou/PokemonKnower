@@ -1584,10 +1584,20 @@ def voice_command():
             response['speech'] = f"Searching for {query}"
     
     # Navigation commands
-    elif any(word in command for word in ['go to', 'open', 'show']):
-        nav_match = re.search(r'(?:go to|open|show)\s+(pokedex|scanner|quiz|gallery|home|favorites|stories)', command)
-        if nav_match:
-            page = nav_match.group(1)
+    elif any(word in command for word in ['go to', 'open', 'show', 'navigate']):
+        # Flexible matching for page names
+        nav_match = re.search(r'(?:go to|open|show|navigate)\s+(?:the\s+)?(pokedex|scanner|quiz+|gallery|home|favorites|stories)', command)
+        
+        # Handle "quizz" or "quiz"
+        page_raw = nav_match.group(1) if nav_match else None
+        
+        if page_raw:
+            # Normalize page names
+            if 'quiz' in page_raw:
+                page = 'quiz'
+            else:
+                page = page_raw
+            
             routes = {
                 'home': '/',
                 'pokedex': '/pokedex',
@@ -1600,6 +1610,9 @@ def voice_command():
             response['action'] = 'navigate'
             response['data'] = {'url': routes.get(page, '/')}
             response['speech'] = f"Opening {page}"
+        else:
+             response['understood'] = False
+             response['speech'] = "I'm not sure which page you want to go to."
     
     else:
         # Try as Pokemon name directly

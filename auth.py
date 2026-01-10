@@ -26,19 +26,24 @@ def get_stytch_client():
     """Lazy initialization of Stytch client"""
     global stytch_client
     if stytch_client is None and STYTCH_PROJECT_ID and STYTCH_SECRET:
-        # Ensure there is an event loop for aiohttp (used by Stytch)
+        # Check for existing loop or create a new one for this thread
         try:
-            loop = asyncio.get_running_loop()
+            loop = asyncio.get_event_loop()
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             
         # Stytch v9.x uses environment parameter as string: 'test' or 'live'
-        stytch_client = stytch.Client(
-            project_id=STYTCH_PROJECT_ID,
-            secret=STYTCH_SECRET,
-            environment=STYTCH_ENV  # 'test' or 'live'
-        )
+        try:
+            stytch_client = stytch.Client(
+                project_id=STYTCH_PROJECT_ID,
+                secret=STYTCH_SECRET,
+                environment=STYTCH_ENV
+            )
+        except Exception as e:
+            print(f"Error initializing Stytch client: {e}")
+            return None
+            
     return stytch_client
 
 
