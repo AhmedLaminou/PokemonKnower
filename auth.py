@@ -23,17 +23,17 @@ import asyncio
 stytch_client = None
 
 def get_stytch_client():
-    """Lazy initialization of Stytch client"""
     global stytch_client
     if stytch_client is None and STYTCH_PROJECT_ID and STYTCH_SECRET:
-        # Check for existing loop or create a new one for this thread
+        # Stytch's AsyncClient (used internally) requires an event loop.
+        # In a synchronous Flask app (especially under Gunicorn), one might not exist.
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
         except RuntimeError:
+            # No running loop, create and set a new one for this thread
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             
-        # Stytch v9.x uses environment parameter as string: 'test' or 'live'
         try:
             stytch_client = stytch.Client(
                 project_id=STYTCH_PROJECT_ID,
@@ -42,7 +42,18 @@ def get_stytch_client():
             )
         except Exception as e:
             print(f"Error initializing Stytch client: {e}")
-            return None
+            # Try once more with a fresh loop just in case the existing one was bad
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                stytch_client = stytch.Client(
+                    project_id=STYTCH_PROJECT_ID,
+                    secret=STYTCH_SECRET,
+                    environment=STYTCH_ENV
+                )
+            except Exception as e2:
+                print(f"Retry failed initializing Stytch client: {e2}")
+                return None
             
     return stytch_client
 
