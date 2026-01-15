@@ -79,6 +79,19 @@ def create_checkout_session():
             }
         )
         
+        # Validate checkout session response
+        if not checkout_session:
+            print("Error: Stripe returned None for checkout_session")
+            return jsonify({'error': 'Failed to create Stripe session'}), 500
+            
+        if not hasattr(checkout_session, 'id') or not checkout_session.id:
+            print(f"Error: Stripe session missing ID. Response: {checkout_session}")
+            return jsonify({'error': 'Invalid Stripe session response'}), 500
+            
+        if not hasattr(checkout_session, 'url') or not checkout_session.url:
+            print(f"Error: Stripe session missing URL. Session ID: {checkout_session.id}")
+            return jsonify({'error': 'Stripe session URL not available'}), 500
+        
         # Create donation record in database
         donation = Donation(
             user_id=user_id,
