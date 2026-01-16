@@ -33,8 +33,10 @@ def create_checkout_session():
     """Create a Stripe Checkout session"""
     from models import db, Donation
     
-    if not STRIPE_SECRET_KEY:
-        return jsonify({'error': 'Stripe not configured'}), 500
+    # Check if Stripe is configured
+    if not STRIPE_SECRET_KEY or STRIPE_SECRET_KEY.strip() == '':
+        print("Error: STRIPE_SECRET_KEY environment variable not set")
+        return jsonify({'error': 'Payment processing is not configured. Please contact support.'}), 503
     
     try:
         data = request.get_json() or {}

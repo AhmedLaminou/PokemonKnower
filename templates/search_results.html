@@ -1,56 +1,80 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="search-results-container">
-    <h1>Search Results</h1>
+<div class="search-results-page">
+    <div class="search-results-header">
+        <h1 class="gradient-text">
+            <i class="fas fa-search"></i>
+            Search Results
+        </h1>
+        {% if results %}
+            <p class="results-count">Found <span class="count-number">{{ results|length }}</span> Pokémon</p>
+        {% endif %}
+    </div>
     
     {% if query or type_filter or min_weight > 0 or max_weight < float('inf') or 
           min_height > 0 or max_height < float('inf') or 
           min_attack > 0 or min_defense > 0 or min_stamina > 0 %}
-        <div class="search-filters">
-            <h3>Active Filters:</h3>
+        <div class="search-filters-section">
+            <div class="filters-header">
+                <h3><i class="fas fa-filter"></i> Active Filters</h3>
+                <a href="{{ url_for('index') }}" class="clear-filters-btn">
+                    <i class="fas fa-times-circle"></i> Clear All
+                </a>
+            </div>
             <div class="active-filters">
                 {% if query %}
-                    <span class="filter-pill">Name: {{ query }}</span>
+                    <span class="filter-pill">
+                        <i class="fas fa-font"></i> Name: <strong>{{ query }}</strong>
+                    </span>
                 {% endif %}
                 {% if type_filter %}
-                    <span class="filter-pill">Type: {{ type_filter|title }}</span>
+                    <span class="filter-pill type-filter">
+                        <i class="fas fa-tag"></i> Type: <strong>{{ type_filter|title }}</strong>
+                    </span>
                 {% endif %}
                 {% if min_weight > 0 or max_weight < infinity %}
                     <span class="filter-pill">
-                        Weight: {{ min_weight }} - {{ '∞' if max_weight == infinity else max_weight }} kg
+                        <i class="fas fa-weight-hanging"></i> {{ min_weight }}-{{ '∞' if max_weight == infinity else max_weight }} kg
                     </span>
                 {% endif %}
                 {% if min_height > 0 or max_height < infinity %}
                     <span class="filter-pill">
-                        Height: {{ min_height }} - {{ '∞' if max_height == infinity else max_height }} m
+                        <i class="fas fa-ruler-vertical"></i> {{ min_height }}-{{ '∞' if max_height == infinity else max_height }} m
                     </span>
                 {% endif %}
                 {% if min_attack > 0 %}
-                    <span class="filter-pill">Min ATK: {{ min_attack }}</span>
+                    <span class="filter-pill stat-atk">
+                        <i class="fas fa-bolt"></i> ATK ≥ {{ min_attack }}
+                    </span>
                 {% endif %}
                 {% if min_defense > 0 %}
-                    <span class="filter-pill">Min DEF: {{ min_defense }}</span>
+                    <span class="filter-pill stat-def">
+                        <i class="fas fa-shield-alt"></i> DEF ≥ {{ min_defense }}
+                    </span>
                 {% endif %}
                 {% if min_stamina > 0 %}
-                    <span class="filter-pill">Min STA: {{ min_stamina }}</span>
+                    <span class="filter-pill stat-sta">
+                        <i class="fas fa-heart"></i> STA ≥ {{ min_stamina }}
+                    </span>
                 {% endif %}
             </div>
-            <a href="{{ url_for('index') }}" class="clear-filters">Clear all filters</a>
         </div>
     {% endif %}
     
     {% if results %}
-        <div class="pokemon-grid">
+        <div class="pokemon-results-grid">
             {% for pokemon in results %}
-                <div class="pokemon-card-preview" onclick="window.location.href='{{ url_for('pokemon_detail', identifier=pokemon.name) }}'">
-                    <div class="pokemon-preview-image">
+                <div class="pokemon-result-card" data-pokemon="{{ pokemon.name }}">
+                    <div class="card-glow"></div>
+                    <div class="pokemon-number">#{{ "%03d"|format(pokemon.number) }}</div>
+                    <div class="pokemon-image-container">
                         <img src="{{ url_for('static', filename='images/pokemon/' ~ pokemon.number ~ '.png') }}" 
                              alt="{{ pokemon.name }}"
                              onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/pokeball.png') }}'">
                     </div>
-                    <div class="pokemon-preview-info">
-                        <h3>{{ pokemon.name|title }}</h3>
+                    <div class="pokemon-info">
+                        <h3 class="pokemon-name">{{ pokemon.name|title }}</h3>
                         <div class="pokemon-types">
                             {% if pokemon.main_type %}
                                 <span class="type-badge type-{{ pokemon.main_type|lower }}">
@@ -63,29 +87,445 @@
                                 </span>
                             {% endif %}
                         </div>
-                        <div class="pokemon-stats-preview">
-                            <div class="stat">
-                                <span class="stat-label">ATK</span>
-                                <span class="stat-value">{{ pokemon.attack }}</span>
+                        <div class="pokemon-stats-grid">
+                            <div class="stat-item atk">
+                                <i class="fas fa-bolt"></i>
+                                <div class="stat-details">
+                                    <span class="stat-label">ATK</span>
+                                    <span class="stat-value">{{ pokemon.attack }}</span>
+                                </div>
                             </div>
-                            <div class="stat">
-                                <span class="stat-label">DEF</span>
-                                <span class="stat-value">{{ pokemon.defense }}</span>
+                            <div class="stat-item def">
+                                <i class="fas fa-shield-alt"></i>
+                                <div class="stat-details">
+                                    <span class="stat-label">DEF</span>
+                                    <span class="stat-value">{{ pokemon.defense }}</span>
+                                </div>
                             </div>
-                            <div class="stat">
-                                <span class="stat-label">STA</span>
-                                <span class="stat-value">{{ pokemon.stamina }}</span>
+                            <div class="stat-item sta">
+                                <i class="fas fa-heart"></i>
+                                <div class="stat-details">
+                                    <span class="stat-label">STA</span>
+                                    <span class="stat-value">{{ pokemon.stamina }}</span>
+                                </div>
                             </div>
                         </div>
+                    </div>
+                    <div class="card-action">
+                        <a href="{{ url_for('pokemon_detail', identifier=pokemon.name) }}" class="view-details-btn">
+                            View Details <i class="fas fa-arrow-right"></i>
+                        </a>
                     </div>
                 </div>
             {% endfor %}
         </div>
     {% else %}
-        <div class="no-results">
-            <p>No Pokémon found matching your search criteria.</p>
-            <a href="{{ url_for('index') }}" class="btn-back">← Back to Home</a>
+        <div class="no-results-section">
+            <div class="no-results-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h2>No Pokémon Found</h2>
+            <p>We couldn't find any Pokémon matching your search criteria.</p>
+            <a href="{{ url_for('index') }}" class="btn-home">
+                <i class="fas fa-home"></i> Back to Home
+            </a>
         </div>
     {% endif %}
 </div>
+
+<style>
+.search-results-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: 80vh;
+}
+
+.search-results-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeInDown 0.6s ease-out;
+}
+
+.search-results-header h1 {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.gradient-text {
+    background: linear-gradient(135deg, #FFD700, #FFA500, #FF6B6B);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+}
+
+.results-count {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+.count-number {
+    color: var(--pokemon-yellow);
+    font-weight: 700;
+    font-size: 1.4rem;
+}
+
+.search-filters-section {
+    background: rgba(30, 30, 46, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 8px 32px rgba(255, 215, 0, 0.1);
+    animation: fadeIn 0.8s ease-out;
+}
+
+.filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.filters-header h3 {
+    color: var(--pokemon-yellow);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.clear-filters-btn {
+    background: linear-gradient(135deg, #ff6b6b, #dc0a2d);
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(220, 10, 45, 0.3);
+}
+
+.clear-filters-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(220, 10, 45, 0.5);
+}
+
+.active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.filter-pill {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    padding: 0.6rem 1.2rem;
+    border-radius: 25px;
+    color: white;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.filter-pill:hover {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: var(--pokemon-yellow);
+    transform: translateY(-2px);
+}
+
+.filter-pill i {
+    color: var(--pokemon-yellow);
+}
+
+.pokemon-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.pokemon-result-card {
+    position: relative;
+    background: linear-gradient(135deg, rgba(30, 30, 46, 0.9), rgba(20, 20, 36, 0.95));
+    border: 2px solid rgba(255, 215, 0, 0.2);
+    border-radius: 24px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.pokemon-result-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: var(--pokemon-yellow);
+    box-shadow: 0 20px 60px rgba(255, 215, 0, 0.4);
+}
+
+.card-glow {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+}
+
+.pokemon-result-card:hover .card-glow {
+    opacity: 1;
+}
+
+.pokemon-number {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 215, 0, 0.2);
+    color: var(--pokemon-yellow);
+    padding: 0.4rem 0.8rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.pokemon-image-container {
+    width: 100%;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.pokemon-image-container img {
+    max-width: 160px;
+    max-height: 160px;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+    transition: all 0.4s ease;
+}
+
+.pokemon-result-card:hover .pokemon-image-container img {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.pokemon-info {
+    text-align: center;
+}
+
+.pokemon-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+    color: white;
+}
+
+.pokemon-types {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.2rem;
+}
+
+.type-badge {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.pokemon-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0.8rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.3s ease;
+}
+
+.stat-item i {
+    font-size: 1.2rem;
+    margin-bottom: 0.2rem;
+}
+
+.stat-item.atk { border-color: rgba(255, 193, 7, 0.3); }
+.stat-item.atk i { color: #FFC107; }
+
+.stat-item.def { border-color: rgba(76, 175, 80, 0.3); }
+.stat-item.def i { color: #4CAF50; }
+
+.stat-item.sta { border-color: rgba(244, 67, 54, 0.3); }
+.stat-item.sta i { color: #F44336; }
+
+.stat-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+}
+
+.card-action {
+    margin-top: 1.2rem;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+}
+
+.pokemon-result-card:hover .card-action {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.view-details-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, var(--pokemon-yellow), #FFA500);
+    color: #1a1a2e;
+    padding: 0.8rem 1.5rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 700;
+    width: 100%;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.view-details-btn:hover {
+    transform: translateX(5px);
+    box-shadow: 0 6px 25px rgba(255, 215, 0, 0.5);
+}
+
+.no-results-section {
+    text-align: center;
+    padding: 4rem 2rem;
+    animation: fadeIn 0.8s ease-out;
+}
+
+.no-results-icon {
+    font-size: 5rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+.no-results-section h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+.no-results-section p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+.btn-home {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(58, 123, 213, 0.4);
+}
+
+.btn-home:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 35px rgba(58, 123, 213, 0.6);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .search-results-header h1 {
+        font-size: 2rem;
+    }
+    
+    .pokemon-results-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .filters-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+}
+</style>
 {% endblock %}
