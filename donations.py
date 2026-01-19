@@ -5,7 +5,15 @@ Donations module using Stripe Checkout
 import os
 from datetime import datetime
 from flask import Blueprint, request, redirect, url_for, jsonify, render_template, session
-import stripe
+
+# Try to import stripe, but handle if it's not installed
+try:
+    import stripe
+    STRIPE_AVAILABLE = True
+except ImportError:
+    print("WARNING: stripe module not installed")
+    stripe = None
+    STRIPE_AVAILABLE = False
 
 donations_bp = Blueprint('donations', __name__, url_prefix='/donate')
 
@@ -14,7 +22,14 @@ STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
 
-stripe.api_key = STRIPE_SECRET_KEY
+# Set Stripe API key if available and configured
+if STRIPE_AVAILABLE and STRIPE_SECRET_KEY:
+    try:
+        stripe.api_key = STRIPE_SECRET_KEY
+        print(f"Stripe initialized successfully with key: {STRIPE_SECRET_KEY[:20]}...")
+    except Exception as e:
+        print(f"Error setting Stripe API key: {e}")
+        STRIPE_AVAILABLE = False
 
 
 def get_base_url():
@@ -32,6 +47,11 @@ def donate_page():
 def create_checkout_session():
     """Create a Stripe Checkout session"""
     from models import db, Donation
+    
+    # Check if Stripe module is available
+    if not STRIPE_AVAILABLE:
+        print("Error: Stripe module not available")
+        return jsonify({'error': 'Payment processing is currently unavailable'}), 503
     
     # Check if Stripe is configured
     if not STRIPE_SECRET_KEY or STRIPE_SECRET_KEY.strip() == '':

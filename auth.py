@@ -272,15 +272,21 @@ def register():
         password = request.form.get('password')
         name = request.form.get('name')
         
+        print(f"Registration attempt for email: {email}, name: {name}")
+        
         # Validate input
         if not email or not password:
+            print("Registration failed: missing email or password")
             return render_template('auth/register.html', error='Email and password required')
         
         client = get_stytch_client()
         if not client:
-            return render_template('auth/register.html', error='Auth not configured')
+            print("Registration failed: Stytch client not initialized")
+            error_msg = 'Authentication service is not available. Please check STYTCH environment variables.'
+            return render_template('auth/register.html', error=error_msg)
         
         try:
+            print(f"Attempting to create Stytch user for {email}")
             # Create user with password
             response = client.passwords.create(
                 email=email,
@@ -288,6 +294,8 @@ def register():
                 name=name,
                 session_duration_minutes=60*24*7  # 1 week
             )
+            
+            print(f"Stytch user created successfully: {response.user_id}")
             
             # Create local user record
             from models import db, User
@@ -299,14 +307,23 @@ def register():
             db.session.add(user)
             db.session.commit()
             
+            print(f"Local user record created for {email}")
+            
             # Set session
             session['user_id'] = user.id
             session['stytch_session_token'] = response.session_token
             
+            print(f"User {email} logged in successfully")
             return redirect(url_for('index'))
         
         except Exception as e:
-            return render_template('auth/register.html', error=str(e))
+            print(f"Registration error for {email}: {type(e).__name__}: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            error_msg = f'Registration failed: {str(e)}'
+            if 'duplicate' in str(e).lower() or 'already exists' in str(e).lower():
+                error_msg = 'This email is already registered. Please login instead.'
+            return render_template('auth/register.html', error=error_msg)
     
     return render_template('auth/register.html')
 
